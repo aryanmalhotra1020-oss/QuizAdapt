@@ -5,12 +5,14 @@ import api from '../utils/api';
 const Subject = () => {
   const { id } = useParams();
   const [notes, setNotes] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
     fetchNotes();
+    fetchTopics();
   }, []);
 
   const fetchNotes = async () => {
@@ -19,6 +21,15 @@ const Subject = () => {
       setNotes(response.data);
     } catch (err) {
       setError('Failed to load notes');
+    }
+  };
+
+  const fetchTopics = async () => {
+    try {
+      const response = await api.get(`/notes/${id}/topics`);
+      setTopics(response.data);
+    } catch (err) {
+      console.error('Failed to load topics');
     }
   };
 
@@ -37,8 +48,9 @@ const Subject = () => {
       await api.post(`/notes/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setSuccess('Notes uploaded successfully!');
+      setSuccess('Notes uploaded and topics extracted!');
       fetchNotes();
+      fetchTopics();
     } catch (err) {
       setError('Failed to upload notes');
     } finally {
@@ -63,10 +75,24 @@ const Subject = () => {
           style={styles.fileInput}
           disabled={uploading}
         />
-        {uploading && <p style={styles.uploading}>Uploading...</p>}
+        {uploading && <p style={styles.uploading}>Uploading and extracting topics...</p>}
         {success && <p style={styles.success}>{success}</p>}
         {error && <p style={styles.error}>{error}</p>}
       </div>
+
+      {topics.length > 0 && (
+        <div style={styles.topicsSection}>
+          <h3 style={styles.sectionTitle}>Extracted Topics</h3>
+          <p style={styles.hint}>These topics were identified from your uploaded notes</p>
+          <div style={styles.topicsGrid}>
+            {topics.map((topic) => (
+              <div key={topic.id} style={styles.topicTag}>
+                {topic.topic_name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={styles.notesSection}>
         <h3 style={styles.sectionTitle}>Uploaded Notes</h3>
@@ -142,6 +168,28 @@ const styles = {
   error: {
     color: 'red',
     marginTop: '0.5rem',
+  },
+  topicsSection: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+    marginBottom: '2rem',
+  },
+  topicsGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.75rem',
+    marginTop: '0.5rem',
+  },
+  topicTag: {
+    backgroundColor: '#E0F7FA',
+    color: '#00838F',
+    padding: '0.4rem 1rem',
+    borderRadius: '20px',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    border: '1px solid #B2EBF2',
   },
   notesSection: {
     backgroundColor: '#fff',
