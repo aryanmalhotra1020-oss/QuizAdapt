@@ -113,6 +113,12 @@ const Subject = () => {
           <h3 style={styles.sectionTitle}>Ready to Test Yourself?</h3>
           <p style={styles.hint}>Generate an adaptive quiz based on your uploaded notes</p>
           <button
+            style={styles.diagnosticButton}
+            onClick={() => navigate(`/diagnostic/${id}`)}
+          >
+            Take Knowledge Assessment First
+          </button>
+          <button
             style={styles.quizButton}
             onClick={handleGenerateQuiz}
             disabled={generating}
@@ -237,6 +243,18 @@ const styles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     width: '100%',
+  },
+  diagnosticButton: {
+    padding: '0.9rem 2rem',
+    backgroundColor: '#E0F7FA',
+    color: '#00838F',
+    border: '2px solid #00838F',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    width: '100%',
+    marginBottom: '0.75rem',
   },
   notesSection: {
     backgroundColor: '#fff',

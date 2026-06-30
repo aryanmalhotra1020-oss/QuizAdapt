@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Subject from './pages/Subject';
 import Navbar from './components/Navbar';
 import Quiz from './pages/Quiz';
+import DiagnosticQuiz from './pages/DiagnosticQuiz';
 
 function App() {
   return (
@@ -30,6 +31,11 @@ function App() {
           <Route path="/quiz/:quizId" element={
             <ProtectedRoute>
               <Quiz />
+            </ProtectedRoute>
+          } />
+          <Route path="/diagnostic/:subjectId" element={
+            <ProtectedRoute>
+              <DiagnosticQuiz />
             </ProtectedRoute>
           } />
           <Route path="*" element={<Navigate to="/login" />} />
