@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Subject from './pages/Subject';
 import Navbar from './components/Navbar';
+import Quiz from './pages/Quiz';
 
 function App() {
   return (
@@ -24,6 +25,11 @@ function App() {
           <Route path="/subject/:id" element={
             <ProtectedRoute>
               <Subject />
+            </ProtectedRoute>
+          } />
+          <Route path="/quiz/:quizId" element={
+            <ProtectedRoute>
+              <Quiz />
             </ProtectedRoute>
           } />
           <Route path="*" element={<Navigate to="/login" />} />

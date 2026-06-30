@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
 const Subject = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [generating, setGenerating] = useState(false);
   const [notes, setNotes] = useState([]);
   const [topics, setTopics] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -30,6 +32,18 @@ const Subject = () => {
       setTopics(response.data);
     } catch (err) {
       console.error('Failed to load topics');
+    }
+  };
+
+  const handleGenerateQuiz = async () => {
+    setGenerating(true);
+    try {
+      const response = await api.post(`/quiz/generate/${id}`);
+      navigate(`/quiz/${response.data.quiz_id}`);
+    } catch (err) {
+      setError('Failed to generate quiz. Make sure you have uploaded notes first.');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -91,6 +105,20 @@ const Subject = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {topics.length > 0 && (
+        <div style={styles.quizSection}>
+          <h3 style={styles.sectionTitle}>Ready to Test Yourself?</h3>
+          <p style={styles.hint}>Generate an adaptive quiz based on your uploaded notes</p>
+          <button
+            style={styles.quizButton}
+            onClick={handleGenerateQuiz}
+            disabled={generating}
+          >
+            {generating ? 'Generating Quiz... (this may take a moment)' : '🧠 Generate Quiz'}
+          </button>
         </div>
       )}
 
@@ -190,6 +218,25 @@ const styles = {
     fontSize: '0.9rem',
     fontWeight: '500',
     border: '1px solid #B2EBF2',
+  },
+  quizSection: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+    marginBottom: '2rem',
+    border: '2px solid #00B4D8',
+  },
+  quizButton: {
+    padding: '0.9rem 2rem',
+    backgroundColor: '#1A1A2E',
+    color: '#00B4D8',
+    border: '2px solid #00B4D8',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    width: '100%',
   },
   notesSection: {
     backgroundColor: '#fff',
