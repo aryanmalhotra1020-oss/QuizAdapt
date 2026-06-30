@@ -4,6 +4,7 @@ from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance
 from app.services import generate_question_for_topic
 import random
+from app.bkt import BKTModel
 
 quiz_bp = Blueprint('quiz', __name__)
 
@@ -11,25 +12,65 @@ quiz_bp = Blueprint('quiz', __name__)
 @jwt_required()
 def generate_quiz(subject_id):
     user_id = get_jwt_identity()
+    bkt = BKTModel()
 
     # Get all topics for this subject
     topics = Topic.query.filter_by(subject_id=subject_id).all()
     if not topics:
         return jsonify({'error': 'No topics found. Please upload notes first.'}), 400
 
-    # Get the raw text from the most recent note
+    # Get most recent note
     note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
     if not note:
         return jsonify({'error': 'No notes found for this subject.'}), 400
 
-    # Create a new quiz
-    quiz = Quiz(subject_id=subject_id, type='adaptive')
+    # Get topic performance scores
+    performances = {
+        p.topic_id: p.strength_score
+        for p in TopicPerformance.query.filter_by(
+            user_id=user_id,
+            subject_id=subject_id
+        ).all()
+    }
+
+    # Classify topics as weak, moderate or strong
+    weak_topics = []
+    moderate_topics = []
+    strong_topics = []
+
+    for topic in topics:
+        score = performances.get(topic.id, bkt.p_know)
+        classification = bkt.classify(score)
+        if classification == 'weak':
+            weak_topics.append(topic)
+        elif classification == 'moderate':
+            moderate_topics.append(topic)
+        else:
+            strong_topics.append(topic)
+
+    # Build adaptive question pool:
+    # 50% weak topics, 30% moderate, 20% strong (revision)
+    selected_topics = []
+    selected_topics += random.sample(weak_topics, min(5, len(weak_topics)))
+    selected_topics += random.sample(moderate_topics, min(3, len(moderate_topics)))
+    selected_topics += random.sample(strong_topics, min(2, len(strong_topics)))
+
+    # If not enough topics, fill with whatever is available
+    if len(selected_topics) < 5:
+        remaining = [t for t in topics if t not in selected_topics]
+        selected_topics += random.sample(remaining, min(5 - len(selected_topics), len(remaining)))
+
+    # Determine quiz type
+    quiz_type = 'adaptive' if performances else 'initial'
+
+    # Create quiz
+    quiz = Quiz(subject_id=subject_id, type=quiz_type)
     db.session.add(quiz)
     db.session.commit()
 
-    # Generate one question per topic (up to 10)
+    # Generate questions
     questions_generated = []
-    for topic in topics[:10]:
+    for topic in selected_topics:
         try:
             question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
             question = Question(
@@ -39,20 +80,26 @@ def generate_quiz(subject_id):
                 correct_answer=topic.topic_name
             )
             db.session.add(question)
+            db.session.commit()
             questions_generated.append({
                 'id': question.id,
                 'question_text': question_text,
-                'topic': topic.topic_name
+                'topic': topic.topic_name,
+                'classification': bkt.classify(performances.get(topic.id, bkt.p_know))
             })
         except Exception as e:
             print(f"Error generating question for topic {topic.topic_name}: {e}")
             continue
 
-    db.session.commit()
-
     return jsonify({
         'quiz_id': quiz.id,
-        'questions': questions_generated
+        'type': quiz_type,
+        'questions': questions_generated,
+        'breakdown': {
+            'weak': len(weak_topics),
+            'moderate': len(moderate_topics),
+            'strong': len(strong_topics)
+        }
     }), 201
 
 @quiz_bp.route('/diagnostic/<int:subject_id>', methods=['POST'])
@@ -187,6 +234,7 @@ def get_quiz(quiz_id):
         } for q in questions]
     }), 200
 
+
 @quiz_bp.route('/attempt/<int:quiz_id>', methods=['POST'])
 @jwt_required()
 def submit_attempt(quiz_id):
@@ -194,19 +242,20 @@ def submit_attempt(quiz_id):
     data = request.get_json()
     answers = data.get('answers', [])
 
+    quiz = Quiz.query.get_or_404(quiz_id)
+    bkt = BKTModel()
+
     # Create attempt
     attempt = Attempt(quiz_id=quiz_id, user_id=user_id)
     db.session.add(attempt)
     db.session.commit()
 
-    # Store each answer
     results = []
     for ans in answers:
         question = Question.query.get(ans['question_id'])
         if not question:
             continue
 
-        # Simple exact match for now (semantic similarity in Week 7)
         is_correct = ans['answer'].strip().lower() in question.correct_answer.strip().lower()
         score = 1.0 if is_correct else 0.0
 
@@ -218,10 +267,36 @@ def submit_attempt(quiz_id):
             score=score
         )
         db.session.add(answer)
+
+        # Update topic performance using BKT online learning
+        if question.topic_id:
+            existing = TopicPerformance.query.filter_by(
+                user_id=user_id,
+                subject_id=quiz.subject_id,
+                topic_id=question.topic_id
+            ).first()
+
+            if existing:
+                # Update existing knowledge score using BKT
+                updated_score = bkt.update(existing.strength_score, is_correct)
+                existing.strength_score = updated_score
+                existing.updated_at = db.func.now()
+            else:
+                # First time seeing this topic — initialise with BKT
+                initial_score = bkt.update(bkt.p_know, is_correct)
+                perf = TopicPerformance(
+                    user_id=user_id,
+                    subject_id=quiz.subject_id,
+                    topic_id=question.topic_id,
+                    strength_score=initial_score
+                )
+                db.session.add(perf)
+
         results.append({
             'question_id': question.id,
             'is_correct': is_correct,
-            'correct_answer': question.correct_answer
+            'correct_answer': question.correct_answer,
+            'topic_id': question.topic_id
         })
 
     db.session.commit()
