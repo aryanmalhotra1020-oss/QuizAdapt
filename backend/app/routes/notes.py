@@ -3,9 +3,25 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Note, Topic, Subject
 from keybert import KeyBERT
+import fitz  # PyMuPDF
 
 notes_bp = Blueprint('notes', __name__)
 kw_model = KeyBERT()
+
+def extract_text(file):
+    filename = file.filename.lower()
+    if filename.endswith('.pdf'):
+        # Read PDF and extract text
+        pdf_bytes = file.read()
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        doc.close()
+        return text
+    else:
+        # Plain text file
+        return file.read().decode('utf-8', errors='ignore')
 
 @notes_bp.route('/<int:subject_id>', methods=['POST'])
 @jwt_required()
@@ -20,7 +36,12 @@ def upload_note(subject_id):
         return jsonify({'error': 'No file provided'}), 400
 
     file = request.files['file']
-    raw_text = file.read().decode('utf-8', errors='ignore')
+
+    if not (file.filename.endswith('.txt') or file.filename.endswith('.pdf')):
+        return jsonify({'error': 'Only .txt and .pdf files are supported'}), 400
+
+    # Extract text based on file type
+    raw_text = extract_text(file)
 
     # Save note
     note = Note(subject_id=subject_id, filename=file.filename, raw_text=raw_text)

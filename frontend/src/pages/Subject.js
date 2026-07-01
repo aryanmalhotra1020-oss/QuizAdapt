@@ -81,10 +81,10 @@ const Subject = () => {
 
       <div style={styles.uploadBox}>
         <h3 style={styles.sectionTitle}>Upload Notes</h3>
-        <p style={styles.hint}>Supported formats: .txt files</p>
+        <p style={styles.hint}>Supported formats: .txt files, .pdf files</p>
         <input
           type="file"
-          accept=".txt"
+          accept=".txt, .pdf"
           onChange={handleUpload}
           style={styles.fileInput}
           disabled={uploading}

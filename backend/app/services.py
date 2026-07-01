@@ -1,12 +1,14 @@
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+from transformers import T5Tokenizer, T5ForConditionalGeneration, AutoTokenizer, AutoModel
 import torch
 import os
+import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 't5_qg_model')
 
 tokenizer = None
 model = None
+similarity_tokenizer = None
 similarity_model = None
 
 def load_qg_model():
@@ -15,9 +17,9 @@ def load_qg_model():
         tokenizer = T5Tokenizer.from_pretrained(MODEL_PATH)
         model = T5ForConditionalGeneration.from_pretrained(
             MODEL_PATH,
-            low_cpu_mem_usage=False   
+            _fast_init=False
         )
-        model = model.to("cpu")       
+        model = model.to("cpu")
         model.eval()
     return tokenizer, model
 
@@ -56,29 +58,37 @@ def generate_question_for_topic(raw_text, topic):
     return generate_question(context, topic)
 
 def load_similarity_model():
-    global similarity_model
+    global similarity_tokenizer, similarity_model
     if similarity_model is None:
-        similarity_model = SentenceTransformer(
-            'all-MiniLM-L6-v2',
-            device='cpu',
-            model_kwargs={"low_cpu_mem_usage": False}
+        similarity_tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
+        similarity_model = AutoModel.from_pretrained(
+            'sentence-transformers/all-MiniLM-L6-v2',
+            low_cpu_mem_usage=False
         )
-    return similarity_model
+        similarity_model = similarity_model.to("cpu")
+        similarity_model.eval()
+    return similarity_tokenizer, similarity_model
+
+def mean_pooling(model_output, attention_mask):
+    token_embeddings = model_output[0]
+    mask = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+    return torch.sum(token_embeddings * mask, 1) / torch.clamp(mask.sum(1), min=1e-9)
+
+def embed_texts(texts):
+    tok, mdl = load_similarity_model()
+    encoded = tok(texts, padding=True, truncation=True, return_tensors="pt")
+    with torch.no_grad():
+        output = mdl(**encoded)
+    embeddings = mean_pooling(output, encoded["attention_mask"])
+    return F.normalize(embeddings, p=2, dim=1)
 
 def score_answer(user_answer, correct_answer, threshold=0.5):
-    """
-    Score a user's answer against the correct answer using semantic similarity.
-    Returns a score between 0 and 1, and whether it's considered correct.
-    """
     if not user_answer.strip():
         return 0.0, False
-    
-    model = load_similarity_model()
-    
-    embeddings = model.encode([user_answer, correct_answer], convert_to_tensor=True)
-    similarity = util.cos_sim(embeddings[0], embeddings[1]).item()
-    
+
+    embeddings = embed_texts([user_answer, correct_answer])
+    similarity = F.cosine_similarity(embeddings[0].unsqueeze(0), embeddings[1].unsqueeze(0)).item()
+
     score = round(float(similarity), 4)
     is_correct = score >= threshold
-    
     return score, is_correct
