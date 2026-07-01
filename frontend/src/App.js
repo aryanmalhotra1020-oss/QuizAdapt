@@ -9,6 +9,7 @@ import Subject from './pages/Subject';
 import Navbar from './components/Navbar';
 import Quiz from './pages/Quiz';
 import DiagnosticQuiz from './pages/DiagnosticQuiz';
+import Performance from './pages/Performance';
 
 function App() {
   return (
@@ -36,6 +37,11 @@ function App() {
           <Route path="/diagnostic/:subjectId" element={
             <ProtectedRoute>
               <DiagnosticQuiz />
+            </ProtectedRoute>
+          } />
+          <Route path="/performance/:subjectId" element={
+            <ProtectedRoute>
+              <Performance />
             </ProtectedRoute>
           } />
           <Route path="*" element={<Navigate to="/login" />} />

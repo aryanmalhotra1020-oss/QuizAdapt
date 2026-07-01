@@ -125,6 +125,12 @@ const Subject = () => {
           >
             {generating ? 'Generating Quiz... (this may take a moment)' : 'Generate Quiz'}
           </button>
+          <button
+            style={styles.performanceButton}
+            onClick={() => navigate(`/performance/${id}`)}
+          >
+            View Performance Dashboard
+          </button>
         </div>
       )}
 
@@ -255,6 +261,18 @@ const styles = {
     cursor: 'pointer',
     width: '100%',
     marginBottom: '0.75rem',
+  },
+  performanceButton: {
+    padding: '0.9rem 2rem',
+    backgroundColor: '#fff',
+    color: '#1A1A2E',
+    border: '2px solid #1A1A2E',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    width: '100%',
+    marginTop: '0.75rem',
   },
   notesSection: {
     backgroundColor: '#fff',

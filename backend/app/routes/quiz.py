@@ -313,3 +313,72 @@ def get_subjects():
         'type': q.type,
         'created_at': q.created_at
     } for q in quizzes]), 200
+
+@quiz_bp.route('/performance/<int:subject_id>', methods=['GET'])
+@jwt_required()
+def get_performance(subject_id):
+    user_id = get_jwt_identity()
+    bkt = BKTModel()
+
+    # Get all topic performances for this subject
+    performances = TopicPerformance.query.filter_by(
+        user_id=user_id,
+        subject_id=subject_id
+    ).all()
+
+    # Get all quiz attempts for this subject
+    quizzes = Quiz.query.filter_by(subject_id=subject_id).all()
+    quiz_history = []
+
+    for quiz in quizzes:
+        attempt = Attempt.query.filter_by(
+            quiz_id=quiz.id,
+            user_id=user_id
+        ).first()
+
+        if attempt:
+            answers = Answer.query.filter_by(attempt_id=attempt.id).all()
+            correct = sum(1 for a in answers if a.is_correct)
+            total = len(answers)
+            quiz_history.append({
+                'quiz_id': quiz.id,
+                'type': quiz.type,
+                'score': f"{correct}/{total}",
+                'percentage': round(correct / total * 100) if total > 0 else 0,
+                'created_at': quiz.created_at
+            })
+
+    # Build performance breakdown
+    topic_breakdown = []
+    for p in performances:
+        topic = Topic.query.get(p.topic_id)
+        if topic:
+            topic_breakdown.append({
+                'topic_id': p.topic_id,
+                'topic_name': topic.topic_name,
+                'strength_score': p.strength_score,
+                'classification': bkt.classify(p.strength_score),
+                'updated_at': p.updated_at
+            })
+
+    # Sort by strength score
+    topic_breakdown.sort(key=lambda x: x['strength_score'])
+
+    weak = [t for t in topic_breakdown if t['classification'] == 'weak']
+    moderate = [t for t in topic_breakdown if t['classification'] == 'moderate']
+    strong = [t for t in topic_breakdown if t['classification'] == 'strong']
+
+    return jsonify({
+        'topic_breakdown': topic_breakdown,
+        'weak': weak,
+        'moderate': moderate,
+        'strong': strong,
+        'quiz_history': quiz_history,
+        'summary': {
+            'total_topics': len(topic_breakdown),
+            'weak_count': len(weak),
+            'moderate_count': len(moderate),
+            'strong_count': len(strong),
+            'total_quizzes': len(quiz_history)
+        }
+    }), 200
