@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance
-from app.services import generate_question_for_topic
+from app.services import generate_question_for_topic, score_answer
 import random
 from app.bkt import BKTModel
 
@@ -173,8 +173,7 @@ def submit_diagnostic(quiz_id):
         if not question:
             continue
 
-        is_correct = ans['answer'].strip().lower() in question.correct_answer.strip().lower()
-        score = 1.0 if is_correct else 0.0
+        score, is_correct = score_answer(ans['answer'], question.correct_answer)
 
         answer = Answer(
             attempt_id=attempt.id,
@@ -256,8 +255,7 @@ def submit_attempt(quiz_id):
         if not question:
             continue
 
-        is_correct = ans['answer'].strip().lower() in question.correct_answer.strip().lower()
-        score = 1.0 if is_correct else 0.0
+        score, is_correct = score_answer(ans['answer'], question.correct_answer)
 
         answer = Answer(
             attempt_id=attempt.id,

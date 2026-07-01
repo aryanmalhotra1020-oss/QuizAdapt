@@ -69,7 +69,7 @@ const DiagnosticQuiz = () => {
   if (loading) return (
     <div style={styles.loadingContainer}>
       <div style={styles.loadingCard}>
-        <h2 style={styles.loadingTitle}>🧠 Generating Diagnostic Quiz...</h2>
+        <h2 style={styles.loadingTitle}>Generating Diagnostic Quiz...</h2>
         <p style={styles.loadingText}>We're creating questions to assess your current knowledge level. This may take a moment.</p>
       </div>
     </div>
@@ -89,7 +89,7 @@ const DiagnosticQuiz = () => {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <div style={styles.diagnosticBadge}>📊 Diagnostic Complete</div>
+          <div style={styles.diagnosticBadge}>Diagnostic Complete</div>
           <h2 style={styles.resultsTitle}>Knowledge Baseline Set!</h2>
           <p style={styles.resultsSubtitle}>
             Your results have been used to personalise your learning experience.
@@ -136,7 +136,7 @@ const DiagnosticQuiz = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <div style={styles.diagnosticBadge}>📊 Knowledge Assessment</div>
+        <div style={styles.diagnosticBadge}>Knowledge Assessment</div>
         <p style={styles.diagnosticInfo}>
           Answer these questions so we can personalise your learning experience.
           Don't worry if you don't know — just do your best!

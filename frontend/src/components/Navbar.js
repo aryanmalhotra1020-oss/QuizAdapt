@@ -14,7 +14,7 @@ const Navbar = () => {
   return (
     <nav style={styles.nav}>
       <Link to="/dashboard" style={styles.brand}>
-        AdaptIQ
+        QuizAdapt
       </Link>
       {user && (
         <div style={styles.right}>

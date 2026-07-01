@@ -123,7 +123,7 @@ const Subject = () => {
             onClick={handleGenerateQuiz}
             disabled={generating}
           >
-            {generating ? 'Generating Quiz... (this may take a moment)' : '🧠 Generate Quiz'}
+            {generating ? 'Generating Quiz... (this may take a moment)' : 'Generate Quiz'}
           </button>
         </div>
       )}
