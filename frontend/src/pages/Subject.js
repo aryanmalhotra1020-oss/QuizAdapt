@@ -5,17 +5,28 @@ import api from '../utils/api';
 const Subject = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [generating, setGenerating] = useState(false);
+  const [subjectName, setSubjectName] = useState('');
   const [notes, setNotes] = useState([]);
   const [topics, setTopics] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
+    fetchSubjectName();
     fetchNotes();
     fetchTopics();
   }, []);
+
+  const fetchSubjectName = async () => {
+    try {
+      const response = await api.get(`/subjects/${id}`);
+      setSubjectName(response.data.name);
+    } catch (err) {
+      console.error('Failed to load subject name');
+    }
+  };
 
   const fetchNotes = async () => {
     try {
@@ -35,18 +46,6 @@ const Subject = () => {
     }
   };
 
-  const handleGenerateQuiz = async () => {
-    setGenerating(true);
-    try {
-      const response = await api.post(`/quiz/generate/${id}`);
-      navigate(`/quiz/${response.data.quiz_id}`);
-    } catch (err) {
-      setError('Failed to generate quiz. Make sure you have uploaded notes first.');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -62,97 +61,159 @@ const Subject = () => {
       await api.post(`/notes/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setSuccess('Notes uploaded and topics extracted!');
+      setSuccess('Notes uploaded and topics extracted successfully!');
       fetchNotes();
       fetchTopics();
     } catch (err) {
-      setError('Failed to upload notes');
+      setError('Failed to upload notes. Please try again.');
     } finally {
       setUploading(false);
     }
   };
 
+  const handleGenerateQuiz = async () => {
+    setGenerating(true);
+    setError('');
+    try {
+      const response = await api.post(`/quiz/generate/${id}`);
+      navigate(`/quiz/${response.data.quiz_id}`);
+    } catch (err) {
+      setError('Failed to generate quiz. Make sure you have uploaded notes first.');
+      setGenerating(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
+      {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>Subject Notes</h1>
-        <p style={styles.subtitle}>Upload your lecture notes to generate quizzes</p>
+        <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>
+          ← Dashboard
+        </button>
+        <div style={styles.headerContent}>
+          <h1 style={styles.title}>{subjectName || 'Subject'}</h1>
+          <p style={styles.subtitle}>Upload your notes and start your adaptive learning journey</p>
+        </div>
       </div>
 
-      <div style={styles.uploadBox}>
-        <h3 style={styles.sectionTitle}>Upload Notes</h3>
-        <p style={styles.hint}>Supported formats: .txt files, .pdf files</p>
-        <input
-          type="file"
-          accept=".txt, .pdf"
-          onChange={handleUpload}
-          style={styles.fileInput}
-          disabled={uploading}
-        />
-        {uploading && <p style={styles.uploading}>Uploading and extracting topics...</p>}
-        {success && <p style={styles.success}>{success}</p>}
-        {error && <p style={styles.error}>{error}</p>}
-      </div>
-
+      {/* Action Cards */}
       {topics.length > 0 && (
-        <div style={styles.topicsSection}>
-          <h3 style={styles.sectionTitle}>Extracted Topics</h3>
-          <p style={styles.hint}>These topics were identified from your uploaded notes</p>
-          <div style={styles.topicsGrid}>
-            {topics.map((topic) => (
-              <div key={topic.id} style={styles.topicTag}>
-                {topic.topic_name}
-              </div>
-            ))}
+        <div style={styles.actionGrid}>
+          <div style={styles.actionCard} onClick={() => navigate(`/diagnostic/${id}`)}>
+            <span style={styles.actionIcon}>📊</span>
+            <div>
+              <h3 style={styles.actionTitle}>Knowledge Assessment</h3>
+              <p style={styles.actionDesc}>Test your baseline knowledge first</p>
+            </div>
+            <span style={styles.actionArrow}>→</span>
+          </div>
+          <div style={{
+            ...styles.actionCard,
+            ...styles.actionCardPrimary,
+            opacity: generating ? 0.7 : 1,
+            cursor: generating ? 'not-allowed' : 'pointer'
+          }} onClick={!generating ? handleGenerateQuiz : undefined}>
+            <span style={styles.actionIcon}>🧠</span>
+            <div>
+              <h3 style={styles.actionTitle}>
+                {generating ? 'Generating Quiz...' : 'Adaptive Quiz'}
+              </h3>
+              <p style={styles.actionDesc}>
+                {generating ? 'This may take a moment' : 'Personalised to your weak areas'}
+              </p>
+            </div>
+            <span style={styles.actionArrow}>→</span>
+          </div>
+          <div style={styles.actionCard} onClick={() => navigate(`/performance/${id}`)}>
+            <span style={styles.actionIcon}>📈</span>
+            <div>
+              <h3 style={styles.actionTitle}>Performance</h3>
+              <p style={styles.actionDesc}>View your progress and knowledge map</p>
+            </div>
+            <span style={styles.actionArrow}>→</span>
           </div>
         </div>
       )}
 
-      {topics.length > 0 && (
-        <div style={styles.quizSection}>
-          <h3 style={styles.sectionTitle}>Ready to Test Yourself?</h3>
-          <p style={styles.hint}>Generate an adaptive quiz based on your uploaded notes</p>
-          <button
-            style={styles.diagnosticButton}
-            onClick={() => navigate(`/diagnostic/${id}`)}
-          >
-            Take Knowledge Assessment First
-          </button>
-          <button
-            style={styles.quizButton}
-            onClick={handleGenerateQuiz}
-            disabled={generating}
-          >
-            {generating ? 'Generating Quiz... (this may take a moment)' : 'Generate Quiz'}
-          </button>
-          <button
-            style={styles.performanceButton}
-            onClick={() => navigate(`/performance/${id}`)}
-          >
-            View Performance Dashboard
-          </button>
-        </div>
-      )}
+      {error && <div style={styles.errorBanner}>{error}</div>}
+      {success && <div style={styles.successBanner}>{success}</div>}
 
-      <div style={styles.notesSection}>
-        <h3 style={styles.sectionTitle}>Uploaded Notes</h3>
-        {notes.length === 0 ? (
-          <p style={styles.empty}>No notes uploaded yet.</p>
-        ) : (
-          <div style={styles.notesList}>
-            {notes.map((note) => (
-              <div key={note.id} style={styles.noteCard}>
-                <span style={styles.noteIcon}>📄</span>
-                <div>
-                  <p style={styles.noteName}>{note.filename}</p>
-                  <p style={styles.noteDate}>
-                    Uploaded {new Date(note.uploaded_at).toLocaleDateString()}
-                  </p>
+      <div style={styles.grid}>
+        {/* Upload Section */}
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}>📄 Upload Notes</h2>
+          <p style={styles.cardSubtitle}>Supported: .txt and .pdf files</p>
+          <label style={styles.uploadLabel}>
+            <input
+              type="file"
+              accept=".txt,.pdf"
+              onChange={handleUpload}
+              style={styles.fileInput}
+              disabled={uploading}
+            />
+            <div style={styles.uploadBox}>
+              {uploading ? (
+                <>
+                  <span style={styles.uploadIcon}>⏳</span>
+                  <p style={styles.uploadText}>Uploading and extracting topics...</p>
+                  <p style={styles.uploadHint}>This may take a moment</p>
+                </>
+              ) : (
+                <>
+                  <span style={styles.uploadIcon}>☁️</span>
+                  <p style={styles.uploadText}>Click to upload a file</p>
+                  <p style={styles.uploadHint}>.txt or .pdf — max 10MB</p>
+                </>
+              )}
+            </div>
+          </label>
+
+          {/* Uploaded Notes */}
+          {notes.length > 0 && (
+            <div style={styles.notesList}>
+              <h3 style={styles.notesTitle}>Uploaded Files</h3>
+              {notes.map(note => (
+                <div key={note.id} style={styles.noteItem}>
+                  <span style={styles.noteIcon}>
+                    {note.filename.endsWith('.pdf') ? '📕' : '📄'}
+                  </span>
+                  <div style={styles.noteInfo}>
+                    <p style={styles.noteName}>{note.filename}</p>
+                    <p style={styles.noteDate}>
+                      {new Date(note.uploaded_at).toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'short', year: 'numeric'
+                      })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Topics Section */}
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}>🏷️ Extracted Topics</h2>
+          <p style={styles.cardSubtitle}>
+            {topics.length > 0
+              ? `${topics.length} topics identified from your notes`
+              : 'Upload notes to see extracted topics'}
+          </p>
+          {topics.length === 0 ? (
+            <div style={styles.emptyTopics}>
+              <span style={styles.emptyIcon}>📝</span>
+              <p>No topics yet — upload your notes to get started</p>
+            </div>
+          ) : (
+            <div style={styles.topicsGrid}>
+              {topics.map(topic => (
+                <div key={topic.id} style={styles.topicTag}>
+                  {topic.topic_name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -160,157 +221,206 @@ const Subject = () => {
 
 const styles = {
   container: {
-    maxWidth: '900px',
+    maxWidth: '1100px',
     margin: '0 auto',
     padding: '2rem',
   },
   header: {
     marginBottom: '2rem',
   },
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#00B4D8',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    padding: 0,
+    marginBottom: '0.75rem',
+    display: 'block',
+    fontWeight: '500',
+  },
+  headerContent: {},
   title: {
     fontSize: '2rem',
+    fontWeight: '800',
     color: '#1A1A2E',
-    margin: '0 0 0.5rem',
+    marginBottom: '0.3rem',
   },
   subtitle: {
-    color: '#666',
-    fontSize: '1rem',
+    color: '#94A3B8',
+    fontSize: '0.95rem',
   },
-  uploadBox: {
+  actionGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '1rem',
+    marginBottom: '1.5rem',
+  },
+  actionCard: {
     backgroundColor: '#fff',
     borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    marginBottom: '2rem',
-    border: '2px dashed #00B4D8',
+    padding: '1.25rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    cursor: 'pointer',
+    border: '2px solid #E2E8F0',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    transition: 'all 0.2s',
   },
-  sectionTitle: {
-    margin: '0 0 0.5rem',
+  actionCardPrimary: {
+    backgroundColor: '#1A1A2E',
+    border: '2px solid #00B4D8',
+  },
+  actionIcon: {
+    fontSize: '1.5rem',
+    flexShrink: 0,
+  },
+  actionTitle: {
+    fontSize: '0.95rem',
+    fontWeight: '700',
     color: '#1A1A2E',
+    marginBottom: '0.2rem',
   },
-  hint: {
-    color: '#999',
+  actionDesc: {
+    fontSize: '0.8rem',
+    color: '#94A3B8',
+  },
+  actionArrow: {
+    marginLeft: 'auto',
+    color: '#CBD5E1',
+    fontSize: '1.1rem',
+    flexShrink: 0,
+  },
+  errorBanner: {
+    backgroundColor: '#FEF2F2',
+    border: '1px solid #FECACA',
+    color: '#DC2626',
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    marginBottom: '1rem',
+    fontSize: '0.9rem',
+  },
+  successBanner: {
+    backgroundColor: '#F0FDF4',
+    border: '1px solid #BBF7D0',
+    color: '#16A34A',
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    marginBottom: '1rem',
+    fontSize: '0.9rem',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '1.5rem',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+  },
+  cardTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: '0.3rem',
+  },
+  cardSubtitle: {
+    color: '#94A3B8',
     fontSize: '0.85rem',
-    margin: '0 0 1rem',
+    marginBottom: '1rem',
+  },
+  uploadLabel: {
+    cursor: 'pointer',
+    display: 'block',
   },
   fileInput: {
-    display: 'block',
-    marginTop: '0.5rem',
+    display: 'none',
   },
-  uploading: {
-    color: '#00B4D8',
-    marginTop: '0.5rem',
-  },
-  success: {
-    color: 'green',
-    marginTop: '0.5rem',
-  },
-  error: {
-    color: 'red',
-    marginTop: '0.5rem',
-  },
-  topicsSection: {
-    backgroundColor: '#fff',
+  uploadBox: {
+    border: '2px dashed #E2E8F0',
     borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    marginBottom: '2rem',
+    padding: '2rem',
+    textAlign: 'center',
+    transition: 'border-color 0.2s',
+  },
+  uploadIcon: {
+    fontSize: '2rem',
+    display: 'block',
+    marginBottom: '0.5rem',
+  },
+  uploadText: {
+    color: '#1A1A2E',
+    fontWeight: '600',
+    fontSize: '0.95rem',
+    marginBottom: '0.25rem',
+  },
+  uploadHint: {
+    color: '#94A3B8',
+    fontSize: '0.8rem',
+  },
+  notesList: {
+    marginTop: '1rem',
+    borderTop: '1px solid #F1F5F9',
+    paddingTop: '1rem',
+  },
+  notesTitle: {
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: '0.75rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  noteItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.6rem 0',
+    borderBottom: '1px solid #F8FAFC',
+  },
+  noteIcon: {
+    fontSize: '1.2rem',
+  },
+  noteInfo: {},
+  noteName: {
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    color: '#1A1A2E',
+    margin: 0,
+  },
+  noteDate: {
+    fontSize: '0.75rem',
+    color: '#94A3B8',
+    margin: 0,
+  },
+  emptyTopics: {
+    textAlign: 'center',
+    padding: '2rem',
+    color: '#94A3B8',
+    fontSize: '0.9rem',
+  },
+  emptyIcon: {
+    fontSize: '2rem',
+    display: 'block',
+    marginBottom: '0.5rem',
   },
   topicsGrid: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '0.75rem',
-    marginTop: '0.5rem',
+    gap: '0.5rem',
   },
   topicTag: {
-    backgroundColor: '#E0F7FA',
-    color: '#00838F',
-    padding: '0.4rem 1rem',
+    backgroundColor: '#EFF6FF',
+    color: '#2563EB',
+    padding: '0.35rem 0.85rem',
     borderRadius: '20px',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    border: '1px solid #B2EBF2',
-  },
-  quizSection: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    marginBottom: '2rem',
-    border: '2px solid #00B4D8',
-  },
-  quizButton: {
-    padding: '0.9rem 2rem',
-    backgroundColor: '#1A1A2E',
-    color: '#00B4D8',
-    border: '2px solid #00B4D8',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    width: '100%',
-  },
-  diagnosticButton: {
-    padding: '0.9rem 2rem',
-    backgroundColor: '#E0F7FA',
-    color: '#00838F',
-    border: '2px solid #00838F',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    width: '100%',
-    marginBottom: '0.75rem',
-  },
-  performanceButton: {
-    padding: '0.9rem 2rem',
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
-    border: '2px solid #1A1A2E',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    width: '100%',
-    marginTop: '0.75rem',
-  },
-  notesSection: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-  },
-  empty: {
-    color: '#999',
-    textAlign: 'center',
-    padding: '2rem',
-  },
-  notesList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  },
-  noteCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    padding: '1rem',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px',
-    border: '1px solid #eee',
-  },
-  noteIcon: {
-    fontSize: '1.5rem',
-  },
-  noteName: {
-    margin: 0,
-    fontWeight: 'bold',
-    color: '#1A1A2E',
-  },
-  noteDate: {
-    margin: 0,
-    color: '#999',
     fontSize: '0.85rem',
+    fontWeight: '500',
+    border: '1px solid #BFDBFE',
+    textTransform: 'capitalize',
   },
 };
 

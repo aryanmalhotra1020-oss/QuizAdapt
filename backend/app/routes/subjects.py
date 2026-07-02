@@ -31,3 +31,17 @@ def create_subject():
     db.session.commit()
 
     return jsonify({'message': 'Subject created', 'id': subject.id}), 201
+
+
+@subjects_bp.route('/<int:subject_id>', methods=['GET'])
+@jwt_required()
+def get_subject(subject_id):
+    user_id = get_jwt_identity()
+    subject = Subject.query.filter_by(id=subject_id, user_id=user_id).first()
+    if not subject:
+        return jsonify({'error': 'Subject not found'}), 404
+    return jsonify({
+        'id': subject.id,
+        'name': subject.name,
+        'created_at': subject.created_at
+    }), 200

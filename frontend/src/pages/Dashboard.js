@@ -37,49 +37,90 @@ const Dashboard = () => {
     }
   };
 
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Subjects</h1>
-        <p style={styles.subtitle}>Welcome back, {user?.name}! Select a subject to continue learning.</p>
+      {/* Hero Section */}
+      <div style={styles.hero}>
+        <div style={styles.heroContent}>
+          <h1 style={styles.heroTitle}>
+            {getTimeOfDay()}, {user?.name.split(' ')[0]}! 👋
+          </h1>
+          <p style={styles.heroSubtitle}>
+            What would you like to study today?
+          </p>
+        </div>
+        <div style={styles.heroStats}>
+          <div style={styles.statPill}>
+            <span style={styles.statNum}>{subjects.length}</span>
+            <span style={styles.statLabel}>Subjects</span>
+          </div>
+        </div>
       </div>
 
-      <div style={styles.createBox}>
-        <input
-          style={styles.input}
-          type="text"
-          placeholder="New subject name (e.g. Artificial Intelligence)"
-          value={newSubject}
-          onChange={(e) => setNewSubject(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleCreateSubject()}
-        />
-        <button style={styles.button} onClick={handleCreateSubject}>
-          + Add Subject
-        </button>
+      {/* Create Subject */}
+      <div style={styles.createSection}>
+        <h2 style={styles.sectionTitle}>My Subjects</h2>
+        <div style={styles.createBox}>
+          <input
+            style={styles.input}
+            type="text"
+            placeholder="Add a new subject (e.g. Artificial Intelligence, Networks...)"
+            value={newSubject}
+            onChange={(e) => setNewSubject(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreateSubject()}
+          />
+          <button style={styles.createBtn} onClick={handleCreateSubject}>
+            + Add Subject
+          </button>
+        </div>
+        {error && <p style={styles.error}>{error}</p>}
       </div>
 
-      {error && <p style={styles.error}>{error}</p>}
-
+      {/* Subjects Grid */}
       {loading ? (
-        <p style={styles.loading}>Loading subjects...</p>
+        <div style={styles.loadingGrid}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={styles.skeletonCard} />
+          ))}
+        </div>
       ) : subjects.length === 0 ? (
         <div style={styles.empty}>
-          <p>No subjects yet. Create your first one above!</p>
+          <div style={styles.emptyIcon}>📚</div>
+          <h3 style={styles.emptyTitle}>No subjects yet</h3>
+          <p style={styles.emptyText}>Create your first subject above to get started!</p>
         </div>
       ) : (
         <div style={styles.grid}>
-          {subjects.map((subject) => (
+          {subjects.map((subject, index) => (
             <div
               key={subject.id}
               style={styles.card}
               onClick={() => navigate(`/subject/${subject.id}`)}
             >
+              <div style={styles.cardHeader}>
+                <div style={{
+                  ...styles.cardIcon,
+                  backgroundColor: COLORS[index % COLORS.length]
+                }}>
+                  {subject.name.charAt(0).toUpperCase()}
+                </div>
+                <span style={styles.cardArrow}>→</span>
+              </div>
               <h3 style={styles.cardTitle}>{subject.name}</h3>
               <p style={styles.cardDate}>
-                Created {new Date(subject.created_at).toLocaleDateString()}
+                Created {new Date(subject.created_at).toLocaleDateString('en-GB', {
+                  day: 'numeric', month: 'short', year: 'numeric'
+                })}
               </p>
               <div style={styles.cardFooter}>
-                <span style={styles.cardLink}>Open Subject →</span>
+                <span style={styles.cardAction}>Open Subject</span>
               </div>
             </div>
           ))}
@@ -89,61 +130,125 @@ const Dashboard = () => {
   );
 };
 
+const COLORS = ['#00B4D8', '#7C3AED', '#059669', '#DC2626', '#D97706', '#2563EB'];
+
 const styles = {
   container: {
     maxWidth: '1100px',
     margin: '0 auto',
     padding: '2rem',
   },
-  header: {
+  hero: {
+    background: 'linear-gradient(135deg, #1A1A2E 0%, #0F3460 100%)',
+    borderRadius: '16px',
+    padding: '2rem 2.5rem',
     marginBottom: '2rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
   },
-  title: {
-    fontSize: '2rem',
-    color: '#1A1A2E',
-    margin: '0 0 0.5rem',
+  heroContent: {},
+  heroTitle: {
+    fontSize: '1.8rem',
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: '0.5rem',
   },
-  subtitle: {
-    color: '#666',
+  heroSubtitle: {
+    color: '#94A3B8',
     fontSize: '1rem',
+  },
+  heroStats: {
+    display: 'flex',
+    gap: '1rem',
+  },
+  statPill: {
+    backgroundColor: 'rgba(0,180,216,0.15)',
+    border: '1px solid rgba(0,180,216,0.3)',
+    borderRadius: '12px',
+    padding: '0.75rem 1.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  statNum: {
+    fontSize: '1.8rem',
+    fontWeight: 'bold',
+    color: '#00B4D8',
+  },
+  statLabel: {
+    fontSize: '0.8rem',
+    color: '#94A3B8',
+  },
+  createSection: {
+    marginBottom: '1.5rem',
+  },
+  sectionTitle: {
+    fontSize: '1.3rem',
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: '1rem',
   },
   createBox: {
     display: 'flex',
-    gap: '1rem',
-    marginBottom: '2rem',
+    gap: '0.75rem',
   },
   input: {
     flex: 1,
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    fontSize: '1rem',
-    outline: 'none',
+    padding: '0.8rem 1rem',
+    borderRadius: '10px',
+    border: '2px solid #E2E8F0',
+    fontSize: '0.95rem',
+    backgroundColor: '#fff',
+    color: '#1A1A2E',
   },
-  button: {
-    padding: '0.75rem 1.5rem',
+  createBtn: {
+    padding: '0.8rem 1.5rem',
     backgroundColor: '#00B4D8',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
+    borderRadius: '10px',
+    fontSize: '0.95rem',
+    fontWeight: '600',
     cursor: 'pointer',
-    fontWeight: 'bold',
     whiteSpace: 'nowrap',
   },
   error: {
-    color: 'red',
+    color: '#EF4444',
     fontSize: '0.85rem',
+    marginTop: '0.5rem',
   },
-  loading: {
-    color: '#666',
+  loadingGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '1.5rem',
+  },
+  skeletonCard: {
+    height: '160px',
+    borderRadius: '16px',
+    backgroundColor: '#E2E8F0',
+    animation: 'pulse 1.5s infinite',
   },
   empty: {
     textAlign: 'center',
-    padding: '4rem',
-    color: '#666',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '12px',
+    padding: '4rem 2rem',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+  },
+  emptyIcon: {
+    fontSize: '3rem',
+    marginBottom: '1rem',
+  },
+  emptyTitle: {
+    fontSize: '1.3rem',
+    color: '#1A1A2E',
+    marginBottom: '0.5rem',
+  },
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: '0.95rem',
   },
   grid: {
     display: 'grid',
@@ -152,31 +257,53 @@ const styles = {
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
+    borderRadius: '16px',
     padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
     cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    border: '1px solid #eee',
+    border: '2px solid transparent',
+    transition: 'all 0.2s ease',
   },
-  cardTitle: {
-    margin: '0 0 0.5rem',
-    color: '#1A1A2E',
+  cardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '1rem',
+  },
+  cardIcon: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    fontWeight: 'bold',
     fontSize: '1.2rem',
   },
+  cardArrow: {
+    color: '#CBD5E1',
+    fontSize: '1.2rem',
+  },
+  cardTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: '0.4rem',
+  },
   cardDate: {
-    color: '#999',
-    fontSize: '0.85rem',
-    margin: '0 0 1rem',
+    color: '#94A3B8',
+    fontSize: '0.8rem',
+    marginBottom: '1rem',
   },
   cardFooter: {
-    borderTop: '1px solid #eee',
+    borderTop: '1px solid #F1F5F9',
     paddingTop: '0.75rem',
   },
-  cardLink: {
+  cardAction: {
     color: '#00B4D8',
-    fontSize: '0.9rem',
-    fontWeight: 'bold',
+    fontSize: '0.85rem',
+    fontWeight: '600',
   },
 };
 

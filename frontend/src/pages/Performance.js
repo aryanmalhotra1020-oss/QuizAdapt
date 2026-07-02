@@ -8,11 +8,21 @@ const Performance = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [subjectName, setSubjectName] = useState('');
 
   useEffect(() => {
     fetchPerformance();
+    fetchSubjectName();
   }, []);
 
+  const fetchSubjectName = async () => {
+    try {
+      const response = await api.get(`/subjects/${subjectId}`);
+      setSubjectName(response.data.name);
+    } catch (err) {
+      console.error('Failed to load subject name');
+    }
+  };
   const fetchPerformance = async () => {
     try {
       const response = await api.get(`/quiz/performance/${subjectId}`);
@@ -42,7 +52,7 @@ const Performance = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <button style={styles.backButton} onClick={() => navigate(-1)}>← Back</button>
-        <h1 style={styles.title}>Performance Dashboard</h1>
+        <h1 style={styles.title}>{subjectName ? `${subjectName} — Performance` : 'Performance Dashboard'}</h1>
         <p style={styles.subtitle}>Track your learning progress and knowledge gaps</p>
       </div>
 
