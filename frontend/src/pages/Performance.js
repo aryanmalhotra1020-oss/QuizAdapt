@@ -6,23 +6,15 @@ const Performance = () => {
   const { subjectId } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [subjectName, setSubjectName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [subjectName, setSubjectName] = useState('');
 
   useEffect(() => {
     fetchPerformance();
     fetchSubjectName();
   }, []);
 
-  const fetchSubjectName = async () => {
-    try {
-      const response = await api.get(`/subjects/${subjectId}`);
-      setSubjectName(response.data.name);
-    } catch (err) {
-      console.error('Failed to load subject name');
-    }
-  };
   const fetchPerformance = async () => {
     try {
       const response = await api.get(`/quiz/performance/${subjectId}`);
@@ -34,306 +26,467 @@ const Performance = () => {
     }
   };
 
+  const fetchSubjectName = async () => {
+    try {
+      const response = await api.get(`/subjects/${subjectId}`);
+      setSubjectName(response.data.name);
+    } catch (err) {
+      console.error('Failed to load subject name');
+    }
+  };
+
   if (loading) return (
-    <div style={styles.loadingContainer}>
-      <p>Loading your performance data...</p>
+    <div style={styles.centered}>
+      <div style={styles.loadingCard}>
+        <span style={styles.loadingIcon}>📊</span>
+        <p style={styles.loadingText}>Loading your performance data...</p>
+      </div>
     </div>
   );
 
   if (error) return (
-    <div style={styles.loadingContainer}>
+    <div style={styles.centered}>
       <p style={styles.error}>{error}</p>
     </div>
   );
 
-  const { summary, weak, moderate, strong, quiz_history } = data;
+  const { summary, weak, moderate, strong, quiz_history, topic_breakdown } = data;
+  const overallScore = topic_breakdown.length > 0
+    ? Math.round((topic_breakdown.reduce((sum, t) => sum + t.strength_score, 0) / topic_breakdown.length) * 100)
+    : 0;
+
+  const getScoreColor = (pct) => {
+    if (pct >= 70) return '#22C55E';
+    if (pct >= 40) return '#F59E0B';
+    return '#EF4444';
+  };
 
   return (
     <div style={styles.container}>
+      {/* Header */}
       <div style={styles.header}>
-        <button style={styles.backButton} onClick={() => navigate(-1)}>← Back</button>
-        <h1 style={styles.title}>{subjectName ? `${subjectName} — Performance` : 'Performance Dashboard'}</h1>
-        <p style={styles.subtitle}>Track your learning progress and knowledge gaps</p>
+        <button style={styles.backBtn} onClick={() => navigate(`/subject/${subjectId}`)}>
+          ← Back to Subject
+        </button>
+        <h1 style={styles.title}>{subjectName ? `${subjectName}` : 'Performance'}</h1>
+        <p style={styles.subtitle}>Your learning progress and knowledge breakdown</p>
       </div>
 
       {/* Summary Cards */}
       <div style={styles.summaryGrid}>
-        <div style={styles.summaryCard}>
-          <span style={styles.summaryNum}>{summary.total_quizzes}</span>
-          <span style={styles.summaryLabel}>Quizzes Taken</span>
+        <div style={styles.overallCard}>
+          <div style={{
+            ...styles.overallCircle,
+            borderColor: getScoreColor(overallScore)
+          }}>
+            <span style={{ ...styles.overallNum, color: getScoreColor(overallScore) }}>
+              {overallScore}%
+            </span>
+            <span style={styles.overallLabel}>Overall</span>
+          </div>
+          <div style={styles.overallInfo}>
+            <h3 style={styles.overallTitle}>Knowledge Score</h3>
+            <p style={styles.overallDesc}>
+              {overallScore >= 70
+                ? 'You\'re doing great! Keep it up.'
+                : overallScore >= 40
+                ? 'Good progress! Focus on weak areas.'
+                : 'Keep practising — you\'re improving!'}
+            </p>
+          </div>
         </div>
-        <div style={{ ...styles.summaryCard, borderTop: '4px solid #EF4444' }}>
-          <span style={styles.summaryNum}>{summary.weak_count}</span>
-          <span style={styles.summaryLabel}>Weak Topics</span>
-        </div>
-        <div style={{ ...styles.summaryCard, borderTop: '4px solid #F59E0B' }}>
-          <span style={styles.summaryNum}>{summary.moderate_count}</span>
-          <span style={styles.summaryLabel}>Moderate Topics</span>
-        </div>
-        <div style={{ ...styles.summaryCard, borderTop: '4px solid #22C55E' }}>
-          <span style={styles.summaryNum}>{summary.strong_count}</span>
-          <span style={styles.summaryLabel}>Strong Topics</span>
+
+        <div style={styles.statsGrid}>
+          <div style={styles.statCard}>
+            <span style={styles.statNum}>{summary.total_quizzes}</span>
+            <span style={styles.statLabel}>Quizzes Taken</span>
+          </div>
+          <div style={{ ...styles.statCard, borderTop: '3px solid #EF4444' }}>
+            <span style={{ ...styles.statNum, color: '#EF4444' }}>{summary.weak_count}</span>
+            <span style={styles.statLabel}>Weak Topics</span>
+          </div>
+          <div style={{ ...styles.statCard, borderTop: '3px solid #F59E0B' }}>
+            <span style={{ ...styles.statNum, color: '#F59E0B' }}>{summary.moderate_count}</span>
+            <span style={styles.statLabel}>Moderate Topics</span>
+          </div>
+          <div style={{ ...styles.statCard, borderTop: '3px solid #22C55E' }}>
+            <span style={{ ...styles.statNum, color: '#22C55E' }}>{summary.strong_count}</span>
+            <span style={styles.statLabel}>Strong Topics</span>
+          </div>
         </div>
       </div>
 
-      {/* Topic Breakdown */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Topic Knowledge Map</h2>
+      <div style={styles.mainGrid}>
+        {/* Topic Knowledge Map */}
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}>📊 Topic Knowledge Map</h2>
+          <p style={styles.cardSubtitle}>Your knowledge level per topic</p>
 
-        {weak.length > 0 && (
-          <div style={styles.topicGroup}>
-            <h3 style={{ ...styles.groupTitle, color: '#EF4444' }}>Needs Work</h3>
-            {weak.map(topic => (
-              <div key={topic.topic_id} style={styles.topicRow}>
-                <span style={styles.topicName}>{topic.topic_name}</span>
-                <div style={styles.barContainer}>
-                  <div style={{
-                    ...styles.bar,
-                    width: `${topic.strength_score * 100}%`,
-                    backgroundColor: '#EF4444'
-                  }} />
+          {topic_breakdown.length === 0 ? (
+            <div style={styles.empty}>
+              <p>Complete a quiz to see your topic breakdown</p>
+            </div>
+          ) : (
+            <div style={styles.topicList}>
+              {weak.length > 0 && (
+                <div style={styles.topicGroup}>
+                  <div style={styles.groupHeader}>
+                    <span style={styles.groupDot} />
+                    <h3 style={{ ...styles.groupTitle, color: '#EF4444' }}>Needs Work</h3>
+                  </div>
+                  {weak.map(topic => (
+                    <TopicBar key={topic.topic_id} topic={topic} color="#EF4444" />
+                  ))}
                 </div>
-                <span style={styles.scoreLabel}>{Math.round(topic.strength_score * 100)}%</span>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+              {moderate.length > 0 && (
+                <div style={styles.topicGroup}>
+                  <div style={styles.groupHeader}>
+                    <span style={{ ...styles.groupDot, backgroundColor: '#F59E0B' }} />
+                    <h3 style={{ ...styles.groupTitle, color: '#F59E0B' }}>Getting There</h3>
+                  </div>
+                  {moderate.map(topic => (
+                    <TopicBar key={topic.topic_id} topic={topic} color="#F59E0B" />
+                  ))}
+                </div>
+              )}
+              {strong.length > 0 && (
+                <div style={styles.topicGroup}>
+                  <div style={styles.groupHeader}>
+                    <span style={{ ...styles.groupDot, backgroundColor: '#22C55E' }} />
+                    <h3 style={{ ...styles.groupTitle, color: '#22C55E' }}>Strong</h3>
+                  </div>
+                  {strong.map(topic => (
+                    <TopicBar key={topic.topic_id} topic={topic} color="#22C55E" />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-        {moderate.length > 0 && (
-          <div style={styles.topicGroup}>
-            <h3 style={{ ...styles.groupTitle, color: '#F59E0B' }}>Getting There</h3>
-            {moderate.map(topic => (
-              <div key={topic.topic_id} style={styles.topicRow}>
-                <span style={styles.topicName}>{topic.topic_name}</span>
-                <div style={styles.barContainer}>
-                  <div style={{
-                    ...styles.bar,
-                    width: `${topic.strength_score * 100}%`,
-                    backgroundColor: '#F59E0B'
-                  }} />
-                </div>
-                <span style={styles.scoreLabel}>{Math.round(topic.strength_score * 100)}%</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Quiz History */}
+        <div style={styles.card}>
+          <h2 style={styles.cardTitle}>📋 Quiz History</h2>
+          <p style={styles.cardSubtitle}>{quiz_history.length} quizzes completed</p>
 
-        {strong.length > 0 && (
-          <div style={styles.topicGroup}>
-            <h3 style={{ ...styles.groupTitle, color: '#22C55E' }}>Strong</h3>
-            {strong.map(topic => (
-              <div key={topic.topic_id} style={styles.topicRow}>
-                <span style={styles.topicName}>{topic.topic_name}</span>
-                <div style={styles.barContainer}>
-                  <div style={{
-                    ...styles.bar,
-                    width: `${topic.strength_score * 100}%`,
-                    backgroundColor: '#22C55E'
-                  }} />
+          {quiz_history.length === 0 ? (
+            <div style={styles.empty}>
+              <p>No quizzes taken yet</p>
+            </div>
+          ) : (
+            <div style={styles.historyList}>
+              {quiz_history.slice().reverse().map((quiz, i) => (
+                <div key={quiz.quiz_id} style={styles.historyItem}>
+                  <div style={styles.historyLeft}>
+                    <span style={{
+                      ...styles.typeBadge,
+                      backgroundColor:
+                        quiz.type === 'diagnostic' ? '#EFF6FF' :
+                        quiz.type === 'adaptive' ? '#F5F3FF' : '#F0FDF4',
+                      color:
+                        quiz.type === 'diagnostic' ? '#2563EB' :
+                        quiz.type === 'adaptive' ? '#7C3AED' : '#16A34A'
+                    }}>
+                      {quiz.type === 'diagnostic' ? '📊 Diagnostic' :
+                       quiz.type === 'adaptive' ? '🧠 Adaptive' : '📝 Initial'}
+                    </span>
+                    <span style={styles.historyDate}>
+                      {new Date(quiz.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric', month: 'short'
+                      })}
+                    </span>
+                  </div>
+                  <div style={styles.historyRight}>
+                    <span style={styles.historyScore}>{quiz.score}</span>
+                    <span style={{
+                      ...styles.historyPct,
+                      color: getScoreColor(quiz.percentage)
+                    }}>
+                      {quiz.percentage}%
+                    </span>
+                  </div>
                 </div>
-                <span style={styles.scoreLabel}>{Math.round(topic.strength_score * 100)}%</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
 
-      {/* Quiz History */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Quiz History</h2>
-        {quiz_history.length === 0 ? (
-          <p style={styles.empty}>No quizzes taken yet.</p>
-        ) : (
-          <div style={styles.historyList}>
-            {quiz_history.map((quiz, i) => (
-              <div key={quiz.quiz_id} style={styles.historyItem}>
-                <div style={styles.historyLeft}>
-                  <span style={{
-                    ...styles.quizTypeBadge,
-                    backgroundColor: quiz.type === 'diagnostic' ? '#E0F7FA' :
-                      quiz.type === 'adaptive' ? '#EDE9FE' : '#F0FDF4',
-                    color: quiz.type === 'diagnostic' ? '#00838F' :
-                      quiz.type === 'adaptive' ? '#7C3AED' : '#16A34A'
-                  }}>
-                    {quiz.type}
-                  </span>
-                  <span style={styles.historyDate}>
-                    {new Date(quiz.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <div style={styles.historyRight}>
-                  <span style={styles.historyScore}>{quiz.score}</span>
-                  <span style={{
-                    ...styles.historyPct,
-                    color: quiz.percentage >= 70 ? '#22C55E' :
-                      quiz.percentage >= 40 ? '#F59E0B' : '#EF4444'
-                  }}>
-                    {quiz.percentage}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div style={styles.actions}>
-        <button
-          style={styles.adaptiveButton}
-          onClick={() => navigate(`/subject/${subjectId}`)}
-        >
-          Continue Learning
-        </button>
+          {/* Continue Learning */}
+          <button
+            style={styles.continueBtn}
+            onClick={() => navigate(`/subject/${subjectId}`)}
+          >
+            🧠 Continue Learning
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-const styles = {
-  container: {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '2rem',
-  },
-  loadingContainer: {
+const TopicBar = ({ topic, color }) => (
+  <div style={topicStyles.row}>
+    <span style={topicStyles.name}>{topic.topic_name}</span>
+    <div style={topicStyles.barContainer}>
+      <div style={{
+        ...topicStyles.bar,
+        width: `${topic.strength_score * 100}%`,
+        backgroundColor: color
+      }} />
+    </div>
+    <span style={{ ...topicStyles.score, color }}>
+      {Math.round(topic.strength_score * 100)}%
+    </span>
+  </div>
+);
+
+const topicStyles = {
+  row: {
     display: 'flex',
-    justifyContent: 'center',
     alignItems: 'center',
-    height: 'calc(100vh - 60px)',
-    color: '#666',
+    gap: '0.75rem',
+    marginBottom: '0.6rem',
   },
-  header: {
-    marginBottom: '2rem',
-  },
-  backButton: {
-    background: 'none',
-    border: 'none',
-    color: '#00B4D8',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    padding: 0,
-    marginBottom: '1rem',
-    display: 'block',
-  },
-  title: {
-    fontSize: '2rem',
-    color: '#1A1A2E',
-    margin: '0 0 0.5rem',
-  },
-  subtitle: {
-    color: '#666',
-    fontSize: '1rem',
-    margin: 0,
-  },
-  summaryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '1rem',
-    marginBottom: '2rem',
-  },
-  summaryCard: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    borderTop: '4px solid #00B4D8',
-  },
-  summaryNum: {
-    fontSize: '2.5rem',
-    fontWeight: 'bold',
-    color: '#1A1A2E',
-  },
-  summaryLabel: {
+  name: {
+    width: '160px',
     fontSize: '0.85rem',
-    color: '#666',
-    marginTop: '0.25rem',
-    textAlign: 'center',
-  },
-  section: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-    marginBottom: '2rem',
-  },
-  sectionTitle: {
-    fontSize: '1.3rem',
-    color: '#1A1A2E',
-    margin: '0 0 1.5rem',
-  },
-  topicGroup: {
-    marginBottom: '1.5rem',
-  },
-  groupTitle: {
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    marginBottom: '0.75rem',
-  },
-  topicRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    marginBottom: '0.75rem',
-  },
-  topicName: {
-    width: '180px',
-    fontSize: '0.9rem',
     color: '#1A1A2E',
     flexShrink: 0,
     textTransform: 'capitalize',
+    fontWeight: '500',
   },
   barContainer: {
     flex: 1,
-    height: '10px',
-    backgroundColor: '#f0f0f0',
-    borderRadius: '5px',
+    height: '8px',
+    backgroundColor: '#F1F5F9',
+    borderRadius: '4px',
     overflow: 'hidden',
   },
   bar: {
     height: '100%',
-    borderRadius: '5px',
-    transition: 'width 0.5s ease',
+    borderRadius: '4px',
+    transition: 'width 0.6s ease',
   },
-  scoreLabel: {
-    width: '40px',
-    fontSize: '0.85rem',
-    color: '#666',
+  score: {
+    width: '38px',
+    fontSize: '0.8rem',
+    fontWeight: '600',
     textAlign: 'right',
     flexShrink: 0,
+  },
+};
+
+const styles = {
+  container: {
+    maxWidth: '1100px',
+    margin: '0 auto',
+    padding: '2rem',
+  },
+  centered: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 'calc(100vh - 64px)',
+    backgroundColor: '#F0F4F8',
+  },
+  loadingCard: {
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    padding: '3rem',
+    textAlign: 'center',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+  },
+  loadingIcon: {
+    fontSize: '2.5rem',
+    display: 'block',
+    marginBottom: '1rem',
+  },
+  loadingText: {
+    color: '#64748B',
+    fontSize: '1rem',
+  },
+  error: {
+    color: '#EF4444',
+  },
+  header: {
+    marginBottom: '2rem',
+  },
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#00B4D8',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    padding: 0,
+    marginBottom: '0.75rem',
+    display: 'block',
+    fontWeight: '500',
+  },
+  title: {
+    fontSize: '2rem',
+    fontWeight: '800',
+    color: '#1A1A2E',
+    marginBottom: '0.3rem',
+  },
+  subtitle: {
+    color: '#94A3B8',
+    fontSize: '0.95rem',
+  },
+  summaryGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 2fr',
+    gap: '1.5rem',
+    marginBottom: '1.5rem',
+  },
+  overallCard: {
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1rem',
+    textAlign: 'center',
+  },
+  overallCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    border: '4px solid',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overallNum: {
+    fontSize: '1.6rem',
+    fontWeight: '800',
+    lineHeight: 1,
+  },
+  overallLabel: {
+    fontSize: '0.7rem',
+    color: '#94A3B8',
+    marginTop: '0.2rem',
+  },
+  overallInfo: {},
+  overallTitle: {
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: '0.3rem',
+  },
+  overallDesc: {
+    fontSize: '0.85rem',
+    color: '#64748B',
+    lineHeight: '1.4',
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '1rem',
+  },
+  statCard: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    borderTop: '3px solid #00B4D8',
+  },
+  statNum: {
+    fontSize: '2rem',
+    fontWeight: '800',
+    color: '#1A1A2E',
+  },
+  statLabel: {
+    fontSize: '0.75rem',
+    color: '#94A3B8',
+    marginTop: '0.25rem',
+    textAlign: 'center',
+  },
+  mainGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '1.5rem',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+  },
+  cardTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#1A1A2E',
+    marginBottom: '0.3rem',
+  },
+  cardSubtitle: {
+    color: '#94A3B8',
+    fontSize: '0.85rem',
+    marginBottom: '1.25rem',
+  },
+  topicList: {},
+  topicGroup: {
+    marginBottom: '1.25rem',
+  },
+  groupHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginBottom: '0.75rem',
+  },
+  groupDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    backgroundColor: '#EF4444',
+    flexShrink: 0,
+  },
+  groupTitle: {
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    margin: 0,
+  },
+  empty: {
+    textAlign: 'center',
+    padding: '2rem',
+    color: '#94A3B8',
+    fontSize: '0.9rem',
   },
   historyList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem',
+    gap: '0.6rem',
+    marginBottom: '1.5rem',
   },
   historyItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '0.75rem 1rem',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px',
-    border: '1px solid #eee',
+    backgroundColor: '#F8FAFC',
+    borderRadius: '10px',
+    border: '1px solid #F1F5F9',
   },
   historyLeft: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem',
   },
-  quizTypeBadge: {
+  typeBadge: {
     padding: '0.2rem 0.75rem',
-    borderRadius: '12px',
-    fontSize: '0.8rem',
-    fontWeight: 'bold',
-    textTransform: 'capitalize',
+    borderRadius: '20px',
+    fontSize: '0.78rem',
+    fontWeight: '600',
   },
   historyDate: {
-    color: '#999',
-    fontSize: '0.85rem',
+    color: '#94A3B8',
+    fontSize: '0.8rem',
   },
   historyRight: {
     display: 'flex',
@@ -341,35 +494,24 @@ const styles = {
     gap: '0.75rem',
   },
   historyScore: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1A1A2E',
-  },
-  historyPct: {
-    fontWeight: 'bold',
     fontSize: '0.9rem',
   },
-  empty: {
-    color: '#999',
-    textAlign: 'center',
-    padding: '1rem',
+  historyPct: {
+    fontWeight: '700',
+    fontSize: '0.9rem',
   },
-  actions: {
-    display: 'flex',
-    gap: '1rem',
-  },
-  adaptiveButton: {
-    flex: 1,
-    padding: '0.9rem',
+  continueBtn: {
+    width: '100%',
+    padding: '0.85rem',
     backgroundColor: '#1A1A2E',
     color: '#00B4D8',
     border: '2px solid #00B4D8',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 'bold',
+    borderRadius: '10px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
     cursor: 'pointer',
-  },
-  error: {
-    color: 'red',
   },
 };
 
