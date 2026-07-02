@@ -226,6 +226,7 @@ def get_quiz(quiz_id):
     return jsonify({
         'quiz_id': quiz.id,
         'type': quiz.type,
+        'subject_id': quiz.subject_id,
         'questions': [{
             'id': q.id,
             'question_text': q.question_text,
