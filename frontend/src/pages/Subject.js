@@ -115,12 +115,20 @@ const Subject = () => {
           }} onClick={!generating ? handleGenerateQuiz : undefined}>
             <span style={styles.actionIcon}>🧠</span>
             <div>
-              <h3 style={styles.actionTitle}>
+              <h3 style={styles.actionTitlePrimary}>
                 {generating ? 'Generating Quiz...' : 'Adaptive Quiz'}
               </h3>
-              <p style={styles.actionDesc}>
+              <p style={styles.actionDescPrimary}>
                 {generating ? 'This may take a moment' : 'Personalised to your weak areas'}
               </p>
+            </div>
+            <span style={styles.actionArrow}>→</span>
+          </div>
+          <div style={styles.actionCard} onClick={() => navigate(`/review/${id}`)}>
+            <span style={styles.actionIcon}>🔁</span>
+            <div>
+              <h3 style={styles.actionTitle}>Review Due Topics</h3>
+              <p style={styles.actionDesc}>Spaced repetition for topics you're due to revisit</p>
             </div>
             <span style={styles.actionArrow}>→</span>
           </div>
@@ -252,7 +260,7 @@ const styles = {
   },
   actionGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '1rem',
     marginBottom: '1.5rem',
   },
@@ -291,6 +299,16 @@ const styles = {
     color: '#CBD5E1',
     fontSize: '1.1rem',
     flexShrink: 0,
+  },
+  actionTitlePrimary: {
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: '0.2rem',
+  },
+  actionDescPrimary: {
+    fontSize: '0.8rem',
+    color: '#CBD5E1',
   },
   errorBanner: {
     backgroundColor: '#FEF2F2',

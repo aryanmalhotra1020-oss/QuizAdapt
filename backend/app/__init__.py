@@ -25,10 +25,13 @@ def create_app():
     from app.routes.subjects import subjects_bp
     from app.routes.notes import notes_bp
     from app.routes.quiz import quiz_bp
+    from app.routes.review import review_bp
+
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(subjects_bp, url_prefix='/api/subjects')
     app.register_blueprint(notes_bp, url_prefix='/api/notes')
     app.register_blueprint(quiz_bp, url_prefix='/api/quiz')
+    app.register_blueprint(review_bp, url_prefix='/api/review')
 
     return app

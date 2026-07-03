@@ -80,3 +80,19 @@ class TopicPerformance(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
     strength_score = db.Column(db.Float, default=0.5)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ReviewSchedule(db.Model):
+    __tablename__ = 'review_schedule'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
+    easiness_factor = db.Column(db.Float, nullable=False, default=2.5)
+    interval_days = db.Column(db.Integer, nullable=False, default=1)
+    repetitions = db.Column(db.Integer, nullable=False, default=0)
+    next_review_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    last_reviewed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'topic_id', name='uq_user_topic_review'),)

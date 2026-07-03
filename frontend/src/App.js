@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import Quiz from './pages/Quiz';
 import DiagnosticQuiz from './pages/DiagnosticQuiz';
 import Performance from './pages/Performance';
+import ReviewQueue from './pages/ReviewQueue';
 
 function App() {
   return (
@@ -42,6 +43,11 @@ function App() {
           <Route path="/performance/:subjectId" element={
             <ProtectedRoute>
               <Performance />
+            </ProtectedRoute>
+          } />
+          <Route path="/review/:subjectId" element={
+            <ProtectedRoute>
+              <ReviewQueue />
             </ProtectedRoute>
           } />
           <Route path="*" element={<Navigate to="/login" />} />

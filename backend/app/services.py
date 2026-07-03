@@ -15,11 +15,8 @@ def load_qg_model():
     global tokenizer, model
     if model is None:
         tokenizer = T5Tokenizer.from_pretrained(MODEL_PATH)
-        model = T5ForConditionalGeneration.from_pretrained(
-            MODEL_PATH,
-            _fast_init=False
-        )
-        model = model.to("cpu")
+        model = T5ForConditionalGeneration.from_pretrained(MODEL_PATH)
+        model.tie_weights()
         model.eval()
     return tokenizer, model
 
@@ -61,11 +58,8 @@ def load_similarity_model():
     global similarity_tokenizer, similarity_model
     if similarity_model is None:
         similarity_tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
-        similarity_model = AutoModel.from_pretrained(
-            'sentence-transformers/all-MiniLM-L6-v2',
-            low_cpu_mem_usage=False
-        )
-        similarity_model = similarity_model.to("cpu")
+        similarity_model = AutoModel.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
+        similarity_model.tie_weights()
         similarity_model.eval()
     return similarity_tokenizer, similarity_model
 
