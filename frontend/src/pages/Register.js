@@ -28,41 +28,63 @@ const Register = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
+        <span style={styles.icon}>🚀</span>
         <h2 style={styles.title}>Create Account</h2>
         <p style={styles.subtitle}>Start your adaptive learning journey</p>
-        {error && <p style={styles.error}>{error}</p>}
-        <div style={styles.form}>
-          <input
-            style={styles.input}
-            type="text"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            style={styles.input}
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+
+        {error && <div style={styles.errorBanner}>{error}</div>}
+
+        <form style={styles.form} onSubmit={handleSubmit}>
+          <div>
+            <label style={styles.label}>Full Name</label>
+            <input
+              style={styles.input}
+              type="text"
+              placeholder="Jane Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onFocus={(e) => (e.target.style.borderColor = '#00B4D8')}
+              onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Email</label>
+            <input
+              style={styles.input}
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={(e) => (e.target.style.borderColor = '#00B4D8')}
+              onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
+              required
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Password</label>
+            <input
+              style={styles.input}
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={(e) => (e.target.style.borderColor = '#00B4D8')}
+              onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
+              required
+            />
+          </div>
           <button
-            style={styles.button}
-            onClick={handleSubmit}
+            style={{ ...styles.button, opacity: loading ? 0.7 : 1 }}
+            type="submit"
             disabled={loading}
           >
-            {loading ? 'Creating account...' : 'Register'}
+            {loading ? 'Creating account...' : 'Register →'}
           </button>
-        </div>
+        </form>
+
         <p style={styles.link}>
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login" style={styles.linkAccent}>Login</Link>
         </p>
       </div>
     </div>
@@ -74,58 +96,92 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 'calc(100vh - 60px)',
-    backgroundColor: '#f0f4f8',
+    minHeight: 'calc(100vh - 64px)',
+    backgroundColor: '#F0F4F8',
+    padding: '2rem',
   },
   card: {
     backgroundColor: '#fff',
     padding: '2.5rem',
-    borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    borderRadius: '20px',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '420px',
+    textAlign: 'center',
+  },
+  icon: {
+    fontSize: '2.5rem',
+    display: 'block',
+    marginBottom: '0.75rem',
   },
   title: {
-    margin: '0 0 0.5rem',
+    margin: '0 0 0.4rem',
     color: '#1A1A2E',
+    fontSize: '1.7rem',
+    fontWeight: '800',
   },
   subtitle: {
-    margin: '0 0 1.5rem',
-    color: '#666',
+    margin: '0 0 1.75rem',
+    color: '#94A3B8',
     fontSize: '0.9rem',
   },
-  error: {
-    color: 'red',
+  errorBanner: {
+    backgroundColor: '#FEF2F2',
+    border: '1px solid #FECACA',
+    color: '#DC2626',
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    marginBottom: '1.25rem',
     fontSize: '0.85rem',
-    marginBottom: '1rem',
+    textAlign: 'left',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem',
+    gap: '1.1rem',
+    textAlign: 'left',
+  },
+  label: {
+    display: 'block',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: '0.4rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
   },
   input: {
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    fontSize: '1rem',
+    width: '100%',
+    padding: '0.8rem 1rem',
+    borderRadius: '10px',
+    border: '2px solid #E2E8F0',
+    fontSize: '0.95rem',
+    color: '#1A1A2E',
     outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s',
   },
   button: {
-    padding: '0.75rem',
+    padding: '0.85rem',
     backgroundColor: '#00B4D8',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     fontSize: '1rem',
     cursor: 'pointer',
-    fontWeight: 'bold',
+    fontWeight: '700',
+    marginTop: '0.25rem',
   },
   link: {
-    marginTop: '1.5rem',
+    marginTop: '1.75rem',
     textAlign: 'center',
-    fontSize: '0.9rem',
-    color: '#666',
+    fontSize: '0.85rem',
+    color: '#94A3B8',
+  },
+  linkAccent: {
+    color: '#00B4D8',
+    fontWeight: '600',
+    textDecoration: 'none',
   },
 };
 
