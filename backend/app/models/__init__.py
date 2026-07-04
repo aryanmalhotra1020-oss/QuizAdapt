@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -15,7 +15,8 @@ class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_accessed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     notes = db.relationship('Note', backref='subject', lazy=True, cascade='all, delete')
     quizzes = db.relationship('Quiz', backref='subject', lazy=True, cascade='all, delete')
 
@@ -25,7 +26,7 @@ class Note(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
     raw_text = db.Column(db.Text)
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     topics = db.relationship('Topic', backref='note', lazy=True, cascade='all, delete')
 
 class Topic(db.Model):

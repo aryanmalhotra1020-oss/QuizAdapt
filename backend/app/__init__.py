@@ -19,7 +19,7 @@ def create_app():
 
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 
     from app.routes.auth import auth_bp
     from app.routes.subjects import subjects_bp

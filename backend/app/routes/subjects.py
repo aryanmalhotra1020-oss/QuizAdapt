@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Subject
+from datetime import datetime
 
 subjects_bp = Blueprint('subjects', __name__)
 
@@ -9,12 +10,34 @@ subjects_bp = Blueprint('subjects', __name__)
 @jwt_required()
 def get_subjects():
     user_id = get_jwt_identity()
-    subjects = Subject.query.filter_by(user_id=user_id).all()
+    subjects = Subject.query.filter_by(user_id=user_id) \
+        .order_by(Subject.last_accessed_at.desc()) \
+        .all()
     return jsonify([{
         'id': s.id,
         'name': s.name,
-        'created_at': s.created_at
+        'created_at': s.created_at,
+        'last_accessed_at': s.last_accessed_at
     } for s in subjects]), 200
+
+@subjects_bp.route('/last-accessed', methods=['GET'])
+@jwt_required()
+def get_last_accessed_subject():
+    user_id = get_jwt_identity()
+    subject = Subject.query.filter_by(user_id=user_id) \
+        .order_by(Subject.last_accessed_at.desc()) \
+        .first()
+
+    if not subject:
+        return jsonify({'subject': None}), 200
+
+    return jsonify({
+        'subject': {
+            'id': subject.id,
+            'name': subject.name
+        }
+    }), 200
+
 
 @subjects_bp.route('/', methods=['POST'])
 @jwt_required()
@@ -40,8 +63,13 @@ def get_subject(subject_id):
     subject = Subject.query.filter_by(id=subject_id, user_id=user_id).first()
     if not subject:
         return jsonify({'error': 'Subject not found'}), 404
+
+    subject.last_accessed_at = datetime.utcnow()
+    db.session.commit()
+
     return jsonify({
         'id': subject.id,
         'name': subject.name,
-        'created_at': subject.created_at
+        'created_at': subject.created_at,
+        'last_accessed_at': subject.last_accessed_at
     }), 200
