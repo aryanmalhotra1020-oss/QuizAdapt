@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +17,15 @@ const Login = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/dashboard');
+
+      const response = await api.get('/subjects/last-accessed');
+      const lastSubject = response.data.subject;
+
+      if (lastSubject) {
+        navigate(`/subject/${lastSubject.id}`);
+      } else {
+        navigate('/subjects/new');
+      }
     } catch (err) {
       setError('Invalid email or password');
     } finally {
