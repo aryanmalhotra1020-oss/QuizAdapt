@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 const AppShell = ({ children }) => {
   const { user } = useAuth();
   const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/';
   const showSidebar = user && !isAuthPage;
 
   return (

@@ -14,6 +14,7 @@ import Quiz from './pages/Quiz';
 import DiagnosticQuiz from './pages/DiagnosticQuiz';
 import Performance from './pages/Performance';
 import ReviewQueue from './pages/ReviewQueue';
+import Landing from './pages/Landing';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Router>
         <AppShell>
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={
