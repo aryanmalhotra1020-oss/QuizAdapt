@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [subjects, setSubjects] = useState([]);
+
+  useEffect(() => {
+    api.get('/subjects/')
+      .then((res) => setSubjects(res.data))
+      .catch(() => {});
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -14,7 +22,6 @@ const Sidebar = () => {
 
   const navItems = [
     { label: 'Home', path: '/dashboard' },
-    { label: 'Subjects', path: '/subjects' },
     { label: 'Create Subject', path: '/subjects/new' },
     { label: 'Profile', path: '/profile' },
   ];
@@ -41,6 +48,26 @@ const Sidebar = () => {
             {item.label}
           </Link>
         ))}
+
+        <div style={styles.subjectsHeading}>Subjects</div>
+        {subjects.map((s) => {
+          const isPending = s.status === 'pending_diagnostic';
+          const linkPath = isPending ? `/diagnostic/${s.id}` : `/subject/${s.id}`;
+          return (
+            <Link
+              key={s.id}
+              to={linkPath}
+              style={{
+                ...styles.subjectLink,
+                ...(isActive(linkPath) ? styles.navLinkActive : {}),
+              }}
+              title={isPending ? 'Pending Diagnostic Quiz' : undefined}
+            >
+              <span style={styles.subjectName}>{s.name}</span>
+              {isPending && <span style={styles.pendingIcon}>⚠</span>}
+            </Link>
+          );
+        })}
       </div>
 
       <div style={styles.bottomSection}>
@@ -72,6 +99,7 @@ const styles = {
     padding: '1.5rem 1rem',
     boxShadow: '2px 0 12px rgba(0,0,0,0.3)',
     zIndex: 100,
+    overflowY: 'auto',
   },
   brand: {
     color: '#00B4D8',
@@ -106,6 +134,35 @@ const styles = {
     backgroundColor: '#16213E',
     color: '#00B4D8',
     fontWeight: '600',
+  },
+  subjectsHeading: {
+    color: '#64748B',
+    fontSize: '0.7rem',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    padding: '1rem 0.75rem 0.4rem',
+  },
+  subjectLink: {
+    color: '#94A3B8',
+    textDecoration: 'none',
+    fontSize: '0.9rem',
+    padding: '0.55rem 0.75rem',
+    borderRadius: '6px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subjectName: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  pendingIcon: {
+    color: '#F59E0B',
+    fontSize: '0.85rem',
+    marginLeft: '0.5rem',
+    flexShrink: 0,
   },
   bottomSection: {
     borderTop: '1px solid #374151',

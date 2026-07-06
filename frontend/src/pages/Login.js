@@ -22,7 +22,11 @@ const Login = () => {
       const lastSubject = response.data.subject;
 
       if (lastSubject) {
-        navigate(`/subject/${lastSubject.id}`);
+        if (lastSubject.status === 'pending_diagnostic') {
+          navigate(`/diagnostic/${lastSubject.id}`);
+        } else {
+          navigate(`/subject/${lastSubject.id}`);
+        }
       } else {
         navigate('/subjects/new');
       }

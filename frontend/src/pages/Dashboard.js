@@ -5,7 +5,6 @@ import api from '../utils/api';
 
 const Dashboard = () => {
   const [subjects, setSubjects] = useState([]);
-  const [newSubject, setNewSubject] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user } = useAuth();
@@ -26,14 +25,11 @@ const Dashboard = () => {
     }
   };
 
-  const handleCreateSubject = async () => {
-    if (!newSubject.trim()) return;
-    try {
-      await api.post('/subjects/', { name: newSubject });
-      setNewSubject('');
-      fetchSubjects();
-    } catch (err) {
-      setError('Failed to create subject');
+  const handleOpenSubject = (subject) => {
+    if (subject.status === 'pending_diagnostic') {
+      navigate(`/diagnostic/${subject.id}`);
+    } else {
+      navigate(`/subject/${subject.id}`);
     }
   };
 
@@ -64,24 +60,14 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Create Subject */}
-      <div style={styles.createSection}>
+      {/* Section header + Create button */}
+      <div style={styles.sectionHeader}>
         <h2 style={styles.sectionTitle}>My Subjects</h2>
-        <div style={styles.createBox}>
-          <input
-            style={styles.input}
-            type="text"
-            placeholder="Add a new subject (e.g. Artificial Intelligence, Networks...)"
-            value={newSubject}
-            onChange={(e) => setNewSubject(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateSubject()}
-          />
-          <button style={styles.createBtn} onClick={handleCreateSubject}>
-            + Add Subject
-          </button>
-        </div>
-        {error && <p style={styles.error}>{error}</p>}
+        <button style={styles.createBtn} onClick={() => navigate('/subjects/new')}>
+          + Create Subject
+        </button>
       </div>
+      {error && <p style={styles.error}>{error}</p>}
 
       {/* Subjects Grid */}
       {loading ? (
@@ -94,36 +80,43 @@ const Dashboard = () => {
         <div style={styles.empty}>
           <div style={styles.emptyIcon}>📚</div>
           <h3 style={styles.emptyTitle}>No subjects yet</h3>
-          <p style={styles.emptyText}>Create your first subject above to get started!</p>
+          <p style={styles.emptyText}>Create your first subject to get started!</p>
         </div>
       ) : (
         <div style={styles.grid}>
-          {subjects.map((subject, index) => (
-            <div
-              key={subject.id}
-              style={styles.card}
-              onClick={() => navigate(`/subject/${subject.id}`)}
-            >
-              <div style={styles.cardHeader}>
-                <div style={{
-                  ...styles.cardIcon,
-                  backgroundColor: COLORS[index % COLORS.length]
-                }}>
-                  {subject.name.charAt(0).toUpperCase()}
+          {subjects.map((subject, index) => {
+            const isPending = subject.status === 'pending_diagnostic';
+            return (
+              <div
+                key={subject.id}
+                style={styles.card}
+                onClick={() => handleOpenSubject(subject)}
+              >
+                <div style={styles.cardHeader}>
+                  <div style={{
+                    ...styles.cardIcon,
+                    backgroundColor: COLORS[index % COLORS.length]
+                  }}>
+                    {subject.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span style={styles.cardArrow}>→</span>
                 </div>
-                <span style={styles.cardArrow}>→</span>
+                <h3 style={styles.cardTitle}>{subject.name}</h3>
+                <p style={styles.cardDate}>
+                  Created {new Date(subject.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'short', year: 'numeric'
+                  })}
+                </p>
+                <div style={styles.cardFooter}>
+                  {isPending ? (
+                    <span style={styles.cardActionPending}>⚠ Pending Diagnostic Quiz</span>
+                  ) : (
+                    <span style={styles.cardAction}>Open Subject</span>
+                  )}
+                </div>
               </div>
-              <h3 style={styles.cardTitle}>{subject.name}</h3>
-              <p style={styles.cardDate}>
-                Created {new Date(subject.created_at).toLocaleDateString('en-GB', {
-                  day: 'numeric', month: 'short', year: 'numeric'
-                })}
-              </p>
-              <div style={styles.cardFooter}>
-                <span style={styles.cardAction}>Open Subject</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -181,35 +174,25 @@ const styles = {
     fontSize: '0.8rem',
     color: '#94A3B8',
   },
-  createSection: {
-    marginBottom: '1.5rem',
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.25rem',
   },
   sectionTitle: {
     fontSize: '1.3rem',
     fontWeight: '700',
     color: '#1A1A2E',
-    marginBottom: '1rem',
-  },
-  createBox: {
-    display: 'flex',
-    gap: '0.75rem',
-  },
-  input: {
-    flex: 1,
-    padding: '0.8rem 1rem',
-    borderRadius: '10px',
-    border: '2px solid #E2E8F0',
-    fontSize: '0.95rem',
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
+    margin: 0,
   },
   createBtn: {
-    padding: '0.8rem 1.5rem',
+    padding: '0.65rem 1.25rem',
     backgroundColor: '#00B4D8',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     fontWeight: '600',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
@@ -217,7 +200,7 @@ const styles = {
   error: {
     color: '#EF4444',
     fontSize: '0.85rem',
-    marginTop: '0.5rem',
+    marginBottom: '1rem',
   },
   loadingGrid: {
     display: 'grid',
@@ -302,6 +285,11 @@ const styles = {
   },
   cardAction: {
     color: '#00B4D8',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+  },
+  cardActionPending: {
+    color: '#F59E0B',
     fontSize: '0.85rem',
     fontWeight: '600',
   },

@@ -15,6 +15,8 @@ class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    status = db.Column(db.String(30), default='pending_diagnostic', nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_accessed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     notes = db.relationship('Note', backref='subject', lazy=True, cascade='all, delete')

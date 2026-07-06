@@ -14,3 +14,6 @@ frontend/build/
 
 # General
 .DS_Store
+
+# AI for problem solving and help
+.claude/skills/

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance
+from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance, Subject
 from app.services import generate_question_for_topic, score_answer
 import random
 from app.bkt import BKTModel
@@ -208,6 +208,11 @@ def submit_diagnostic(quiz_id):
             'is_correct': is_correct,
             'correct_answer': question.correct_answer
         })
+
+    # Mark the subject as fully onboarded now that diagnostic is complete
+    subject = Subject.query.get(quiz.subject_id)
+    if subject:
+        subject.status = 'active'
 
     db.session.commit()
 

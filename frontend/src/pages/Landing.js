@@ -1,33 +1,75 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+const tokens = {
+  primary: '#2563EB',
+  primaryHover: '#1D4ED8',
+  primarySoft: '#DBEAFE',
+  darkSurface: '#0F172A',
+  bgLight: '#F8FAFC',
+  bgWhite: '#FFFFFF',
+  foreground: '#1E293B',
+  onDarkMuted: '#94A3B8',
+  bodyMuted: '#64748B',
+  border: '#E2E8F0',
+  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
+  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
+};
+
+const LogoMark = ({ size = 26 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect width="24" height="24" rx="6" fill={tokens.primary} />
+    <rect x="5" y="13" width="3.2" height="6" rx="1" fill="#FFFFFF" />
+    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill="#FFFFFF" />
+    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#93C5FD" />
+  </svg>
+);
+
 const Landing = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @keyframes fillBar {
-          from { width: 0%; }
-        }
-        .mastery-bar-fill {
-          animation: fillBar 1.2s ease-out forwards;
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+        @media (prefers-reduced-motion: no-preference) {
+          .step-card, .feature-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+          .step-card:hover, .step-card:focus-visible {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(37,99,235,0.14);
+          }
         }
         .cta-primary:hover {
-          background-color: #009BB8 !important;
+          background-color: ${tokens.primaryHover} !important;
         }
         .cta-ghost:hover {
-          background-color: rgba(255,255,255,0.08) !important;
+          background-color: rgba(15,23,42,0.05) !important;
         }
-        .step-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        a, button {
+          cursor: pointer;
+        }
+        a:focus-visible, button:focus-visible {
+          outline: 2px solid ${tokens.primary};
+          outline-offset: 3px;
+        }
+        .feature-card:hover, .feature-card:focus-visible {
+          border-color: ${tokens.primary} !important;
+        }
+
+        @media (max-width: 640px) {
+          .header-row { padding: 1.1rem 1.25rem !important; }
+          .hero-row { padding: 3rem 1.25rem !important; }
+          .section-pad { padding: 3.5rem 1.25rem !important; }
+          .headline-text { font-size: 2.1rem !important; }
         }
       `}</style>
 
       {/* Header */}
-      <header style={styles.header}>
+      <header style={styles.header} className="header-row">
         <div style={styles.brand}>
-          <span style={styles.brandIcon}>⚡</span>
-          AdaptIQ
+          <LogoMark />
+          QuizAdapt
         </div>
         <div style={styles.headerLinks}>
           <Link to="/login" style={styles.loginLink}>Log in</Link>
@@ -38,14 +80,16 @@ const Landing = () => {
       </header>
 
       {/* Hero */}
-      <section style={styles.hero}>
+      <section style={styles.hero} className="hero-row">
         <div style={styles.heroText}>
-          <h1 style={styles.headline}>
+          <h1 style={styles.headline} className="headline-text">
             Learn what you<br />don't know yet.
           </h1>
           <p style={styles.subheadline}>
-            AdaptIQ turns your own notes into quizzes that target your weak
-            spots — not just whatever page you happened to study last.
+            QuizAdapt turns your own notes into quizzes that target your weak
+            spots — not just whatever page you happened to study last. A
+            fine-tuned T5 model reads your notes and writes the questions
+            for you.
           </p>
           <div style={styles.heroCtas}>
             <Link to="/register" style={styles.primaryBtn} className="cta-primary">
@@ -57,47 +101,45 @@ const Landing = () => {
           </div>
         </div>
 
-        <div style={styles.masteryCard}>
-          <p style={styles.masteryLabel}>Your topic mastery, live</p>
-          {[
-            { label: 'Weak', pct: 50, color: '#EF4444' },
-            { label: 'Moderate', pct: 30, color: '#F59E0B' },
-            { label: 'Strong', pct: 20, color: '#10B981' },
-          ].map((row) => (
-            <div key={row.label} style={styles.masteryRow}>
-              <div style={styles.masteryRowHead}>
-                <span style={styles.masteryRowLabel}>{row.label}</span>
-                <span style={styles.masteryRowPct}>{row.pct}%</span>
+        <div style={styles.heroDemo}>
+          <div style={styles.demoCard}>
+            <span style={styles.demoCardLabel}>Your notes</span>
+            <p style={styles.demoNoteText}>
+              Mitochondria are membrane-bound organelles that generate most of
+              a cell's ATP through oxidative phosphorylation. Often called
+              the "powerhouse of the cell."
+            </p>
+          </div>
+
+          <div style={styles.demoArrowDown} aria-hidden="true">↓</div>
+
+          <div style={styles.demoCard}>
+            <span style={styles.demoBadge}>Generated by QuizAdapt</span>
+            <p style={styles.demoQuestion}>
+              What is the primary function of the mitochondria?
+            </p>
+            <div style={styles.demoOptions}>
+              <div style={styles.demoOption}>A. Protein synthesis</div>
+              <div style={{ ...styles.demoOption, ...styles.demoOptionCorrect }}>
+                B. ATP production via oxidative phosphorylation
               </div>
-              <div style={styles.masteryTrack}>
-                <div
-                  className="mastery-bar-fill"
-                  style={{
-                    ...styles.masteryFill,
-                    width: `${row.pct}%`,
-                    backgroundColor: row.color,
-                  }}
-                />
-              </div>
+              <div style={styles.demoOption}>C. Waste removal</div>
             </div>
-          ))}
-          <p style={styles.masteryCaption}>
-            Every quiz leans harder on what you're weakest at.
-          </p>
+          </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section style={styles.howSection}>
+      <section style={styles.howSection} className="section-pad">
         <h2 style={styles.sectionTitle}>How it works</h2>
         <div style={styles.stepsGrid}>
           {[
             { n: '01', title: 'Upload your notes', body: 'PDFs or text — whatever you already have.' },
-            { n: '02', title: 'We map the topics', body: 'AdaptIQ pulls out the concepts your notes actually cover.' },
-            { n: '03', title: 'Take an adaptive quiz', body: 'Questions lean toward what you\u2019re shakiest on.' },
+            { n: '02', title: 'We map the topics', body: 'QuizAdapt pulls out the concepts your notes actually cover.' },
+            { n: '03', title: 'Take an adaptive quiz', body: 'Questions lean toward what you’re shakiest on.' },
             { n: '04', title: 'Track your mastery', body: 'Watch weak topics shift to strong, over time.' },
           ].map((step) => (
-            <div key={step.n} style={styles.stepCard} className="step-card">
+            <div key={step.n} tabIndex={0} style={styles.stepCard} className="step-card">
               <span style={styles.stepNumber}>{step.n}</span>
               <h3 style={styles.stepTitle}>{step.title}</h3>
               <p style={styles.stepBody}>{step.body}</p>
@@ -107,16 +149,16 @@ const Landing = () => {
       </section>
 
       {/* Features */}
-      <section style={styles.featuresSection}>
+      <section style={styles.featuresSection} className="section-pad">
         <h2 style={styles.sectionTitle}>What's inside</h2>
         <div style={styles.featuresGrid}>
           {[
             { title: 'Adaptive Quizzes', body: 'Weighted toward your weak topics using an online mastery model.' },
             { title: 'Custom Quiz Generator', body: 'Pick MCQ, fill-in-the-blank, match, or long-answer — at your difficulty.' },
-            { title: 'Spaced Repetition', body: 'A review queue that resurfaces topics right before you\u2019d forget them.' },
+            { title: 'Spaced Repetition', body: 'A review queue that resurfaces topics right before you’d forget them.' },
             { title: 'Performance Dashboard', body: 'See exactly where you stand, topic by topic.' },
           ].map((f) => (
-            <div key={f.title} style={styles.featureCard}>
+            <div key={f.title} tabIndex={0} style={styles.featureCard} className="feature-card">
               <h3 style={styles.featureTitle}>{f.title}</h3>
               <p style={styles.featureBody}>{f.body}</p>
             </div>
@@ -126,7 +168,7 @@ const Landing = () => {
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <span style={styles.brandIcon}>⚡</span> AdaptIQ
+        <LogoMark size={20} /> QuizAdapt
       </footer>
     </div>
   );
@@ -134,27 +176,26 @@ const Landing = () => {
 
 const styles = {
   page: {
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
+    backgroundColor: tokens.bgWhite,
+    color: tokens.foreground,
+    fontFamily: tokens.bodyFont,
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1.25rem 3rem',
-    backgroundColor: '#1A1A2E',
+    backgroundColor: tokens.darkSurface,
   },
   brand: {
-    color: '#00B4D8',
-    fontSize: '1.3rem',
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: tokens.headingFont,
+    fontSize: '1.25rem',
+    fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.4rem',
-    letterSpacing: '-0.5px',
-  },
-  brandIcon: {
-    fontSize: '1.1rem',
+    gap: '0.6rem',
+    letterSpacing: '-0.3px',
   },
   headerLinks: {
     display: 'flex',
@@ -162,13 +203,13 @@ const styles = {
     gap: '1.5rem',
   },
   loginLink: {
-    color: '#94A3B8',
+    color: tokens.onDarkMuted,
     textDecoration: 'none',
     fontSize: '0.9rem',
   },
   headerCta: {
-    backgroundColor: '#00B4D8',
-    color: '#1A1A2E',
+    backgroundColor: tokens.primary,
+    color: '#FFFFFF',
     textDecoration: 'none',
     padding: '0.55rem 1.1rem',
     borderRadius: '8px',
@@ -180,35 +221,39 @@ const styles = {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '3rem',
+    justifyContent: 'center',
+    gap: '4rem',
     padding: '5rem 3rem',
-    backgroundColor: '#1A1A2E',
+    backgroundColor: tokens.bgLight,
   },
   heroText: {
+    flex: '1 1 420px',
+    minWidth: 0,
     maxWidth: '480px',
   },
   headline: {
-    color: '#fff',
+    color: tokens.foreground,
+    fontFamily: tokens.headingFont,
     fontSize: '2.75rem',
-    fontWeight: '800',
+    fontWeight: '700',
     lineHeight: '1.15',
     margin: '0 0 1.25rem',
     letterSpacing: '-1px',
   },
   subheadline: {
-    color: '#94A3B8',
+    color: tokens.bodyMuted,
     fontSize: '1.05rem',
     lineHeight: '1.6',
     margin: '0 0 2rem',
   },
   heroCtas: {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '1rem',
   },
   primaryBtn: {
-    backgroundColor: '#00B4D8',
-    color: '#1A1A2E',
+    backgroundColor: tokens.primary,
+    color: '#FFFFFF',
     textDecoration: 'none',
     padding: '0.85rem 1.6rem',
     borderRadius: '10px',
@@ -217,143 +262,176 @@ const styles = {
     transition: 'background-color 0.15s',
   },
   ghostBtn: {
-    color: '#E2E8F0',
+    color: tokens.foreground,
     textDecoration: 'none',
     padding: '0.85rem 1.6rem',
     borderRadius: '10px',
     fontWeight: '600',
     fontSize: '1rem',
-    border: '1px solid #374151',
+    border: `1px solid ${tokens.border}`,
     transition: 'background-color 0.15s',
   },
-  masteryCard: {
-    backgroundColor: '#16213E',
-    borderRadius: '16px',
-    padding: '1.75rem',
-    width: '340px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+  heroDemo: {
+    flex: '1 1 340px',
+    minWidth: 0,
+    maxWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.5rem',
   },
-  masteryLabel: {
-    color: '#94A3B8',
-    fontSize: '0.8rem',
+  sectionTitle: {
+    fontFamily: tokens.headingFont,
+    fontSize: '1.8rem',
+    fontWeight: '700',
+    textAlign: 'center',
+    margin: '0 0 2.5rem',
+    color: tokens.foreground,
+  },
+  demoCard: {
+    backgroundColor: tokens.bgWhite,
+    borderRadius: '14px',
+    padding: '1.5rem',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+    width: '100%',
+  },
+  demoCardLabel: {
+    display: 'block',
+    fontSize: '0.72rem',
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    margin: '0 0 1.25rem',
+    color: tokens.bodyMuted,
+    marginBottom: '0.6rem',
   },
-  masteryRow: {
-    marginBottom: '1rem',
+  demoNoteText: {
+    fontSize: '0.88rem',
+    lineHeight: '1.55',
+    color: tokens.foreground,
+    margin: 0,
   },
-  masteryRowHead: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '0.35rem',
+  demoArrowDown: {
+    fontSize: '1.25rem',
+    color: tokens.primary,
+    lineHeight: 1,
   },
-  masteryRowLabel: {
-    color: '#E2E8F0',
-    fontSize: '0.85rem',
+  demoBadge: {
+    display: 'inline-block',
+    backgroundColor: tokens.primarySoft,
+    color: tokens.primaryHover,
+    fontSize: '0.7rem',
+    fontWeight: '700',
+    padding: '0.28rem 0.6rem',
+    borderRadius: '999px',
+    marginBottom: '0.75rem',
+  },
+  demoQuestion: {
+    fontSize: '0.95rem',
     fontWeight: '600',
+    margin: '0 0 0.85rem',
+    color: tokens.foreground,
   },
-  masteryRowPct: {
-    color: '#94A3B8',
+  demoOptions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.45rem',
+  },
+  demoOption: {
     fontSize: '0.85rem',
+    padding: '0.5rem 0.7rem',
+    borderRadius: '8px',
+    border: `1px solid ${tokens.border}`,
+    color: tokens.bodyMuted,
   },
-  masteryTrack: {
-    height: '8px',
-    backgroundColor: '#0F1729',
-    borderRadius: '4px',
-    overflow: 'hidden',
-  },
-  masteryFill: {
-    height: '100%',
-    borderRadius: '4px',
-  },
-  masteryCaption: {
-    color: '#64748B',
-    fontSize: '0.78rem',
-    margin: '1.25rem 0 0',
-    lineHeight: '1.5',
+  demoOptionCorrect: {
+    borderColor: tokens.primary,
+    backgroundColor: tokens.primarySoft,
+    color: tokens.foreground,
+    fontWeight: '600',
   },
   howSection: {
     padding: '5rem 3rem',
-    backgroundColor: '#F0F4F8',
-  },
-  sectionTitle: {
-    fontSize: '1.8rem',
-    fontWeight: '800',
-    textAlign: 'center',
-    margin: '0 0 2.5rem',
-    color: '#1A1A2E',
+    backgroundColor: tokens.bgWhite,
   },
   stepsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    display: 'flex',
+    flexWrap: 'wrap',
     gap: '1.5rem',
     maxWidth: '1100px',
     margin: '0 auto',
   },
   stepCard: {
-    backgroundColor: '#fff',
+    flex: '1 1 220px',
+    minWidth: 0,
+    backgroundColor: tokens.bgWhite,
     borderRadius: '14px',
     padding: '1.75rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-    transition: 'transform 0.2s, box-shadow 0.2s',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 2px 12px rgba(37,99,235,0.05)',
   },
   stepNumber: {
-    color: '#00B4D8',
+    color: tokens.primary,
+    fontFamily: tokens.headingFont,
     fontSize: '0.85rem',
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: '0.05em',
   },
   stepTitle: {
     fontSize: '1.05rem',
     fontWeight: '700',
     margin: '0.6rem 0 0.5rem',
-    color: '#1A1A2E',
+    color: tokens.foreground,
   },
   stepBody: {
     fontSize: '0.9rem',
-    color: '#64748B',
+    color: tokens.bodyMuted,
     lineHeight: '1.5',
     margin: 0,
   },
   featuresSection: {
     padding: '5rem 3rem',
-    backgroundColor: '#fff',
+    backgroundColor: tokens.bgLight,
   },
   featuresGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    display: 'flex',
+    flexWrap: 'wrap',
     gap: '1.5rem',
     maxWidth: '1100px',
     margin: '0 auto',
   },
   featureCard: {
+    flex: '1 1 240px',
+    minWidth: 0,
     padding: '1.75rem',
     borderRadius: '14px',
-    border: '1px solid #E2E8F0',
+    backgroundColor: tokens.bgWhite,
+    border: `1px solid ${tokens.border}`,
   },
   featureTitle: {
     fontSize: '1.05rem',
     fontWeight: '700',
     margin: '0 0 0.5rem',
-    color: '#1A1A2E',
+    color: tokens.foreground,
   },
   featureBody: {
     fontSize: '0.9rem',
-    color: '#64748B',
+    color: tokens.bodyMuted,
     lineHeight: '1.5',
     margin: 0,
   },
   footer: {
     padding: '2rem 3rem',
-    backgroundColor: '#1A1A2E',
-    color: '#94A3B8',
+    backgroundColor: tokens.darkSurface,
+    color: tokens.onDarkMuted,
+    fontFamily: tokens.headingFont,
+    fontWeight: '600',
     textAlign: 'center',
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: '0.4rem',
+    gap: '0.5rem',
   },
 };
 
