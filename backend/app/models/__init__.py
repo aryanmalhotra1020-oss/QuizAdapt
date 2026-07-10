@@ -7,7 +7,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime,default=lambda: datetime.now(timezone.utc))
     subjects = db.relationship('Subject', backref='user', lazy=True, cascade='all, delete')
 
 class Subject(db.Model):
@@ -44,7 +44,7 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     type = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     questions = db.relationship('Question', backref='quiz', lazy=True, cascade='all, delete')
     attempts = db.relationship('Attempt', backref='quiz', lazy=True, cascade='all, delete')
 
@@ -65,7 +65,7 @@ class Attempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = db.Column(db.DateTime, nullable=True)
     answers = db.relationship('Answer', backref='attempt', lazy=True, cascade='all, delete')
 
@@ -85,7 +85,7 @@ class TopicPerformance(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False)
     strength_score = db.Column(db.Float, default=0.5)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class ReviewSchedule(db.Model):
     __tablename__ = 'review_schedule'
@@ -96,9 +96,9 @@ class ReviewSchedule(db.Model):
     easiness_factor = db.Column(db.Float, nullable=False, default=2.5)
     interval_days = db.Column(db.Integer, nullable=False, default=1)
     repetitions = db.Column(db.Integer, nullable=False, default=0)
-    next_review_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    next_review_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     last_reviewed_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (db.UniqueConstraint('user_id', 'topic_id', name='uq_user_topic_review'),)

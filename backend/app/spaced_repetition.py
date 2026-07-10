@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import math
 
 DECAY_TAU_DAYS = 7
@@ -31,7 +31,7 @@ def sm2_update(easiness_factor, interval_days, repetitions, quality):
     easiness_factor = easiness_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
     easiness_factor = max(1.3, easiness_factor)
 
-    next_review_date = datetime.utcnow() + timedelta(days=interval_days)
+    next_review_date = datetime.now(timezone.utc) + timedelta(days=interval_days)
 
     return easiness_factor, interval_days, repetitions, next_review_date
 
@@ -44,7 +44,11 @@ def apply_forgetting_curve(strength_score, last_reviewed_at, baseline=0.2):
     if last_reviewed_at is None:
         return strength_score
 
-    days_elapsed = (datetime.utcnow() - last_reviewed_at).total_seconds() / 86400
+    # Handle naive datetimes from rows created before the timezone-aware fix
+    if last_reviewed_at.tzinfo is None:
+        last_reviewed_at = last_reviewed_at.replace(tzinfo=timezone.utc)
+
+    days_elapsed = (datetime.now(timezone.utc) - last_reviewed_at).total_seconds() / 86400
     if days_elapsed <= 0:
         return strength_score
 

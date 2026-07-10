@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Subject
-from datetime import datetime
+from datetime import datetime, timezone
 
 subjects_bp = Blueprint('subjects', __name__)
 
@@ -50,7 +50,7 @@ def get_subject(subject_id):
     if not subject:
         return jsonify({'error': 'Subject not found'}), 404
 
-    subject.last_accessed_at = datetime.utcnow()
+    subject.last_accessed_at = datetime.now(timezone.utc)
     db.session.commit()
 
     return jsonify({

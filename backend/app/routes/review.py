@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime
+from datetime import datetime, timezone
 from app import db
 from app.models import Topic, Note, TopicPerformance, ReviewSchedule
 from app.services import generate_question_for_topic, score_answer
@@ -19,7 +19,7 @@ def get_due_reviews(subject_id):
     if not note:
         return jsonify({'error': 'No notes found for this subject.'}), 400
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     due_schedules = ReviewSchedule.query.filter(
         ReviewSchedule.user_id == user_id,
@@ -131,8 +131,8 @@ def submit_review():
         schedule.interval_days = new_interval
         schedule.repetitions = new_reps
         schedule.next_review_date = next_date
-        schedule.last_reviewed_at = datetime.utcnow()
-        schedule.updated_at = datetime.utcnow()
+        schedule.last_reviewed_at = datetime.now(timezone.utc)
+        schedule.updated_at = datetime.now(timezone.utc)
     else:
         new_ef, new_interval, new_reps, next_date = sm2_update(2.5, 1, 0, quality)
         schedule = ReviewSchedule(
@@ -143,7 +143,7 @@ def submit_review():
             interval_days=new_interval,
             repetitions=new_reps,
             next_review_date=next_date,
-            last_reviewed_at=datetime.utcnow()
+            last_reviewed_at=datetime.now(timezone.utc)
         )
         db.session.add(schedule)
 
@@ -156,7 +156,7 @@ def submit_review():
     if perf:
         decayed_score = apply_forgetting_curve(perf.strength_score, perf.updated_at)
         perf.strength_score = bkt.update(decayed_score, is_correct)
-        perf.updated_at = datetime.utcnow()
+        perf.updated_at = datetime.now(timezone.utc)
     else:
         perf = TopicPerformance(
             user_id=user_id,

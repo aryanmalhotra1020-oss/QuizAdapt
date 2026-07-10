@@ -6,7 +6,6 @@ import PerformanceOverview from '../components/PerformanceOverview';
 const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'adaptive', label: 'Adaptive Quiz' },
-  { key: 'custom', label: 'Custom Quiz Generator' },
   { key: 'files', label: 'Files & Revision' },
   { key: 'samples', label: 'Sample Papers' },
 ];
@@ -149,18 +148,6 @@ const Subject = () => {
             </div>
             <span style={styles.actionArrow}>→</span>
           </div>
-        </div>
-      )}
-
-      {activeTab === 'custom' && (
-        <div style={styles.comingSoonCard}>
-          <span style={styles.comingSoonIcon}>🧩</span>
-          <h3 style={styles.comingSoonTitle}>Custom Quiz Generator — coming soon</h3>
-          <p style={styles.comingSoonText}>
-            Soon you'll be able to pick question types (MCQ, fill-in-the-blank, match, long-answer)
-            and a difficulty level, and get a quiz generated to match — still weighted toward your
-            weak topics under the hood.
-          </p>
         </div>
       )}
 
