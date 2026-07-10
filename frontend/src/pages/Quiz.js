@@ -6,9 +6,7 @@ const Quiz = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [currentAnswer, setCurrentAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,20 +29,18 @@ const Quiz = () => {
     }
   };
 
-  const handleNext = () => {
-    if (!currentAnswer.trim()) return;
-    setAnswers(prev => ({
-      ...prev,
-      [questions[currentIndex].id]: currentAnswer
-    }));
-    setCurrentAnswer('');
-    setCurrentIndex(prev => prev + 1);
+  const handleSelectOption = (questionId, option) => {
+    setAnswers(prev => ({ ...prev, [questionId]: option }));
   };
-  
-  const submitAnswers = async (finalAnswers) => {
+
+  const allAnswered = questions.length > 0 && questions.every(q => answers[q.id]);
+  const answeredCount = Object.keys(answers).length;
+
+  const handleSubmit = async () => {
+    if (!allAnswered) return;
     setSubmitting(true);
     try {
-      const payload = Object.entries(finalAnswers).map(([question_id, answer]) => ({
+      const payload = Object.entries(answers).map(([question_id, answer]) => ({
         question_id: parseInt(question_id),
         answer
       }));
@@ -55,27 +51,6 @@ const Quiz = () => {
       console.error('Failed to submit quiz');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!currentAnswer.trim()) return;
-    const finalAnswers = {
-      ...answers,
-      [questions[currentIndex].id]: currentAnswer
-    };
-    submitAnswers(finalAnswers);
-  };
-
-  const handleSelectOption = (option) => {
-    const questionId = questions[currentIndex].id;
-    const updatedAnswers = { ...answers, [questionId]: option };
-    setAnswers(updatedAnswers);
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      submitAnswers(updatedAnswers);
     }
   };
 
@@ -93,8 +68,11 @@ const Quiz = () => {
   if (loading) return (
     <div style={styles.centered}>
       <div style={styles.loadingCard}>
-        <span style={styles.loadingIcon}>⏳</span>
-        <h2 style={styles.loadingTitle}>Loading your quiz...</h2>
+        <span style={styles.loadingIcon}>🧠</span>
+        <h2 style={styles.loadingTitle}>Generating your quiz...</h2>
+        <p style={styles.loadingText}>
+          Each question is being written specifically for you — this can take a minute or two. Hang tight.
+        </p>
       </div>
     </div>
   );
@@ -110,13 +88,8 @@ const Quiz = () => {
               {percentage >= 70 ? '🎉' : percentage >= 40 ? '💪' : '📚'}
             </span>
             <h2 style={styles.resultsTitle}>Quiz Complete!</h2>
-            <div style={{
-              ...styles.scoreCircle,
-              borderColor: getScoreColor(percentage)
-            }}>
-              <span style={{ ...styles.scoreNum, color: getScoreColor(percentage) }}>
-                {percentage}%
-              </span>
+            <div style={{ ...styles.scoreCircle, borderColor: getScoreColor(percentage) }}>
+              <span style={{ ...styles.scoreNum, color: getScoreColor(percentage) }}>{percentage}%</span>
               <span style={styles.scoreLabel}>{correct}/{total} correct</span>
             </div>
             <p style={styles.resultsFeedback}>
@@ -145,7 +118,7 @@ const Quiz = () => {
                 </div>
                 <p style={styles.resultQuestion}>{questions[i]?.question_text}</p>
                 <p style={styles.resultAnswer}>
-                  Your answer: <strong>{Object.values(answers)[i] || currentAnswer}</strong>
+                  Your answer: <strong>{answers[questions[i]?.id]}</strong>
                 </p>
                 {!result.is_correct && (
                   <p style={styles.correctAnswer}>
@@ -156,91 +129,69 @@ const Quiz = () => {
             ))}
           </div>
 
-          <div style={styles.resultsActions}>
-            <button style={styles.primaryBtn} onClick={() => navigate(`/subject/${subjectId}`)}>
-              Back to Subject
-            </button>
-          </div>
+          <button style={styles.primaryBtn} onClick={() => navigate(`/subject/${subjectId}`)}>
+            Back to Subject →
+          </button>
         </div>
       </div>
     );
   }
 
-  const question = questions[currentIndex];
-  const progress = ((currentIndex + 1) / questions.length) * 100;
-
   return (
-    <div style={styles.centered}>
-      <div style={styles.quizCard}>
-        {/* Progress */}
-        <div style={styles.progressSection}>
-          <div style={styles.progressInfo}>
-            <span style={styles.progressText}>Question {currentIndex + 1} of {questions.length}</span>
-            <span style={styles.progressPct}>{Math.round(progress)}%</span>
-          </div>
-          <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-          </div>
+    <div style={styles.pageContainer}>
+      <div style={styles.quizWrapper}>
+        <div style={styles.header}>
+          <h1 style={styles.headerTitle}>Adaptive Quiz</h1>
+          <span style={styles.progressBadge}>{answeredCount} / {questions.length} answered</span>
         </div>
 
-        {/* Question */}
-        <div style={styles.questionSection}>
-          <div style={styles.questionNumber}>Q{currentIndex + 1}</div>
-          <h2 style={styles.questionText}>{question?.question_text}</h2>
-        </div>
+        {questions.map((question, index) => (
+          <div key={question.id} style={styles.questionCard}>
+            <div style={styles.questionNumber}>Q{index + 1}</div>
+            <h2 style={styles.questionText}>{question.question_text}</h2>
 
-        {question?.question_type === 'mcq' && question.options ? (
-          <div style={styles.optionsGrid}>
-          {question.options.map((option, i) => (
-          <button
-            key={i}
-            style={styles.optionBtn}
-            onClick={() => handleSelectOption(option)}
-            disabled={submitting}
-          >
-          {option}
-          </button>
+            {question.question_type === 'mcq' && question.options ? (
+              <div style={styles.optionsGrid}>
+                {question.options.map((option, i) => {
+                  const isSelected = answers[question.id] === option;
+                  return (
+                    <button
+                      key={i}
+                      style={{
+                        ...styles.optionBtn,
+                        ...(isSelected ? styles.optionBtnSelected : {}),
+                      }}
+                      onClick={() => handleSelectOption(question.id, option)}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <input
+                style={styles.answerInput}
+                type="text"
+                placeholder="Type your answer here..."
+                value={answers[question.id] || ''}
+                onChange={(e) => handleSelectOption(question.id, e.target.value)}
+              />
+            )}
+          </div>
         ))}
-        </div>
-) : (
-  <>
-    <div style={styles.answerSection}>
-      <label style={styles.answerLabel}>Your Answer</label>
-      <input
-        style={styles.answerInput}
-        type="text"
-        placeholder="Type your answer here..."
-        value={currentAnswer}
-        onChange={(e) => setCurrentAnswer(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            currentIndex < questions.length - 1 ? handleNext() : handleSubmit();
-          }
-        }}
-        autoFocus
-      />
-      <p style={styles.answerHint}>Press Enter or click the button to continue</p>
-    </div>
 
-    {currentIndex < questions.length - 1 ? (
-      <button
-        style={{ ...styles.primaryBtn, opacity: !currentAnswer.trim() ? 0.5 : 1 }}
-        onClick={handleNext}
-        disabled={!currentAnswer.trim()}
-      >
-        Next Question →
-      </button>
-    ) : (
-      <button
-        style={{ ...styles.primaryBtn, opacity: (!currentAnswer.trim() || submitting) ? 0.5 : 1 }}
-        onClick={handleSubmit}
-        disabled={!currentAnswer.trim() || submitting}
-      >
-        {submitting ? 'Submitting...' : 'Submit Quiz ✓'}
-      </button>
-    )}
-  </>
-)}
+        <div style={styles.submitSection}>
+          {!allAnswered && (
+            <p style={styles.submitHint}>Answer all {questions.length} questions to submit</p>
+          )}
+          <button
+            style={{ ...styles.submitBtn, opacity: (!allAnswered || submitting) ? 0.5 : 1 }}
+            onClick={handleSubmit}
+            disabled={!allAnswered || submitting}
+          >
+            {submitting ? 'Submitting...' : 'Submit Quiz ✓'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -250,7 +201,7 @@ const styles = {
   centered: {
     display: 'flex',
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     minHeight: 'calc(100vh - 64px)',
     backgroundColor: '#F0F4F8',
     padding: '2rem',
@@ -261,6 +212,7 @@ const styles = {
     padding: '3rem',
     textAlign: 'center',
     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    maxWidth: '420px',
   },
   loadingIcon: {
     fontSize: '2.5rem',
@@ -270,47 +222,54 @@ const styles = {
   loadingTitle: {
     color: '#1A1A2E',
     fontSize: '1.3rem',
+    marginBottom: '0.75rem',
   },
-  quizCard: {
-    backgroundColor: '#fff',
-    borderRadius: '20px',
-    padding: '2.5rem',
-    width: '100%',
-    maxWidth: '680px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+  loadingText: {
+    color: '#64748B',
+    fontSize: '0.9rem',
+    lineHeight: '1.5',
   },
-  progressSection: {
-    marginBottom: '2.5rem',
+  pageContainer: {
+    backgroundColor: '#F0F4F8',
+    minHeight: 'calc(100vh - 64px)',
+    padding: '2rem',
   },
-  progressInfo: {
+  quizWrapper: {
+    maxWidth: '720px',
+    margin: '0 auto',
+  },
+  header: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '0.5rem',
+    alignItems: 'center',
+    marginBottom: '1.5rem',
+    position: 'sticky',
+    top: 0,
+    backgroundColor: '#F0F4F8',
+    padding: '0.5rem 0',
+    zIndex: 10,
   },
-  progressText: {
-    fontSize: '0.85rem',
-    color: '#94A3B8',
-    fontWeight: '500',
+  headerTitle: {
+    fontSize: '1.5rem',
+    fontWeight: '800',
+    color: '#1A1A2E',
+    margin: 0,
   },
-  progressPct: {
-    fontSize: '0.85rem',
+  progressBadge: {
+    backgroundColor: '#fff',
     color: '#00B4D8',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: '0.85rem',
+    padding: '0.4rem 0.9rem',
+    borderRadius: '20px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
-  progressBar: {
-    height: '6px',
-    backgroundColor: '#F1F5F9',
-    borderRadius: '3px',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#00B4D8',
-    borderRadius: '3px',
-    transition: 'width 0.4s ease',
-  },
-  questionSection: {
-    marginBottom: '2rem',
+  questionCard: {
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    padding: '1.75rem',
+    marginBottom: '1.25rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
   },
   questionNumber: {
     display: 'inline-block',
@@ -320,61 +279,66 @@ const styles = {
     fontWeight: '700',
     padding: '0.25rem 0.75rem',
     borderRadius: '20px',
-    marginBottom: '1rem',
+    marginBottom: '0.75rem',
     letterSpacing: '0.05em',
   },
   questionText: {
-    fontSize: '1.4rem',
+    fontSize: '1.15rem',
     color: '#1A1A2E',
     lineHeight: '1.5',
     fontWeight: '600',
+    margin: '0 0 1.25rem',
   },
-  answerSection: {
-    marginBottom: '1.5rem',
+  optionsGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.65rem',
   },
-  answerLabel: {
-    display: 'block',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    color: '#64748B',
-    marginBottom: '0.5rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  answerInput: {
+  optionBtn: {
     width: '100%',
-    padding: '0.9rem 1rem',
-    borderRadius: '10px',
-    border: '2px solid #E2E8F0',
-    fontSize: '1rem',
-    color: '#1A1A2E',
-    boxSizing: 'border-box',
-    marginBottom: '0.4rem',
-  },
-  answerHint: {
-    fontSize: '0.75rem',
-    color: '#94A3B8',
-  },
-  primaryBtn: {
-    width: '100%',
-    padding: '0.9rem',
-    backgroundColor: '#00B4D8',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-  },
-  secondaryBtn: {
-    flex: 1,
-    padding: '0.9rem',
+    padding: '0.85rem 1.1rem',
     backgroundColor: '#fff',
     color: '#1A1A2E',
     border: '2px solid #E2E8F0',
     borderRadius: '10px',
     fontSize: '0.95rem',
     fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.15s',
+  },
+  optionBtnSelected: {
+    borderColor: '#00B4D8',
+    backgroundColor: '#EFFCFF',
+    color: '#00838F',
+  },
+  answerInput: {
+    width: '100%',
+    padding: '0.85rem 1rem',
+    borderRadius: '10px',
+    border: '2px solid #E2E8F0',
+    fontSize: '0.95rem',
+    color: '#1A1A2E',
+    boxSizing: 'border-box',
+  },
+  submitSection: {
+    textAlign: 'center',
+    paddingTop: '0.5rem',
+    paddingBottom: '2rem',
+  },
+  submitHint: {
+    color: '#94A3B8',
+    fontSize: '0.85rem',
+    marginBottom: '0.75rem',
+  },
+  submitBtn: {
+    padding: '0.95rem 2.5rem',
+    backgroundColor: '#00B4D8',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    fontWeight: '700',
     cursor: 'pointer',
   },
   resultsCard: {
@@ -465,28 +429,16 @@ const styles = {
     color: '#16A34A',
     fontSize: '0.85rem',
   },
-  resultsActions: {
-    display: 'flex',
-    gap: '1rem',
-  },
-  optionsGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-    marginBottom: '1.5rem',
-  },
-  optionBtn: {
+  primaryBtn: {
     width: '100%',
-    padding: '0.9rem 1.1rem',
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
-    border: '2px solid #E2E8F0',
+    padding: '0.9rem',
+    backgroundColor: '#00B4D8',
+    color: '#fff',
+    border: 'none',
     borderRadius: '10px',
-    fontSize: '0.95rem',
-    fontWeight: '600',
+    fontSize: '1rem',
+    fontWeight: '700',
     cursor: 'pointer',
-    textAlign: 'left',
-    textTransform: 'capitalize',
   },
 };
 

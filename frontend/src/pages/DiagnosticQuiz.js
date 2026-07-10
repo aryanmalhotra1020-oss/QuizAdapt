@@ -7,9 +7,7 @@ const DiagnosticQuiz = () => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [quizId, setQuizId] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [currentAnswer, setCurrentAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,14 +30,21 @@ const DiagnosticQuiz = () => {
     }
   };
 
-  const submitAnswers = async (finalAnswers) => {
+  const handleSelectOption = (questionId, option) => {
+    setAnswers(prev => ({ ...prev, [questionId]: option }));
+  };
+
+  const allAnswered = questions.length > 0 && questions.every(q => answers[q.id]);
+  const answeredCount = Object.keys(answers).length;
+
+  const handleSubmit = async () => {
+    if (!allAnswered) return;
     setSubmitting(true);
     try {
-      const payload = Object.entries(finalAnswers).map(([question_id, answer]) => ({
+      const payload = Object.entries(answers).map(([question_id, answer]) => ({
         question_id: parseInt(question_id),
         answer
       }));
-
       const response = await api.post(`/quiz/diagnostic/submit/${quizId}`, { answers: payload });
       setResults(response.data.results);
       setSubmitted(true);
@@ -50,42 +55,13 @@ const DiagnosticQuiz = () => {
     }
   };
 
-  const handleNext = () => {
-    if (!currentAnswer.trim()) return;
-    setAnswers(prev => ({
-      ...prev,
-      [questions[currentIndex].id]: currentAnswer
-    }));
-    setCurrentAnswer('');
-    setCurrentIndex(prev => prev + 1);
-  };
-
-  const handleSubmit = () => {
-    if (!currentAnswer.trim()) return;
-    const finalAnswers = {
-      ...answers,
-      [questions[currentIndex].id]: currentAnswer
-    };
-    submitAnswers(finalAnswers);
-  };
-
-  const handleSelectOption = (option) => {
-    const questionId = questions[currentIndex].id;
-    const updatedAnswers = { ...answers, [questionId]: option };
-    setAnswers(updatedAnswers);
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      submitAnswers(updatedAnswers);
-    }
-  };
-
   if (loading) return (
     <div style={styles.loadingContainer}>
       <div style={styles.loadingCard}>
         <h2 style={styles.loadingTitle}>Generating Diagnostic Quiz...</h2>
-        <p style={styles.loadingText}>We're creating questions to assess your current knowledge level. This may take a moment.</p>
+        <p style={styles.loadingText}>
+          We're writing each question specifically from your notes — this can take a minute or two. Hang tight.
+        </p>
       </div>
     </div>
   );
@@ -149,71 +125,65 @@ const DiagnosticQuiz = () => {
     );
   }
 
-  const question = questions[currentIndex];
-
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.diagnosticBadge}>Knowledge Assessment</div>
-        <p style={styles.diagnosticInfo}>
-          Answer these questions so we can personalise your learning experience.
-          Don't worry if you don't know — just do your best!
-        </p>
-
-        <div style={styles.progress}>
-          <span style={styles.progressText}>
-            Question {currentIndex + 1} of {questions.length}
-          </span>
-          <div style={styles.progressBar}>
-            <div style={{
-              ...styles.progressFill,
-              width: `${((currentIndex + 1) / questions.length) * 100}%`
-            }} />
+      <div style={{ ...styles.card, maxWidth: '720px' }}>
+        <div style={styles.headerRow}>
+          <div>
+            <div style={styles.diagnosticBadge}>Knowledge Assessment</div>
+            <p style={styles.diagnosticInfo}>
+              Answer these questions so we can personalise your learning experience.
+              Don't worry if you don't know — just do your best!
+            </p>
           </div>
+          <span style={styles.progressBadge}>{answeredCount} / {questions.length} answered</span>
         </div>
 
-        <h2 style={styles.question}>{question?.question_text}</h2>
+        {questions.map((question, index) => (
+          <div key={question.id} style={styles.questionBlock}>
+            <div style={styles.questionNumber}>Q{index + 1}</div>
+            <h2 style={styles.question}>{question.question_text}</h2>
 
-        {question?.question_type === 'mcq' && question.options ? (
-          <div style={styles.optionsGrid}>
-            {question.options.map((option, i) => (
-              <button
-                key={i}
-                style={styles.optionBtn}
-                onClick={() => handleSelectOption(option)}
-                disabled={submitting}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <>
-            <input
-              style={styles.input}
-              type="text"
-              placeholder="Type your answer here..."
-              value={currentAnswer}
-              onChange={(e) => setCurrentAnswer(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  currentIndex < questions.length - 1 ? handleNext() : handleSubmit();
-                }
-              }}
-              autoFocus
-            />
-
-            {currentIndex < questions.length - 1 ? (
-              <button style={styles.button} onClick={handleNext} disabled={!currentAnswer.trim()}>
-                Next Question →
-              </button>
+            {question.question_type === 'mcq' && question.options ? (
+              <div style={styles.optionsGrid}>
+                {question.options.map((option, i) => {
+                  const isSelected = answers[question.id] === option;
+                  return (
+                    <button
+                      key={i}
+                      style={{
+                        ...styles.optionBtn,
+                        ...(isSelected ? styles.optionBtnSelected : {}),
+                      }}
+                      onClick={() => handleSelectOption(question.id, option)}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
             ) : (
-              <button style={styles.button} onClick={handleSubmit} disabled={!currentAnswer.trim() || submitting}>
-                {submitting ? 'Submitting...' : 'Complete Assessment ✓'}
-              </button>
+              <input
+                style={styles.input}
+                type="text"
+                placeholder="Type your answer here..."
+                value={answers[question.id] || ''}
+                onChange={(e) => handleSelectOption(question.id, e.target.value)}
+              />
             )}
-          </>
+          </div>
+        ))}
+
+        {!allAnswered && (
+          <p style={styles.submitHint}>Answer all {questions.length} questions to submit</p>
         )}
+        <button
+          style={{ ...styles.button, opacity: (!allAnswered || submitting) ? 0.5 : 1 }}
+          onClick={handleSubmit}
+          disabled={!allAnswered || submitting}
+        >
+          {submitting ? 'Submitting...' : 'Complete Assessment ✓'}
+        </button>
       </div>
     </div>
   );
@@ -223,7 +193,7 @@ const styles = {
   container: {
     display: 'flex',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     minHeight: 'calc(100vh - 60px)',
     backgroundColor: '#f0f4f8',
     padding: '2rem',
@@ -259,7 +229,13 @@ const styles = {
     padding: '2.5rem',
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
     width: '100%',
-    maxWidth: '680px',
+  },
+  headerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '1rem',
+    marginBottom: '1.5rem',
   },
   diagnosticBadge: {
     display: 'inline-block',
@@ -269,40 +245,66 @@ const styles = {
     borderRadius: '20px',
     fontSize: '0.85rem',
     fontWeight: 'bold',
-    marginBottom: '1rem',
+    marginBottom: '0.75rem',
   },
   diagnosticInfo: {
     color: '#666',
-    fontSize: '0.95rem',
-    marginBottom: '1.5rem',
-    lineHeight: '1.6',
-  },
-  progress: {
-    marginBottom: '2rem',
-  },
-  progressText: {
     fontSize: '0.9rem',
-    color: '#666',
-    display: 'block',
-    marginBottom: '0.5rem',
+    lineHeight: '1.6',
+    margin: 0,
   },
-  progressBar: {
-    height: '6px',
-    backgroundColor: '#e0e0e0',
-    borderRadius: '3px',
-    overflow: 'hidden',
+  progressBadge: {
+    backgroundColor: '#F0F4F8',
+    color: '#00B4D8',
+    fontWeight: '700',
+    fontSize: '0.8rem',
+    padding: '0.4rem 0.9rem',
+    borderRadius: '20px',
+    whiteSpace: 'nowrap',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#00B4D8',
-    borderRadius: '3px',
-    transition: 'width 0.3s ease',
+  questionBlock: {
+    borderTop: '1px solid #F1F5F9',
+    paddingTop: '1.5rem',
+    marginTop: '1.5rem',
+  },
+  questionNumber: {
+    display: 'inline-block',
+    backgroundColor: '#EFF6FF',
+    color: '#2563EB',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    padding: '0.25rem 0.75rem',
+    borderRadius: '20px',
+    marginBottom: '0.75rem',
   },
   question: {
-    fontSize: '1.4rem',
+    fontSize: '1.15rem',
     color: '#1A1A2E',
-    marginBottom: '2rem',
+    marginBottom: '1.25rem',
     lineHeight: '1.5',
+  },
+  optionsGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.65rem',
+  },
+  optionBtn: {
+    width: '100%',
+    padding: '0.85rem 1.1rem',
+    backgroundColor: '#fff',
+    color: '#1A1A2E',
+    border: '2px solid #ddd',
+    borderRadius: '8px',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.15s',
+  },
+  optionBtnSelected: {
+    borderColor: '#00B4D8',
+    backgroundColor: '#EFFCFF',
+    color: '#00838F',
   },
   input: {
     width: '100%',
@@ -311,27 +313,14 @@ const styles = {
     border: '2px solid #ddd',
     fontSize: '1rem',
     outline: 'none',
-    marginBottom: '1.5rem',
     boxSizing: 'border-box',
   },
-  optionsGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-    marginBottom: '1.5rem',
-  },
-  optionBtn: {
-    width: '100%',
-    padding: '0.9rem 1.1rem',
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
-    border: '2px solid #ddd',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    textAlign: 'left',
-    textTransform: 'capitalize',
+  submitHint: {
+    color: '#94A3B8',
+    fontSize: '0.85rem',
+    textAlign: 'center',
+    marginTop: '1.5rem',
+    marginBottom: '0.75rem',
   },
   button: {
     width: '100%',
@@ -343,6 +332,7 @@ const styles = {
     fontSize: '1rem',
     fontWeight: 'bold',
     cursor: 'pointer',
+    marginTop: '0.5rem',
   },
   error: {
     color: 'red',
