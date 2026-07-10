@@ -40,21 +40,14 @@ const Quiz = () => {
     setCurrentAnswer('');
     setCurrentIndex(prev => prev + 1);
   };
-
-  const handleSubmit = async () => {
-    if (!currentAnswer.trim()) return;
-    const finalAnswers = {
-      ...answers,
-      [questions[currentIndex].id]: currentAnswer
-    };
-
+  
+  const submitAnswers = async (finalAnswers) => {
     setSubmitting(true);
     try {
       const payload = Object.entries(finalAnswers).map(([question_id, answer]) => ({
         question_id: parseInt(question_id),
         answer
       }));
-
       const response = await api.post(`/quiz/attempt/${quizId}`, { answers: payload });
       setResults(response.data.results);
       setSubmitted(true);
@@ -62,6 +55,27 @@ const Quiz = () => {
       console.error('Failed to submit quiz');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!currentAnswer.trim()) return;
+    const finalAnswers = {
+      ...answers,
+      [questions[currentIndex].id]: currentAnswer
+    };
+    submitAnswers(finalAnswers);
+  };
+
+  const handleSelectOption = (option) => {
+    const questionId = questions[currentIndex].id;
+    const updatedAnswers = { ...answers, [questionId]: option };
+    setAnswers(updatedAnswers);
+
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      submitAnswers(updatedAnswers);
     }
   };
 
@@ -143,11 +157,8 @@ const Quiz = () => {
           </div>
 
           <div style={styles.resultsActions}>
-            <button style={styles.secondaryBtn} onClick={() => navigate(-1)}>
-              ← Back to Subject
-            </button>
-            <button style={styles.primaryBtn} onClick={() => navigate(`/performance/${subjectId}`)}>
-              View Performance →
+            <button style={styles.primaryBtn} onClick={() => navigate(`/subject/${subjectId}`)}>
+              Back to Subject
             </button>
           </div>
         </div>
@@ -178,43 +189,58 @@ const Quiz = () => {
           <h2 style={styles.questionText}>{question?.question_text}</h2>
         </div>
 
-        {/* Answer */}
-        <div style={styles.answerSection}>
-          <label style={styles.answerLabel}>Your Answer</label>
-          <input
-            style={styles.answerInput}
-            type="text"
-            placeholder="Type your answer here..."
-            value={currentAnswer}
-            onChange={(e) => setCurrentAnswer(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                currentIndex < questions.length - 1 ? handleNext() : handleSubmit();
-              }
-            }}
-            autoFocus
-          />
-          <p style={styles.answerHint}>Press Enter or click the button to continue</p>
+        {question?.question_type === 'mcq' && question.options ? (
+          <div style={styles.optionsGrid}>
+          {question.options.map((option, i) => (
+          <button
+            key={i}
+            style={styles.optionBtn}
+            onClick={() => handleSelectOption(option)}
+            disabled={submitting}
+          >
+          {option}
+          </button>
+        ))}
         </div>
+) : (
+  <>
+    <div style={styles.answerSection}>
+      <label style={styles.answerLabel}>Your Answer</label>
+      <input
+        style={styles.answerInput}
+        type="text"
+        placeholder="Type your answer here..."
+        value={currentAnswer}
+        onChange={(e) => setCurrentAnswer(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            currentIndex < questions.length - 1 ? handleNext() : handleSubmit();
+          }
+        }}
+        autoFocus
+      />
+      <p style={styles.answerHint}>Press Enter or click the button to continue</p>
+    </div>
 
-        {/* Button */}
-        {currentIndex < questions.length - 1 ? (
-          <button
-            style={{ ...styles.primaryBtn, opacity: !currentAnswer.trim() ? 0.5 : 1 }}
-            onClick={handleNext}
-            disabled={!currentAnswer.trim()}
-          >
-            Next Question →
-          </button>
-        ) : (
-          <button
-            style={{ ...styles.primaryBtn, opacity: (!currentAnswer.trim() || submitting) ? 0.5 : 1 }}
-            onClick={handleSubmit}
-            disabled={!currentAnswer.trim() || submitting}
-          >
-            {submitting ? 'Submitting...' : 'Submit Quiz ✓'}
-          </button>
-        )}
+    {currentIndex < questions.length - 1 ? (
+      <button
+        style={{ ...styles.primaryBtn, opacity: !currentAnswer.trim() ? 0.5 : 1 }}
+        onClick={handleNext}
+        disabled={!currentAnswer.trim()}
+      >
+        Next Question →
+      </button>
+    ) : (
+      <button
+        style={{ ...styles.primaryBtn, opacity: (!currentAnswer.trim() || submitting) ? 0.5 : 1 }}
+        onClick={handleSubmit}
+        disabled={!currentAnswer.trim() || submitting}
+      >
+        {submitting ? 'Submitting...' : 'Submit Quiz ✓'}
+      </button>
+    )}
+  </>
+)}
       </div>
     </div>
   );
@@ -442,6 +468,25 @@ const styles = {
   resultsActions: {
     display: 'flex',
     gap: '1rem',
+  },
+  optionsGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    marginBottom: '1.5rem',
+  },
+  optionBtn: {
+    width: '100%',
+    padding: '0.9rem 1.1rem',
+    backgroundColor: '#fff',
+    color: '#1A1A2E',
+    border: '2px solid #E2E8F0',
+    borderRadius: '10px',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'left',
+    textTransform: 'capitalize',
   },
 };
 

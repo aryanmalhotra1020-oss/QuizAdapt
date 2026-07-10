@@ -32,23 +32,7 @@ const DiagnosticQuiz = () => {
     }
   };
 
-  const handleNext = () => {
-    if (!currentAnswer.trim()) return;
-    setAnswers(prev => ({
-      ...prev,
-      [questions[currentIndex].id]: currentAnswer
-    }));
-    setCurrentAnswer('');
-    setCurrentIndex(prev => prev + 1);
-  };
-
-  const handleSubmit = async () => {
-    if (!currentAnswer.trim()) return;
-    const finalAnswers = {
-      ...answers,
-      [questions[currentIndex].id]: currentAnswer
-    };
-
+  const submitAnswers = async (finalAnswers) => {
     setSubmitting(true);
     try {
       const payload = Object.entries(finalAnswers).map(([question_id, answer]) => ({
@@ -63,6 +47,37 @@ const DiagnosticQuiz = () => {
       setError('Failed to submit diagnostic quiz');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (!currentAnswer.trim()) return;
+    setAnswers(prev => ({
+      ...prev,
+      [questions[currentIndex].id]: currentAnswer
+    }));
+    setCurrentAnswer('');
+    setCurrentIndex(prev => prev + 1);
+  };
+
+  const handleSubmit = () => {
+    if (!currentAnswer.trim()) return;
+    const finalAnswers = {
+      ...answers,
+      [questions[currentIndex].id]: currentAnswer
+    };
+    submitAnswers(finalAnswers);
+  };
+
+  const handleSelectOption = (option) => {
+    const questionId = questions[currentIndex].id;
+    const updatedAnswers = { ...answers, [questionId]: option };
+    setAnswers(updatedAnswers);
+
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      submitAnswers(updatedAnswers);
     }
   };
 
@@ -114,9 +129,12 @@ const DiagnosticQuiz = () => {
                   </span>
                 </div>
                 <p style={styles.resultQuestion}>{questions[i]?.question_text}</p>
+                <p style={styles.userAnswer}>
+                  Your answer: <strong>{result.user_answer}</strong>
+                </p>
                 {!result.is_correct && (
                   <p style={styles.correctAnswer}>
-                    Answer: <strong>{result.correct_answer}</strong>
+                    Correct answer: <strong>{result.correct_answer}</strong>
                   </p>
                 )}
               </div>
@@ -156,28 +174,45 @@ const DiagnosticQuiz = () => {
 
         <h2 style={styles.question}>{question?.question_text}</h2>
 
-        <input
-          style={styles.input}
-          type="text"
-          placeholder="Type your answer here..."
-          value={currentAnswer}
-          onChange={(e) => setCurrentAnswer(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              currentIndex < questions.length - 1 ? handleNext() : handleSubmit();
-            }
-          }}
-          autoFocus
-        />
-
-        {currentIndex < questions.length - 1 ? (
-          <button style={styles.button} onClick={handleNext} disabled={!currentAnswer.trim()}>
-            Next Question →
-          </button>
+        {question?.question_type === 'mcq' && question.options ? (
+          <div style={styles.optionsGrid}>
+            {question.options.map((option, i) => (
+              <button
+                key={i}
+                style={styles.optionBtn}
+                onClick={() => handleSelectOption(option)}
+                disabled={submitting}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
         ) : (
-          <button style={styles.button} onClick={handleSubmit} disabled={!currentAnswer.trim() || submitting}>
-            {submitting ? 'Submitting...' : 'Complete Assessment ✓'}
-          </button>
+          <>
+            <input
+              style={styles.input}
+              type="text"
+              placeholder="Type your answer here..."
+              value={currentAnswer}
+              onChange={(e) => setCurrentAnswer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  currentIndex < questions.length - 1 ? handleNext() : handleSubmit();
+                }
+              }}
+              autoFocus
+            />
+
+            {currentIndex < questions.length - 1 ? (
+              <button style={styles.button} onClick={handleNext} disabled={!currentAnswer.trim()}>
+                Next Question →
+              </button>
+            ) : (
+              <button style={styles.button} onClick={handleSubmit} disabled={!currentAnswer.trim() || submitting}>
+                {submitting ? 'Submitting...' : 'Complete Assessment ✓'}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -279,6 +314,25 @@ const styles = {
     marginBottom: '1.5rem',
     boxSizing: 'border-box',
   },
+  optionsGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    marginBottom: '1.5rem',
+  },
+  optionBtn: {
+    width: '100%',
+    padding: '0.9rem 1.1rem',
+    backgroundColor: '#fff',
+    color: '#1A1A2E',
+    border: '2px solid #ddd',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textAlign: 'left',
+    textTransform: 'capitalize',
+  },
   button: {
     width: '100%',
     padding: '0.9rem',
@@ -352,6 +406,11 @@ const styles = {
     margin: '0 0 0.5rem',
     color: '#1A1A2E',
     fontSize: '0.95rem',
+  },
+  userAnswer: {
+    margin: '0 0 0.25rem',
+    color: '#475569',
+    fontSize: '0.9rem',
   },
   correctAnswer: {
     margin: 0,

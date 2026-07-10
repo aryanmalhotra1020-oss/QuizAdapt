@@ -76,3 +76,15 @@ def create_subject():
     db.session.commit()
 
     return jsonify({'message': 'Subject created', 'id': subject.id, 'status': subject.status}), 201
+
+@subjects_bp.route('/<int:subject_id>', methods=['DELETE'])
+@jwt_required()
+def delete_subject(subject_id):
+    user_id = get_jwt_identity()
+    subject = Subject.query.filter_by(id=subject_id, user_id=user_id).first()
+    if not subject:
+        return jsonify({'error': 'Subject not found'}), 404
+
+    db.session.delete(subject)
+    db.session.commit()
+    return jsonify({'message': 'Subject deleted'}), 200

@@ -2,11 +2,21 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance, Subject
-from app.services import generate_question_for_topic, score_answer
+from app.services import generate_mcq_question, score_answer, is_malformed_question
 import random
 from app.bkt import BKTModel
+from app.services import generate_question_for_topic, score_answer, generate_mcq_options
+import json
+import traceback
 
 quiz_bp = Blueprint('quiz', __name__)
+
+def score_question_answer(question, user_answer):
+    if question.question_type == 'mcq':
+        is_correct = user_answer.strip() == question.correct_answer.strip()
+        score = 1.0 if is_correct else 0.0
+        return score, is_correct
+    return score_answer(user_answer, question.correct_answer)
 
 @quiz_bp.route('/generate/<int:subject_id>', methods=['POST'])
 @jwt_required()
@@ -72,20 +82,26 @@ def generate_quiz(subject_id):
     questions_generated = []
     for topic in selected_topics:
         try:
-            question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
+            other_topic_names = [t.topic_name for t in topics if t.id != topic.id]
+            mcq = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names)
+
             question = Question(
                 quiz_id=quiz.id,
                 topic_id=topic.id,
-                question_text=question_text,
-                correct_answer=topic.topic_name
+                question_text=mcq['question_text'],
+                correct_answer=mcq['correct_answer'],
+                question_type='mcq',
+                options=json.dumps(mcq['options'])
             )
             db.session.add(question)
             db.session.commit()
             questions_generated.append({
                 'id': question.id,
-                'question_text': question_text,
+                'question_text': mcq['question_text'],
                 'topic': topic.topic_name,
-                'classification': bkt.classify(performances.get(topic.id, bkt.p_know))
+                'classification': bkt.classify(performances.get(topic.id, bkt.p_know)),
+                'question_type': 'mcq',
+                'options': mcq['options']
             })
         except Exception as e:
             print(f"Error generating question for topic {topic.topic_name}: {e}")
@@ -127,23 +143,30 @@ def generate_diagnostic(subject_id):
 
     for topic in diagnostic_topics:
         try:
-            question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
+            other_topic_names = [t.topic_name for t in topics if t.id != topic.id]
+            mcq = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names)
+
             question = Question(
                 quiz_id=quiz.id,
                 topic_id=topic.id,
-                question_text=question_text,
-                correct_answer=topic.topic_name
+                question_text=mcq['question_text'],
+                correct_answer=mcq['correct_answer'],
+                question_type='mcq',
+                options=json.dumps(mcq['options'])
             )
             db.session.add(question)
             db.session.commit()
             questions_generated.append({
                 'id': question.id,
-                'question_text': question_text,
+                'question_text': mcq['question_text'],
                 'topic': topic.topic_name,
-                'topic_id': topic.id
+                'topic_id': topic.id,
+                'question_type': 'mcq',
+                'options': mcq['options']
             })
         except Exception as e:
             print(f"Error generating diagnostic question: {e}")
+            traceback.print_exc()
             continue
 
     return jsonify({
@@ -173,7 +196,7 @@ def submit_diagnostic(quiz_id):
         if not question:
             continue
 
-        score, is_correct = score_answer(ans['answer'], question.correct_answer)
+        score, is_correct = score_question_answer(question, ans['answer'])
 
         answer = Answer(
             attempt_id=attempt.id,
@@ -205,6 +228,7 @@ def submit_diagnostic(quiz_id):
         results.append({
             'question_id': question.id,
             'topic_id': question.topic_id,
+            'user_answer': ans['answer'],
             'is_correct': is_correct,
             'correct_answer': question.correct_answer
         })
@@ -235,7 +259,9 @@ def get_quiz(quiz_id):
         'questions': [{
             'id': q.id,
             'question_text': q.question_text,
-            'topic': q.topic_id
+            'topic': q.topic_id,
+            'question_type': q.question_type,
+            'options': json.loads(q.options) if q.options else None
         } for q in questions]
     }), 200
 
@@ -261,7 +287,7 @@ def submit_attempt(quiz_id):
         if not question:
             continue
 
-        score, is_correct = score_answer(ans['answer'], question.correct_answer)
+        score, is_correct = score_question_answer(question, ans['answer'])
 
         answer = Answer(
             attempt_id=attempt.id,

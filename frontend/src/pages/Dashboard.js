@@ -33,6 +33,17 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteSubject = async (e, subjectId) => {
+    e.stopPropagation(); // don't trigger the card's onClick (open subject)
+    if (!window.confirm('Delete this subject? This cannot be undone.')) return;
+    try {
+      await api.delete(`/subjects/${subjectId}`);
+      fetchSubjects();
+    } catch (err) {
+      setError('Failed to delete subject');
+    }
+  };
+
   const getTimeOfDay = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -100,6 +111,13 @@ const Dashboard = () => {
                     {subject.name.charAt(0).toUpperCase()}
                   </div>
                   <span style={styles.cardArrow}>→</span>
+                  <button
+                    style={styles.deleteBtn}
+                    onClick={(e) => handleDeleteSubject(e, subject.id)}
+                    title="Delete subject"
+                  >
+                    ✕
+                  </button>
                 </div>
                 <h3 style={styles.cardTitle}>{subject.name}</h3>
                 <p style={styles.cardDate}>
@@ -293,6 +311,15 @@ const styles = {
     fontSize: '0.85rem',
     fontWeight: '600',
   },
+  deleteBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#CBD5E1',
+    fontSize: '1rem',
+    cursor: 'pointer',
+    padding: '0.2rem',
+  },
 };
+
 
 export default Dashboard;

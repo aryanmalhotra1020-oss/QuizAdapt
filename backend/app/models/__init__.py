@@ -55,6 +55,9 @@ class Question(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=True)
     question_text = db.Column(db.Text, nullable=False)
     correct_answer = db.Column(db.Text, nullable=False)
+    question_type = db.Column(db.String(30), default='short_answer', nullable=False)
+    difficulty = db.Column(db.String(10), default='medium', nullable=False)
+    options = db.Column(db.Text)  # JSON-encoded list of strings, used for MCQ (and match, later)
     answers = db.relationship('Answer', backref='question', lazy=True, cascade='all, delete')
 
 class Attempt(db.Model):

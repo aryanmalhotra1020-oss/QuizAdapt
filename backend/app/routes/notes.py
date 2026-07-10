@@ -1,27 +1,195 @@
+import re
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Note, Topic, Subject
 from keybert import KeyBERT
 import fitz  # PyMuPDF
+from app.services import embed_texts
+import torch.nn.functional as F
+import spacy
+
 
 notes_bp = Blueprint('notes', __name__)
 kw_model = KeyBERT()
 
+# ─── PDF text extraction & cleanup ───────────────────────────────
+
+ADMIN_PAGE_KEYWORDS = {
+    'attendance', 'module team', 'teaching staff', 'office hours', 'canvas',
+    'weekly structure', 'learning outcome', 'about the module',
+    'expectations', 'further reading', 'feedback', 'outline for today',
+    'any questions', 'module material', 'basic information', 'forms.office.com',
+    'university credentials', 'recommended reading', 'library resource',
+    'associate professor', 'department of computer science', 'assistant professor',
+    'what this module will cover', 'module organization', 'assessment distribution',
+}
+
+def is_admin_page(page_text):
+    lower = page_text.lower()
+    return any(kw in lower for kw in ADMIN_PAGE_KEYWORDS)
+
+def filter_admin_pages(pages_text):
+    filtered = [p for p in pages_text if not is_admin_page(p)]
+    if len(filtered) < max(1, len(pages_text) * 0.3):
+        return pages_text
+    return filtered
+
+def strip_repeated_boilerplate(pages_text, min_pages=3):
+    if len(pages_text) < min_pages:
+        return pages_text
+
+    line_counts = {}
+    pages_lines = []
+    for page in pages_text:
+        lines = [l.strip() for l in page.split('\n')]
+        pages_lines.append(lines)
+        for line in set(lines):
+            if line:
+                line_counts[line] = line_counts.get(line, 0) + 1
+
+    threshold = len(pages_text) * 0.5
+    boilerplate = {line for line, count in line_counts.items() if count >= threshold}
+
+    return ['\n'.join(l for l in lines if l not in boilerplate) for lines in pages_lines]
+
+_DUPLICATE_RUN_PATTERN = re.compile(r'\b([\w|]{2,40})\1\b')
+
+def repair_duplicated_text(text):
+    # PyMuPDF sometimes extracts title-slide text twice with no separator,
+    # from PDFs where bold/shadow title effects create two overlapping text
+    # runs at the same position (common in PowerPoint/Beamer exports).
+    # e.g. "MachineMachine Learning|Learning| FallFall 20252025" -> "Machine Learning Fall 2025"
+    cleaned = text
+    previous = None
+    for _ in range(3):
+        if cleaned == previous:
+            break
+        previous = cleaned
+        cleaned = _DUPLICATE_RUN_PATTERN.sub(r'\1', cleaned)
+    cleaned = cleaned.replace('|', ' ')
+    return cleaned
+
+def protect_abbreviations(text):
+    # Prevents "vs." from being read as a sentence-ending period when
+    # clauses are later split on '.', which was truncating phrases like
+    # "Classification vs. Regression" down to just "Classification vs"
+    return re.sub(r'\bvs\.', 'vs', text, flags=re.IGNORECASE)
+
+
 def extract_text(file):
     filename = file.filename.lower()
     if filename.endswith('.pdf'):
-        # Read PDF and extract text
         pdf_bytes = file.read()
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        text = ""
-        for page in doc:
-            text += page.get_text()
+        pages_text = [page.get_text(sort=True) for page in doc]
         doc.close()
-        return text
+
+        pages_text = strip_repeated_boilerplate(pages_text)
+        pages_text = filter_admin_pages(pages_text)
+        combined = '\n'.join(pages_text)
+        combined = repair_duplicated_text(combined)
+        combined = protect_abbreviations(combined)
+        return combined
     else:
-        # Plain text file
         return file.read().decode('utf-8', errors='ignore')
+
+# ─── Topic extraction & cleanup ──────────────────────────────────
+
+_nlp = None
+
+def extract_topics_per_clause(text, ngram_range=(1, 2), top_n_per_clause=2):
+    lines = [l.strip() for l in text.split('\n') if l.strip()]
+    all_keywords = []
+    for line in lines:
+        for clause in re.split(r'[.;:]', line):
+            clause = clause.strip()
+            if len(clause.split()) < 2:
+                continue  # too short to contain a meaningful phrase
+            try:
+                kws = kw_model.extract_keywords(
+                    clause,
+                    keyphrase_ngram_range=ngram_range,
+                    stop_words='english',
+                    top_n=top_n_per_clause
+                )
+                all_keywords.extend(kws)
+            except Exception:
+                continue
+    return all_keywords
+
+def get_nlp():
+    global _nlp
+    if _nlp is None:
+        _nlp = spacy.load('en_core_web_sm')
+    return _nlp
+
+def get_named_entity_strings(raw_text):
+    nlp = get_nlp()
+    doc = nlp(raw_text[:100000])
+    unwanted_labels = {'PERSON', 'DATE', 'ORG', 'GPE', 'TIME'}
+    return {ent.text.lower().strip() for ent in doc.ents if ent.label_ in unwanted_labels}
+
+def filter_named_entities(keywords, entity_strings):
+    entity_words = set()
+    for ent in entity_strings:
+        entity_words.update(ent.split())
+
+    filtered = []
+    for kw, score in keywords:
+        kw_words = set(kw.lower().split())
+        if kw_words & entity_words:
+            continue
+        filtered.append((kw, score))
+    return filtered
+
+def deduplicate_topics(keywords, similarity_threshold=0.85):
+    if not keywords:
+        return keywords
+
+    phrases = [kw for kw, score in keywords]
+    embeddings = embed_texts(phrases)
+
+    keep = []
+    keep_embeddings = []
+    for i, (phrase, score) in enumerate(keywords):
+        is_duplicate = False
+        for kept_emb in keep_embeddings:
+            sim = F.cosine_similarity(embeddings[i].unsqueeze(0), kept_emb.unsqueeze(0)).item()
+            if sim > similarity_threshold:
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            keep.append((phrase, score))
+            keep_embeddings.append(embeddings[i])
+
+    return keep
+
+CONTRACTION_FRAGMENTS = {'ve', 're', 'll', 'm', 's', 't', 'd'}
+
+def filter_fragment_topics(keywords, max_word_length=20, min_words=2):
+    filtered = []
+    for kw, score in keywords:
+        words = kw.lower().split()
+        if len(words) < min_words:
+            continue
+        if any(w in CONTRACTION_FRAGMENTS for w in words):
+            continue
+        if any(len(w) > max_word_length for w in words):
+            continue
+        filtered.append((kw, score))
+    return filtered
+
+ADMIN_STOPLIST = {
+    'professor', 'instructor', 'module', 'course', 'lecture', 'lecturer',
+    'assessment', 'assignment', 'week', 'semester', 'syllabus', 'agenda',
+    'overview', 'introduction', 'outline', 'schedule', 'contact', 'email'
+}
+
+def filter_admin_topics(keywords):
+    return [(kw, score) for kw, score in keywords if not any(w in kw.lower() for w in ADMIN_STOPLIST)]
+
+# ─── Routes ───────────────────────────────────────────────────────
 
 @notes_bp.route('/<int:subject_id>', methods=['POST'])
 @jwt_required()
@@ -40,24 +208,22 @@ def upload_note(subject_id):
     if not (file.filename.endswith('.txt') or file.filename.endswith('.pdf')):
         return jsonify({'error': 'Only .txt and .pdf files are supported'}), 400
 
-    # Extract text based on file type
     raw_text = extract_text(file)
 
-    # Save note
     note = Note(subject_id=subject_id, filename=file.filename, raw_text=raw_text)
     db.session.add(note)
     db.session.commit()
 
-    # Extract topics using KeyBERT
-    keywords = kw_model.extract_keywords(
-        raw_text,
-        keyphrase_ngram_range=(1, 2),
-        stop_words='english',
-        top_n=10
-    )
+    entity_strings = get_named_entity_strings(raw_text)
 
-    # Save topics to database
-    for keyword, score in keywords:
+    keywords = extract_topics_per_clause(raw_text)
+    keywords = deduplicate_topics(keywords)
+    keywords = filter_named_entities(keywords, entity_strings)
+    keywords = filter_admin_topics(keywords)
+    keywords = filter_fragment_topics(keywords)
+    keywords = sorted(keywords, key=lambda x: x[1], reverse=True)[:10]
+
+    for keyword, _score in keywords:
         topic = Topic(
             note_id=note.id,
             subject_id=subject_id,
@@ -69,7 +235,7 @@ def upload_note(subject_id):
     return jsonify({
         'message': 'Note uploaded and topics extracted',
         'note_id': note.id,
-        'topics': [keyword for keyword, score in keywords]
+        'topics': [keyword for keyword, _score in keywords]
     }), 201
 
 @notes_bp.route('/<int:subject_id>', methods=['GET'])

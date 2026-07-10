@@ -6,6 +6,7 @@ backend/app/__pycache__/
 backend/app/routes/__pycache__/
 backend/app/models/__pycache__/
 backend/app/models/t5_qg_model/
+backend/app/models/mcq_gen_model/
 *.pyc
 
 # Frontend
