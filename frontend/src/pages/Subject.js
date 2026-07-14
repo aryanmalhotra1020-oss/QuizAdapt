@@ -10,6 +10,19 @@ const TABS = [
   { key: 'samples', label: 'Sample Papers' },
 ];
 
+const QUESTION_TYPE_OPTIONS = [
+  { key: 'mcq', label: 'Multiple Choice', desc: 'Pick the correct answer from 4 options' },
+  { key: 'fill_blank', label: 'Fill in the Blank', desc: 'Choose the missing word from a sentence' },
+  { key: 'long_answer', label: 'Long Answer', desc: 'Answer in your own words' },
+  { key: 'multi_select', label: 'Choose', desc: 'Select all correct options that apply' },
+];
+
+const DIFFICULTY_OPTIONS = [
+  { key: 'easy', label: 'Easy' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'hard', label: 'Hard' },
+];
+
 const Subject = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,6 +34,8 @@ const Subject = () => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState(['mcq']);
+  const [difficulty, setDifficulty] = useState('medium');
 
   useEffect(() => {
     fetchSubjectName();
@@ -80,11 +95,23 @@ const Subject = () => {
     }
   };
 
+  const toggleType = (typeKey) => {
+    setSelectedTypes(prev =>
+      prev.includes(typeKey)
+        ? prev.filter(t => t !== typeKey)
+        : [...prev, typeKey]
+    );
+  };
+
   const handleGenerateQuiz = async () => {
+    if (selectedTypes.length === 0) return;
     setGenerating(true);
     setError('');
     try {
-      const response = await api.post(`/quiz/generate/${id}`);
+      const response = await api.post(`/quiz/generate/${id}`, {
+        question_types: selectedTypes,
+        difficulty
+      });
       navigate(`/quiz/${response.data.quiz_id}`);
     } catch (err) {
       setError('Failed to generate quiz. Make sure you have uploaded notes first.');
@@ -94,7 +121,6 @@ const Subject = () => {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>
           ← Dashboard
@@ -102,7 +128,6 @@ const Subject = () => {
         <h1 style={styles.title}>{subjectName || 'Subject'}</h1>
       </div>
 
-      {/* Tabs */}
       <div style={styles.tabBar}>
         {TABS.map((tab) => (
           <button
@@ -121,39 +146,85 @@ const Subject = () => {
       {error && <div style={styles.errorBanner}>{error}</div>}
       {success && <div style={styles.successBanner}>{success}</div>}
 
-      {/* Tab content */}
       {activeTab === 'overview' && (
         <PerformanceOverview subjectId={id} onContinueLearning={() => setActiveTab('adaptive')} />
       )}
 
       {activeTab === 'adaptive' && (
-        <div style={styles.actionGrid}>
-          <div
-            style={{
-              ...styles.actionCard,
-              ...styles.actionCardPrimary,
-              opacity: generating ? 0.7 : 1,
-              cursor: generating ? 'not-allowed' : 'pointer',
-            }}
-            onClick={!generating ? handleGenerateQuiz : undefined}
-          >
-            <span style={styles.actionIcon}>🧠</span>
-            <div>
-              <h3 style={styles.actionTitlePrimary}>
-                {generating ? 'Generating Quiz...' : 'Start Adaptive Quiz'}
-              </h3>
-              <p style={styles.actionDescPrimary}>
-                {generating ? 'This may take a moment' : 'Personalised to your weak areas'}
-              </p>
+        <div style={styles.configCard}>
+          <h2 style={styles.configTitle}>Configure your quiz</h2>
+          <p style={styles.configSubtitle}>
+            Still adaptive under the hood — weighted toward your weak topics. Pick how you want to be tested.
+          </p>
+
+          <div style={styles.configSection}>
+            <h3 style={styles.configSectionLabel}>Question Types</h3>
+            <div style={styles.typeGrid}>
+              {QUESTION_TYPE_OPTIONS.map((opt) => {
+                const isSelected = selectedTypes.includes(opt.key);
+                return (
+                  <div
+                    key={opt.key}
+                    style={{
+                      ...styles.typeOption,
+                      ...(isSelected ? styles.typeOptionSelected : {}),
+                    }}
+                    onClick={() => toggleType(opt.key)}
+                  >
+                    <div style={styles.typeOptionHeader}>
+                      <div style={{
+                        ...styles.checkbox,
+                        ...(isSelected ? styles.checkboxChecked : {}),
+                      }}>
+                        {isSelected && '✓'}
+                      </div>
+                      <span style={styles.typeOptionLabel}>{opt.label}</span>
+                    </div>
+                    <p style={styles.typeOptionDesc}>{opt.desc}</p>
+                  </div>
+                );
+              })}
             </div>
-            <span style={styles.actionArrow}>→</span>
           </div>
+
+          <div style={styles.configSection}>
+            <h3 style={styles.configSectionLabel}>Difficulty</h3>
+            <div style={styles.difficultyRow}>
+              {DIFFICULTY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setDifficulty(opt.key)}
+                  style={{
+                    ...styles.difficultyBtn,
+                    ...(difficulty === opt.key ? styles.difficultyBtnActive : {}),
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {selectedTypes.length === 0 && (
+            <p style={styles.configHint}>Select at least one question type to continue</p>
+          )}
+
+          <button
+            style={{
+              ...styles.generateBtn,
+              opacity: (selectedTypes.length === 0 || generating) ? 0.5 : 1,
+              cursor: (selectedTypes.length === 0 || generating) ? 'not-allowed' : 'pointer',
+            }}
+            onClick={handleGenerateQuiz}
+            disabled={selectedTypes.length === 0 || generating}
+          >
+            {generating ? 'Generating Quiz...' : 'Generate Quiz →'}
+          </button>
         </div>
       )}
 
       {activeTab === 'files' && (
         <div style={styles.grid}>
-          {/* Upload Section */}
           <div style={styles.card}>
             <h2 style={styles.cardTitle}>📄 Upload Notes</h2>
             <p style={styles.cardSubtitle}>Supported: .txt and .pdf files</p>
@@ -204,7 +275,6 @@ const Subject = () => {
             )}
           </div>
 
-          {/* Topics + Revision */}
           <div style={styles.card}>
             <h2 style={styles.cardTitle}>🏷️ Extracted Topics</h2>
             <p style={styles.cardSubtitle}>
@@ -263,29 +333,45 @@ const styles = {
   tabBtnActive: { color: '#00B4D8', borderBottom: '3px solid #00B4D8' },
   errorBanner: { backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
   successBanner: { backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
-  actionGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxWidth: '480px' },
-  actionCard: {
-    backgroundColor: '#fff', borderRadius: '12px', padding: '1.25rem', display: 'flex', alignItems: 'center',
-    gap: '1rem', cursor: 'pointer', border: '2px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+
+  configCard: {
+    backgroundColor: '#fff', borderRadius: '16px', padding: '2rem',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', maxWidth: '680px',
   },
-  actionCardPrimary: { backgroundColor: '#1A1A2E', border: '2px solid #00B4D8' },
-  actionIcon: { fontSize: '1.5rem', flexShrink: 0 },
-  actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.2rem' },
-  actionDesc: { fontSize: '0.8rem', color: '#94A3B8' },
-  actionTitlePrimary: { fontSize: '0.95rem', fontWeight: '700', color: '#FFFFFF', marginBottom: '0.2rem' },
-  actionDescPrimary: { fontSize: '0.8rem', color: '#CBD5E1' },
-  actionArrow: { marginLeft: 'auto', color: '#CBD5E1', fontSize: '1.1rem', flexShrink: 0 },
-  reviewCard: {
-    marginTop: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '12px', padding: '1.1rem',
-    display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', border: '1px solid #F1F5F9',
+  configTitle: { fontSize: '1.3rem', fontWeight: '800', color: '#1A1A2E', margin: '0 0 0.4rem' },
+  configSubtitle: { color: '#94A3B8', fontSize: '0.9rem', margin: '0 0 1.75rem', lineHeight: '1.5' },
+  configSection: { marginBottom: '1.75rem' },
+  configSectionLabel: {
+    fontSize: '0.8rem', fontWeight: '700', color: '#64748B', textTransform: 'uppercase',
+    letterSpacing: '0.05em', margin: '0 0 0.9rem',
   },
-  comingSoonCard: {
-    backgroundColor: '#fff', borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', maxWidth: '560px',
+  typeGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' },
+  typeOption: {
+    border: '2px solid #E2E8F0', borderRadius: '12px', padding: '0.9rem 1rem',
+    cursor: 'pointer', transition: 'all 0.15s',
   },
-  comingSoonIcon: { fontSize: '2.5rem', display: 'block', marginBottom: '1rem' },
-  comingSoonTitle: { fontSize: '1.2rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.5rem' },
-  comingSoonText: { color: '#94A3B8', fontSize: '0.9rem', lineHeight: '1.6' },
+  typeOptionSelected: { borderColor: '#00B4D8', backgroundColor: '#EFFCFF' },
+  typeOptionHeader: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' },
+  checkbox: {
+    width: '18px', height: '18px', borderRadius: '5px', border: '2px solid #CBD5E1',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '0.7rem', color: '#fff', flexShrink: 0,
+  },
+  checkboxChecked: { backgroundColor: '#00B4D8', borderColor: '#00B4D8' },
+  typeOptionLabel: { fontSize: '0.9rem', fontWeight: '700', color: '#1A1A2E' },
+  typeOptionDesc: { fontSize: '0.78rem', color: '#94A3B8', margin: 0, paddingLeft: '1.65rem' },
+  difficultyRow: { display: 'flex', gap: '0.6rem' },
+  difficultyBtn: {
+    flex: 1, padding: '0.65rem', borderRadius: '10px', border: '2px solid #E2E8F0',
+    backgroundColor: '#fff', color: '#64748B', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
+  },
+  difficultyBtnActive: { borderColor: '#00B4D8', backgroundColor: '#EFFCFF', color: '#00838F' },
+  configHint: { color: '#EF4444', fontSize: '0.8rem', marginBottom: '1rem' },
+  generateBtn: {
+    width: '100%', padding: '0.95rem', backgroundColor: '#1A1A2E', color: '#00B4D8',
+    border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '700',
+  },
+
   grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' },
   card: { backgroundColor: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.3rem' },
@@ -306,6 +392,22 @@ const styles = {
   emptyIcon: { fontSize: '2rem', display: 'block', marginBottom: '0.5rem' },
   topicsGrid: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
   topicTag: { backgroundColor: '#EFF6FF', color: '#2563EB', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize' },
+  reviewCard: {
+    marginTop: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '12px', padding: '1.1rem',
+    display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', border: '1px solid #F1F5F9',
+  },
+  actionIcon: { fontSize: '1.5rem', flexShrink: 0 },
+  actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.2rem' },
+  actionDesc: { fontSize: '0.8rem', color: '#94A3B8' },
+  actionArrow: { marginLeft: 'auto', color: '#CBD5E1', fontSize: '1.1rem', flexShrink: 0 },
+
+  comingSoonCard: {
+    backgroundColor: '#fff', borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', maxWidth: '560px',
+  },
+  comingSoonIcon: { fontSize: '2.5rem', display: 'block', marginBottom: '1rem' },
+  comingSoonTitle: { fontSize: '1.2rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.5rem' },
+  comingSoonText: { color: '#94A3B8', fontSize: '0.9rem', lineHeight: '1.6' },
 };
 
 export default Subject;

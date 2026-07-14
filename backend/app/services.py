@@ -45,8 +45,11 @@ def parse_mcq_output(raw_output):
 def _is_valid_mcq(result):
     options = [result['correct'], result['wrong1'], result['wrong2'], result['wrong3']]
     normalized = [o.lower().strip() for o in options]
-    return len(set(normalized)) == 4
-
+    if len(set(normalized)) != 4:
+        return False
+    if any(is_malformed_answer(o) for o in options):
+        return False
+    return True
 
 def generate_mcq_with_flan(context, answer, max_attempts=3):
     tok, mdl = load_flan_model()
@@ -222,16 +225,27 @@ def generate_mcq_options(topic_name, other_topic_names, num_options=4):
     if not other_topic_names:
         return [topic_name]
 
-    try:
-        embeddings = embed_texts([topic_name] + other_topic_names)
-        topic_emb = embeddings[0].unsqueeze(0)
-        other_embs = embeddings[1:]
-        similarities = F.cosine_similarity(topic_emb, other_embs).tolist()
-        ranked = sorted(zip(similarities, other_topic_names), key=lambda x: x[0], reverse=True)
-        distractors = [name for _, name in ranked[:num_options - 1]]
-    except Exception as e:
-        print(f"MCQ distractor ranking failed, using random fallback: {e}")
-        distractors = random.sample(other_topic_names, min(num_options - 1, len(other_topic_names)))
+    all_topics = [topic_name] + other_topic_names
+    cluster = get_cluster_for_topic(topic_name, all_topics)
+    cluster_candidates = [t for t in cluster if t != topic_name]
+
+    if len(cluster_candidates) >= num_options - 1:
+        distractors = random.sample(cluster_candidates, num_options - 1)
+    else:
+        distractors = list(cluster_candidates)
+        remaining_pool = [t for t in other_topic_names if t not in distractors]
+        needed = num_options - 1 - len(distractors)
+        if remaining_pool and needed > 0:
+            try:
+                embeddings = embed_texts([topic_name] + remaining_pool)
+                topic_emb = embeddings[0].unsqueeze(0)
+                other_embs = embeddings[1:]
+                similarities = F.cosine_similarity(topic_emb, other_embs).tolist()
+                ranked = sorted(zip(similarities, remaining_pool), key=lambda x: x[0], reverse=True)
+                distractors += [name for _, name in ranked[:needed]]
+            except Exception as e:
+                print(f"MCQ distractor ranking failed, using random fallback: {e}")
+                distractors += random.sample(remaining_pool, min(needed, len(remaining_pool)))
 
     options = distractors + [topic_name]
     random.shuffle(options)
@@ -281,6 +295,17 @@ def mask_topic_in_question(question_text, topic):
         return pattern.sub('_____', question_text)
     return question_text
 
+_FUSED_WORD_PATTERN = re.compile(r'[a-z][A-Z]')
+
+def is_malformed_answer(answer_text):
+    if not answer_text or len(answer_text.strip()) < 2:
+        return True
+    if _FUSED_WORD_PATTERN.search(answer_text):
+        return True
+    if '=' in answer_text or re.search(r'[^\w\s\-\'.,]', answer_text):
+        return True
+    return False
+
 def is_malformed_question(question_text, min_words=4):
     words = question_text.strip().split()
     if len(words) < min_words:
@@ -288,3 +313,117 @@ def is_malformed_question(question_text, min_words=4):
     if not question_text.strip().endswith(('?', '.')):
         return True
     return False
+
+def generate_fill_blank_question(raw_text, topic, other_topic_names, difficulty='medium'):
+    fib = generate_fill_in_blank(raw_text, topic, difficulty=difficulty)
+    options = generate_mcq_options(topic, other_topic_names)
+    return {
+        'question_text': fib['question_text'],
+        'correct_answer': topic,
+        'options': options
+    }
+
+def generate_long_answer_question(raw_text, topic, difficulty='medium'):
+    context = extract_relevant_sentences(raw_text, topic, max_sentences=4, difficulty=difficulty)
+    result = generate_mcq_with_flan(context, topic)
+
+    if result and not is_malformed_question(result['question']) and not is_malformed_answer(result['correct']):
+        return {
+            'question_text': result['question'],
+            'correct_answer': result['correct']
+        }
+
+    return {
+        'question_text': f'In your own words, explain what "{topic}" means based on your notes.',
+        'correct_answer': topic
+    }
+
+GENERIC_DECOY_TOPICS = [
+    'photosynthesis', 'supply and demand', 'the French Revolution', 'cellular respiration',
+    'opportunity cost', "Newton's laws of motion", 'DNA replication', 'market equilibrium',
+    'the water cycle', 'plate tectonics', 'the Renaissance', 'inflation rate',
+    'the periodic table', 'natural selection', 'the Cold War', 'the nitrogen cycle'
+]
+
+def generate_multi_select_question(subject_topic_names, decoy_pool=None, num_correct=2, num_incorrect=3, similarity_threshold=0.45):
+    if len(subject_topic_names) < 2:
+        return None
+
+    clusters = cluster_topics(subject_topic_names, similarity_threshold=similarity_threshold)
+    eligible_clusters = [c for c in clusters if len(c) >= 2]
+
+    if eligible_clusters:
+        chosen_cluster = random.choice(eligible_clusters)
+        actual_num_correct = min(num_correct, len(chosen_cluster))
+        correct_options = random.sample(chosen_cluster, actual_num_correct)
+        anchor = correct_options[0]
+
+        outside_topics = [t for t in subject_topic_names if t not in chosen_cluster]
+        pool = outside_topics if len(outside_topics) >= num_incorrect else (decoy_pool or GENERIC_DECOY_TOPICS)
+        actual_num_incorrect = min(num_incorrect, len(pool))
+        incorrect_options = random.sample(pool, actual_num_incorrect)
+
+        question_text = f'Which of the following are most closely related to "{anchor}"?'
+    else:
+        actual_num_correct = min(num_correct, len(subject_topic_names))
+        correct_options = random.sample(subject_topic_names, actual_num_correct)
+        pool = decoy_pool or GENERIC_DECOY_TOPICS
+        actual_num_incorrect = min(num_incorrect, len(pool))
+        incorrect_options = random.sample(pool, actual_num_incorrect)
+        question_text = 'Which of the following topics are covered in your notes for this subject?'
+
+    options = correct_options + incorrect_options
+    random.shuffle(options)
+
+    return {
+        'question_text': question_text,
+        'correct_answers': correct_options,
+        'options': options
+    }
+
+def cluster_topics(topic_names, similarity_threshold=0.45):
+    """
+    Groups topics into clusters of mutually-related concepts using embedding
+    similarity (single-linkage via Union-Find: two topics are transitively
+    grouped if connected by any pairwise similarity above threshold).
+    """
+    if not topic_names:
+        return []
+    if len(topic_names) == 1:
+        return [[topic_names[0]]]
+
+    embeddings = embed_texts(topic_names)
+    n = len(topic_names)
+    parent = list(range(n))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(i, j):
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            parent[ri] = rj
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            sim = F.cosine_similarity(embeddings[i].unsqueeze(0), embeddings[j].unsqueeze(0)).item()
+            if sim > similarity_threshold:
+                union(i, j)
+
+    clusters_map = {}
+    for i in range(n):
+        root = find(i)
+        clusters_map.setdefault(root, []).append(topic_names[i])
+
+    return list(clusters_map.values())
+
+
+def get_cluster_for_topic(topic, all_topic_names, similarity_threshold=0.45):
+    clusters = cluster_topics(all_topic_names, similarity_threshold=similarity_threshold)
+    for cluster in clusters:
+        if topic in cluster:
+            return cluster
+    return [topic]

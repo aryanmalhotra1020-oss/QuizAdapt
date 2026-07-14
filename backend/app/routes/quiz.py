@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance, Subject
-from app.services import generate_mcq_question, score_answer, is_malformed_question
+from app.services import generate_mcq_question, generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question, score_answer, is_malformed_question
 import random
 from app.bkt import BKTModel
 from app.services import generate_question_for_topic, score_answer, generate_mcq_options
@@ -11,43 +11,90 @@ import traceback
 
 quiz_bp = Blueprint('quiz', __name__)
 
+def find_topic_by_name(topics, name):
+    for t in topics:
+        if t.topic_name == name:
+            return t
+    return None
+
 def score_question_answer(question, user_answer):
-    if question.question_type == 'mcq':
+    if question.question_type in ('mcq', 'fill_blank'):
         is_correct = user_answer.strip() == question.correct_answer.strip()
         score = 1.0 if is_correct else 0.0
         return score, is_correct
+
+    if question.question_type == 'multi_select':
+        correct_set = set(json.loads(question.correct_answer))
+        try:
+            selected_set = set(json.loads(user_answer))
+        except (json.JSONDecodeError, TypeError):
+            selected_set = set()
+
+        num_correct_total = len(correct_set)
+        num_correct_selected = len(correct_set & selected_set)
+        num_incorrect_selected = len(selected_set - correct_set)
+
+        score = max(0.0, (num_correct_selected - num_incorrect_selected) / num_correct_total) if num_correct_total else 0.0
+        is_correct = score >= 0.7
+        return round(score, 4), is_correct
+
+    # long_answer and any future free-text types
     return score_answer(user_answer, question.correct_answer)
+
+
+@quiz_bp.route('/test-types/<int:subject_id>', methods=['GET'])
+@jwt_required()
+def test_question_types(subject_id):
+    from app.services import generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question
+
+    note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
+    topics = Topic.query.filter_by(subject_id=subject_id).all()
+    if not topics:
+        return jsonify({'error': 'No topics found'}), 400
+
+    topic_names = [t.topic_name for t in topics]
+    sample_topics = topics[:3]  # test across a few topics, not just the first
+
+    fill_blanks = []
+    long_answers = []
+    for t in sample_topics:
+        other_names = [name for name in topic_names if name != t.topic_name]
+        fill_blanks.append(generate_fill_blank_question(note.raw_text, t.topic_name, other_names))
+        long_answers.append(generate_long_answer_question(note.raw_text, t.topic_name))
+
+    multi_select = generate_multi_select_question(topic_names)
+
+    return jsonify({
+        'topics': topic_names,
+        'fill_blanks': fill_blanks,
+        'long_answers': long_answers,
+        'multi_select': multi_select
+    }), 200
+
 
 @quiz_bp.route('/generate/<int:subject_id>', methods=['POST'])
 @jwt_required()
 def generate_quiz(subject_id):
     user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    question_types = data.get('question_types') or ['mcq']
+    difficulty = data.get('difficulty', 'medium')
     bkt = BKTModel()
 
-    # Get all topics for this subject
     topics = Topic.query.filter_by(subject_id=subject_id).all()
     if not topics:
         return jsonify({'error': 'No topics found. Please upload notes first.'}), 400
 
-    # Get most recent note
     note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
     if not note:
         return jsonify({'error': 'No notes found for this subject.'}), 400
 
-    # Get topic performance scores
     performances = {
         p.topic_id: p.strength_score
-        for p in TopicPerformance.query.filter_by(
-            user_id=user_id,
-            subject_id=subject_id
-        ).all()
+        for p in TopicPerformance.query.filter_by(user_id=user_id, subject_id=subject_id).all()
     }
 
-    # Classify topics as weak, moderate or strong
-    weak_topics = []
-    moderate_topics = []
-    strong_topics = []
-
+    weak_topics, moderate_topics, strong_topics = [], [], []
     for topic in topics:
         score = performances.get(topic.id, bkt.p_know)
         classification = bkt.classify(score)
@@ -58,50 +105,86 @@ def generate_quiz(subject_id):
         else:
             strong_topics.append(topic)
 
-    # Build adaptive question pool:
-    # 50% weak topics, 30% moderate, 20% strong (revision)
     selected_topics = []
     selected_topics += random.sample(weak_topics, min(5, len(weak_topics)))
     selected_topics += random.sample(moderate_topics, min(3, len(moderate_topics)))
     selected_topics += random.sample(strong_topics, min(2, len(strong_topics)))
-
-    # If not enough topics, fill with whatever is available
     if len(selected_topics) < 5:
         remaining = [t for t in topics if t not in selected_topics]
         selected_topics += random.sample(remaining, min(5 - len(selected_topics), len(remaining)))
 
-    # Determine quiz type
     quiz_type = 'adaptive' if performances else 'initial'
-
-    # Create quiz
     quiz = Quiz(subject_id=subject_id, type=quiz_type)
     db.session.add(quiz)
     db.session.commit()
 
-    # Generate questions
+    topic_names_all = [t.topic_name for t in topics]
     questions_generated = []
+
     for topic in selected_topics:
         try:
+            chosen_type = random.choice(question_types)
             other_topic_names = [t.topic_name for t in topics if t.id != topic.id]
-            mcq = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names)
+            display_topic_name = topic.topic_name
+
+            if chosen_type == 'mcq':
+                result = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names, difficulty=difficulty)
+                q_type = 'mcq'
+                correct_answer = result['correct_answer']
+                options_json = json.dumps(result['options'])
+                question_text = result['question_text']
+                topic_id = topic.id
+
+            elif chosen_type == 'fill_blank':
+                result = generate_fill_blank_question(note.raw_text, topic.topic_name, other_topic_names, difficulty=difficulty)
+                q_type = 'fill_blank'
+                correct_answer = result['correct_answer']
+                options_json = json.dumps(result['options'])
+                question_text = result['question_text']
+                topic_id = topic.id
+
+            elif chosen_type == 'long_answer':
+                result = generate_long_answer_question(note.raw_text, topic.topic_name, difficulty=difficulty)
+                q_type = 'long_answer'
+                correct_answer = result['correct_answer']
+                options_json = None
+                question_text = result['question_text']
+                topic_id = topic.id
+
+            elif chosen_type == 'multi_select':
+                result = generate_multi_select_question(topic_names_all)
+                if not result:
+                    continue
+                anchor_topic = find_topic_by_name(topics, result['correct_answers'][0])
+                q_type = 'multi_select'
+                correct_answer = json.dumps(result['correct_answers'])
+                options_json = json.dumps(result['options'])
+                question_text = result['question_text']
+                topic_id = anchor_topic.id if anchor_topic else topic.id
+                display_topic_name = anchor_topic.topic_name if anchor_topic else topic.topic_name
+
+            else:
+                continue
 
             question = Question(
                 quiz_id=quiz.id,
-                topic_id=topic.id,
-                question_text=mcq['question_text'],
-                correct_answer=mcq['correct_answer'],
-                question_type='mcq',
-                options=json.dumps(mcq['options'])
+                topic_id=topic_id,
+                question_text=question_text,
+                correct_answer=correct_answer,
+                question_type=q_type,
+                difficulty=difficulty,
+                options=options_json
             )
             db.session.add(question)
             db.session.commit()
+
             questions_generated.append({
                 'id': question.id,
-                'question_text': mcq['question_text'],
+                'question_text': question_text,
                 'topic': topic.topic_name,
                 'classification': bkt.classify(performances.get(topic.id, bkt.p_know)),
-                'question_type': 'mcq',
-                'options': mcq['options']
+                'question_type': q_type,
+                'options': json.loads(options_json) if options_json else None
             })
         except Exception as e:
             print(f"Error generating question for topic {topic.topic_name}: {e}")

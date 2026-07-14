@@ -15,6 +15,11 @@ kw_model = KeyBERT()
 
 # ─── PDF text extraction & cleanup ───────────────────────────────
 
+_VALID_TOPIC_PATTERN = re.compile(r"^[A-Za-z0-9\s\-']+$")
+
+def filter_symbol_contaminated_topics(keywords):
+    return [(kw, score) for kw, score in keywords if _VALID_TOPIC_PATTERN.match(kw)]
+
 ADMIN_PAGE_KEYWORDS = {
     'attendance', 'module team', 'teaching staff', 'office hours', 'canvas',
     'weekly structure', 'learning outcome', 'about the module',
@@ -221,6 +226,7 @@ def upload_note(subject_id):
     keywords = filter_named_entities(keywords, entity_strings)
     keywords = filter_admin_topics(keywords)
     keywords = filter_fragment_topics(keywords)
+    keywords = filter_symbol_contaminated_topics(keywords)
     keywords = sorted(keywords, key=lambda x: x[1], reverse=True)[:10]
 
     for keyword, _score in keywords:
