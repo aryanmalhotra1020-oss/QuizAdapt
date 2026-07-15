@@ -39,7 +39,32 @@ const CloseIcon = () => (
   </svg>
 );
 
-const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
+const HomeIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
+  </svg>
+);
+
+const PlusCircleIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+  </svg>
+);
+
+const LogoutIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
+const ChevronIcon = ({ direction = 'left' }) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+    style={{ transform: direction === 'right' ? 'rotate(180deg)' : 'none' }}>
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const Sidebar = ({ isOpen = false, onClose = () => {}, collapsed = false, onToggleCollapse = () => {} }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,9 +87,8 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
   };
 
   const navItems = [
-    { label: 'Home', path: '/dashboard' },
-    { label: 'Create Subject', path: '/subjects/new' },
-    { label: 'Profile', path: '/profile' },
+    { label: 'Home', path: '/dashboard', Icon: HomeIcon },
+    { label: 'Create Subject', path: '/subjects/new', Icon: PlusCircleIcon },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -75,11 +99,16 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
         .sidebar-nav-link:hover { background-color: ${tokens.darkSurfaceAlt}; }
+        .sidebar-user-link:hover { background-color: ${tokens.darkSurfaceAlt}; }
+        .sidebar-toggle-btn:hover, .sidebar-close-btn:hover { background-color: ${tokens.darkSurfaceAlt}; }
         .sidebar-close-btn { display: none; }
         .sidebar-backdrop { display: none; }
+        button, a { cursor: pointer; }
+        a:focus-visible, button:focus-visible { outline: 2px solid ${tokens.primary}; outline-offset: 2px; }
 
         @media (max-width: 768px) {
           .app-sidebar {
+            width: 240px !important;
             transform: translateX(-100%);
             transition: transform 0.25s ease;
             box-shadow: 2px 0 24px rgba(0,0,0,0.4);
@@ -89,6 +118,9 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
           }
           .sidebar-close-btn {
             display: inline-flex !important;
+          }
+          .sidebar-toggle-btn {
+            display: none !important;
           }
           .sidebar-backdrop.is-open {
             display: block !important;
@@ -105,13 +137,13 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
 
       <nav
         className={`app-sidebar${isOpen ? ' is-open' : ''}`}
-        style={styles.sidebar}
+        style={{ ...styles.sidebar, width: collapsed ? '68px' : '240px' }}
         aria-label="Main navigation"
       >
-        <div style={styles.topRow}>
-          <Link to="/dashboard" style={styles.brand}>
+        <div style={{ ...styles.topRow, ...(collapsed ? styles.topRowCollapsed : {}) }}>
+          <Link to="/dashboard" style={styles.brand} title="QuizAdapt">
             <LogoMark />
-            QuizAdapt
+            {!collapsed && 'QuizAdapt'}
           </Link>
           <button
             className="sidebar-close-btn"
@@ -121,6 +153,15 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
           >
             <CloseIcon />
           </button>
+          <button
+            className="sidebar-toggle-btn"
+            style={styles.toggleBtn}
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <ChevronIcon direction={collapsed ? 'right' : 'left'} />
+          </button>
         </div>
 
         <div style={styles.navSection}>
@@ -129,50 +170,68 @@ const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
               key={item.path}
               to={item.path}
               className="sidebar-nav-link"
+              title={collapsed ? item.label : undefined}
               style={{
                 ...styles.navLink,
+                ...(collapsed ? styles.navLinkCollapsed : {}),
                 ...(isActive(item.path) ? styles.navLinkActive : {}),
               }}
             >
-              {item.label}
+              <item.Icon />
+              {!collapsed && item.label}
             </Link>
           ))}
 
-          <div style={styles.subjectsHeading}>Subjects</div>
-          {subjects.map((s) => {
-            const isPending = s.status === 'pending_diagnostic';
-            const linkPath = isPending ? `/diagnostic/${s.id}` : `/subject/${s.id}`;
-            return (
-              <Link
-                key={s.id}
-                to={linkPath}
-                className="sidebar-nav-link"
-                style={{
-                  ...styles.subjectLink,
-                  ...(isActive(linkPath) ? styles.navLinkActive : {}),
-                }}
-                title={isPending ? 'Pending Diagnostic Quiz' : undefined}
-              >
-                <span style={styles.subjectName}>{s.name}</span>
-                {isPending && (
-                  <span style={styles.pendingIcon} aria-label="Pending diagnostic quiz">
-                    <AlertIcon />
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+          {!collapsed && (
+            <>
+              <div style={styles.subjectsHeading}>Subjects</div>
+              {subjects.map((s) => {
+                const isPending = s.status === 'pending_diagnostic';
+                const linkPath = isPending ? `/diagnostic/${s.id}` : `/subject/${s.id}`;
+                return (
+                  <Link
+                    key={s.id}
+                    to={linkPath}
+                    className="sidebar-nav-link"
+                    style={{
+                      ...styles.subjectLink,
+                      ...(isActive(linkPath) ? styles.navLinkActive : {}),
+                    }}
+                    title={isPending ? 'Pending Diagnostic Quiz' : undefined}
+                  >
+                    <span style={styles.subjectName}>{s.name}</span>
+                    {isPending && (
+                      <span style={styles.pendingIcon} aria-label="Pending diagnostic quiz">
+                        <AlertIcon />
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </div>
 
         <div style={styles.bottomSection}>
-          <div style={styles.userInfo}>
+          <Link
+            to="/profile"
+            className="sidebar-user-link"
+            style={{ ...styles.userInfo, ...(collapsed ? styles.userInfoCollapsed : {}) }}
+            title={collapsed ? `${user.name} — Profile` : undefined}
+          >
             <div style={styles.avatar}>
               {user.name.charAt(0).toUpperCase()}
             </div>
-            <span style={styles.userName}>{user.name}</span>
-          </div>
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Sign out
+            {!collapsed && <span style={styles.userName}>{user.name}</span>}
+          </Link>
+          <button
+            onClick={handleLogout}
+            style={{ ...styles.logoutBtn, ...(collapsed ? styles.logoutBtnCollapsed : {}) }}
+            title={collapsed ? 'Sign out' : undefined}
+            aria-label="Sign out"
+          >
+            <LogoutIcon />
+            {!collapsed && 'Sign out'}
           </button>
         </div>
       </nav>
@@ -192,7 +251,6 @@ const styles = {
     top: 0,
     left: 0,
     height: '100vh',
-    width: '240px',
     backgroundColor: tokens.darkSurface,
     color: '#fff',
     fontFamily: tokens.bodyFont,
@@ -202,7 +260,9 @@ const styles = {
     boxShadow: '2px 0 12px rgba(0,0,0,0.3)',
     zIndex: 100,
     overflowY: 'auto',
+    overflowX: 'hidden',
     boxSizing: 'border-box',
+    transition: 'width 0.2s ease',
   },
   topRow: {
     display: 'flex',
@@ -210,6 +270,11 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '2.5rem',
     padding: '0 0.5rem',
+  },
+  topRowCollapsed: {
+    flexDirection: 'column',
+    gap: '1rem',
+    padding: 0,
   },
   brand: {
     color: '#FFFFFF',
@@ -221,15 +286,27 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     letterSpacing: '-0.3px',
+    whiteSpace: 'nowrap',
   },
   closeBtn: {
     background: 'none',
     border: 'none',
     color: tokens.onDarkMuted,
-    cursor: 'pointer',
     padding: '0.35rem',
+    borderRadius: '6px',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  toggleBtn: {
+    background: 'none',
+    border: `1px solid ${tokens.border}`,
+    color: tokens.onDarkMuted,
+    padding: '0.35rem',
+    borderRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   navSection: {
     display: 'flex',
@@ -244,6 +321,14 @@ const styles = {
     padding: '0.65rem 0.75rem',
     borderRadius: '6px',
     transition: 'background-color 0.15s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.65rem',
+    whiteSpace: 'nowrap',
+  },
+  navLinkCollapsed: {
+    justifyContent: 'center',
+    padding: '0.65rem',
   },
   navLinkActive: {
     backgroundColor: tokens.darkSurfaceAlt,
@@ -283,13 +368,20 @@ const styles = {
     paddingTop: '1rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem',
+    gap: '0.5rem',
   },
   userInfo: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.6rem',
-    padding: '0 0.5rem',
+    padding: '0.4rem 0.5rem',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    transition: 'background-color 0.15s',
+  },
+  userInfoCollapsed: {
+    justifyContent: 'center',
+    padding: '0.4rem',
   },
   avatar: {
     width: '32px',
@@ -317,10 +409,16 @@ const styles = {
     color: tokens.onDarkMuted,
     padding: '0.5rem 0.75rem',
     borderRadius: '6px',
-    cursor: 'pointer',
     fontSize: '0.85rem',
     transition: 'all 0.2s',
     width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+  },
+  logoutBtnCollapsed: {
+    padding: '0.5rem',
   },
 };
 

@@ -43,13 +43,6 @@ const CloseIcon = () => (
   </svg>
 );
 
-const ArrowIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <line x1="5" y1="12" x2="19" y2="12" />
-    <polyline points="12 5 19 12 12 19" />
-  </svg>
-);
-
 const Dashboard = () => {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +135,7 @@ const Dashboard = () => {
         <div style={styles.hero} className="dashboard-hero">
           <div>
             <h1 style={styles.heroTitle}>
-              {getTimeOfDay()}, {user?.name.split(' ')[0]}! 👋
+              {getTimeOfDay()}, {user?.name.split(' ')[0]}!
             </h1>
             <p style={styles.heroSubtitle}>
               What would you like to study today?
@@ -200,7 +193,6 @@ const Dashboard = () => {
                     }}>
                       {subject.name.charAt(0).toUpperCase()}
                     </div>
-                    <span style={styles.cardArrow}><ArrowIcon /></span>
                     <button
                       className="delete-btn"
                       style={styles.deleteBtn}
@@ -384,11 +376,6 @@ const styles = {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: '1.2rem',
-  },
-  cardArrow: {
-    color: '#CBD5E1',
-    display: 'flex',
-    alignItems: 'center',
   },
   cardTitle: {
     fontSize: '1.1rem',
