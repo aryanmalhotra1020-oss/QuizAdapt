@@ -123,7 +123,20 @@ def split_into_clean_sentences(raw_text):
         parts = re.split(r'(?<=[.?!])\s+', line.strip())
         sentences.extend(parts)
     cleaned = [clean_sentence_noise(s) for s in sentences]
-    return [s for s in cleaned if 4 <= len(s.split()) <= 40]
+    return [s for s in cleaned if 4 <= len(s.split()) <= 40 and not is_low_quality_sentence(s)]
+
+def _prose_ratio(text):
+    if not text:
+        return 0
+    standard_chars = sum(1 for c in text if c.isascii() and (c.isalnum() or c.isspace() or c in ".,;:'-()"))
+    return standard_chars / len(text)
+
+def is_low_quality_sentence(sentence, min_prose_ratio=0.85, min_words=4):
+    if len(sentence.split()) < min_words:
+        return True
+    if _prose_ratio(sentence) < min_prose_ratio:
+        return True
+    return False
 
 def load_qg_model():
     global tokenizer, model
@@ -136,6 +149,7 @@ def load_qg_model():
 
 def extract_relevant_sentences(text, topic, max_sentences=3, difficulty='medium'):
     sentences = [s.strip() for s in text.replace('\n', ' ').split('.') if s.strip()]
+    sentences = [s for s in sentences if not is_low_quality_sentence(s)]
     if not sentences:
         return ''
 
@@ -306,11 +320,26 @@ def is_malformed_answer(answer_text):
         return True
     return False
 
+def has_excessive_repetition(text, ngram_size=3, max_repeats=2):
+    words = text.lower().split()
+    if len(words) < ngram_size * (max_repeats + 1):
+        return False
+    seen = {}
+    for i in range(len(words) - ngram_size + 1):
+        ngram = tuple(words[i:i + ngram_size])
+        seen[ngram] = seen.get(ngram, 0) + 1
+        if seen[ngram] > max_repeats:
+            return True
+    return False
+
+
 def is_malformed_question(question_text, min_words=4):
     words = question_text.strip().split()
     if len(words) < min_words:
         return True
     if not question_text.strip().endswith(('?', '.')):
+        return True
+    if has_excessive_repetition(question_text):
         return True
     return False
 

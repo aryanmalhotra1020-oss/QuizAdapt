@@ -28,11 +28,19 @@ ADMIN_PAGE_KEYWORDS = {
     'university credentials', 'recommended reading', 'library resource',
     'associate professor', 'department of computer science', 'assistant professor',
     'what this module will cover', 'module organization', 'assessment distribution',
+    'recommended textbook', 'free online course', 'programming environment',
+    'pre-requisite', 'prerequisite', 'module plan', 'module lead', 'module team',
 }
+
+_URL_EMAIL_PATTERN = re.compile(r'(https?://\S+|www\.\S+|\S+@\S+\.\S+)')
 
 def is_admin_page(page_text):
     lower = page_text.lower()
-    return any(kw in lower for kw in ADMIN_PAGE_KEYWORDS)
+    if any(kw in lower for kw in ADMIN_PAGE_KEYWORDS):
+        return True
+    if _URL_EMAIL_PATTERN.search(page_text):
+        return True
+    return False
 
 def filter_admin_pages(pages_text):
     filtered = [p for p in pages_text if not is_admin_page(p)]
@@ -59,12 +67,9 @@ def strip_repeated_boilerplate(pages_text, min_pages=3):
     return ['\n'.join(l for l in lines if l not in boilerplate) for lines in pages_lines]
 
 _DUPLICATE_RUN_PATTERN = re.compile(r'\b([\w|]{2,40})\1\b')
+_DUPLICATE_WORD_PATTERN = re.compile(r'\b(\w+)\s+\1\b', re.IGNORECASE)
 
 def repair_duplicated_text(text):
-    # PyMuPDF sometimes extracts title-slide text twice with no separator,
-    # from PDFs where bold/shadow title effects create two overlapping text
-    # runs at the same position (common in PowerPoint/Beamer exports).
-    # e.g. "MachineMachine Learning|Learning| FallFall 20252025" -> "Machine Learning Fall 2025"
     cleaned = text
     previous = None
     for _ in range(3):
@@ -72,6 +77,7 @@ def repair_duplicated_text(text):
             break
         previous = cleaned
         cleaned = _DUPLICATE_RUN_PATTERN.sub(r'\1', cleaned)
+        cleaned = _DUPLICATE_WORD_PATTERN.sub(r'\1', cleaned)
     cleaned = cleaned.replace('|', ' ')
     return cleaned
 
