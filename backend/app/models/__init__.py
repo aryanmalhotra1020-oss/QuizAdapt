@@ -38,6 +38,8 @@ class Topic(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     topic_name = db.Column(db.String(255), nullable=False)
     performances = db.relationship('TopicPerformance', backref='topic', lazy=True, cascade='all, delete')
+    review_schedules = db.relationship('ReviewSchedule', backref='topic', lazy=True, cascade='all, delete')
+
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'

@@ -29,4 +29,4 @@ The goal here was to build a system where the model itself is fine-tuned on task
 
 ## Status
 
-Actively in development as an MSc dissertation project (deadline: September 2026). Core adaptive quiz loop - notes upload, topic extraction, diagnostic, adaptive MCQ generation, performance tracking — is complete and tested end-to-end. Custom quiz configuration (question type/difficulty selection) and sample paper generation are planned future additions.
+Actively in development as an MSc dissertation project (deadline: September 2026). Core adaptive quiz loop - notes upload, topic extraction, diagnostic, adaptive MCQ generation, performance tracking - is complete and tested end-to-end. Custom quiz configuration (question type/difficulty selection) and sample paper generation are planned future additions.
