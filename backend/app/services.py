@@ -49,6 +49,17 @@ def _is_valid_mcq(result):
         return False
     if any(is_malformed_answer(o) for o in options):
         return False
+
+    try:
+        embeddings = embed_texts(options)
+        for i in range(len(options)):
+            for j in range(i + 1, len(options)):
+                sim = F.cosine_similarity(embeddings[i].unsqueeze(0), embeddings[j].unsqueeze(0)).item()
+                if sim > 0.92:
+                    return False
+    except Exception as e:
+        print(f"Option similarity check failed, allowing through: {e}")
+
     return True
 
 def generate_mcq_with_flan(context, answer, max_attempts=3):
@@ -286,11 +297,20 @@ def generate_fill_in_blank(raw_text, topic, difficulty='medium'):
             'from_real_sentence': True
         }
 
-    # No verbatim match - use the best clean sentence available rather
-    # than falling back to the looser extract_relevant_sentences(), which
-    # doesn't have the same page/clause contamination protections
-    fallback_candidates = [s for s in sentences if len(s.split()) >= 5]
-    base_sentence = fallback_candidates[0] if fallback_candidates else topic
+    if sentences:
+        try:
+            embeddings = embed_texts([topic] + sentences)
+            topic_emb = embeddings[0].unsqueeze(0)
+            sentence_embs = embeddings[1:]
+            similarities = F.cosine_similarity(topic_emb, sentence_embs).tolist()
+            best_idx = similarities.index(max(similarities))
+            base_sentence = sentences[best_idx]
+        except Exception as e:
+            print(f"Fallback sentence ranking failed: {e}")
+            base_sentence = sentences[0]
+    else:
+        base_sentence = topic
+
     return {
         'question_text': f"_____ is best described as: {base_sentence}",
         'correct_answer': topic,
@@ -340,6 +360,9 @@ def is_malformed_question(question_text, min_words=4):
     if not question_text.strip().endswith(('?', '.')):
         return True
     if has_excessive_repetition(question_text):
+        return True
+    lower = question_text.lower().strip()
+    if lower.endswith('and what?') or lower.endswith('or what?'):
         return True
     return False
 

@@ -281,3 +281,19 @@ def get_topics(subject_id):
         'topic_name': t.topic_name,
         'note_id': t.note_id
     } for t in topics]), 200
+
+@notes_bp.route('/<int:subject_id>/topics/<int:topic_id>', methods=['DELETE'])
+@jwt_required()
+def delete_topic(subject_id, topic_id):
+    user_id = get_jwt_identity()
+    subject = Subject.query.filter_by(id=subject_id, user_id=user_id).first()
+    if not subject:
+        return jsonify({'error': 'Subject not found'}), 404
+
+    topic = Topic.query.filter_by(id=topic_id, subject_id=subject_id).first()
+    if not topic:
+        return jsonify({'error': 'Topic not found'}), 404
+
+    db.session.delete(topic)
+    db.session.commit()
+    return jsonify({'message': 'Topic deleted'}), 200

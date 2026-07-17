@@ -119,6 +119,16 @@ const Subject = () => {
     }
   };
 
+  const handleDeleteTopic = async (topicId) => {
+    if (!window.confirm('Delete this topic? It will no longer be used to generate questions.')) return;
+    try {
+      await api.delete(`/notes/${id}/topics/${topicId}`);
+      fetchTopics();
+    } catch (err) {
+      setError('Failed to delete topic');
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -290,7 +300,16 @@ const Subject = () => {
             ) : (
               <div style={styles.topicsGrid}>
                 {topics.map(topic => (
-                  <div key={topic.id} style={styles.topicTag}>{topic.topic_name}</div>
+                  <div key={topic.id} style={styles.topicTag}>
+                    <span>{topic.topic_name}</span>
+                    <button
+                      style={styles.topicDeleteBtn}
+                      onclick={() => handleDeleteTopic(topic.id)}
+                      title = "Delete topic"
+                    >
+                      x
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -391,7 +410,8 @@ const styles = {
   emptyTopics: { textAlign: 'center', padding: '2rem', color: '#94A3B8', fontSize: '0.9rem' },
   emptyIcon: { fontSize: '2rem', display: 'block', marginBottom: '0.5rem' },
   topicsGrid: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
-  topicTag: { backgroundColor: '#EFF6FF', color: '#2563EB', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize' },
+  topicTag: { backgroundColor: '#EFF6FF', color: '#2563EB', padding: '0.35rem 0.6rem 0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap:'0.4rem'},
+  topicDeleteBtn: {background:'none', border: 'none', color: '#93C55D', fontSize: '0.75rem', cursor: 'pointer', padding: '0.1rem 0.2rem', lineHeight: 1},
   reviewCard: {
     marginTop: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '12px', padding: '1.1rem',
     display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', border: '1px solid #F1F5F9',
