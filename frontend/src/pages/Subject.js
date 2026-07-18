@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import PerformanceOverview from '../components/PerformanceOverview';
 
@@ -25,12 +26,14 @@ const DIFFICULTY_OPTIONS = [
 
 const Subject = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [subjectName, setSubjectName] = useState('');
   const [notes, setNotes] = useState([]);
   const [topics, setTopics] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -71,28 +74,44 @@ const Subject = () => {
   };
 
   const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
+    const files = Array.from(e.target.files);
+    if (files.legnth === 0) return;
 
     setUploading(true);
     setError('');
     setSuccess('');
 
-    try {
-      await api.post(`/notes/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setSuccess('Notes uploaded and topics extracted successfully!');
-      fetchNotes();
-      fetchTopics();
-    } catch (err) {
-      setError('Failed to upload notes. Please try again.');
-    } finally {
-      setUploading(false);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i=0; i<files.length; i++) {
+      setUploadProgress(`Uploading ${i+1} of ${files.length}: ${files[i].name}`);
+      const formData = new FormData();
+      formData.append('file', files[i]);
+
+      try {
+        await api.post(`/notes/${id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        successCount++;
+      } catch (err) {
+        failCount++;
+      }
     }
+    setUploadProgress('');
+    setUploading(false);
+
+    if (successCount > 0) {
+      setSuccess(`${successCount} file${successCount > 1 ? 's' : ''} uploaded and topics extracted successfully!`);
+    }
+    if (failCount > 0) {
+      setError(`${failCount} file${failCount > 1 ? 's': ''} failed to upload.`);
+    }
+
+    fetchNotes();
+    fetchTopics();
+
+    e.target.value = '';
   };
 
   const toggleType = (typeKey) => {
@@ -242,6 +261,7 @@ const Subject = () => {
               <input
                 type="file"
                 accept=".txt,.pdf"
+                multiple
                 onChange={handleUpload}
                 style={styles.fileInput}
                 disabled={uploading}
@@ -250,14 +270,14 @@ const Subject = () => {
                 {uploading ? (
                   <>
                     <span style={styles.uploadIcon}>⏳</span>
-                    <p style={styles.uploadText}>Uploading and extracting topics...</p>
-                    <p style={styles.uploadHint}>This may take a moment</p>
+                    <p style={styles.uploadText}>{uploadProgress || 'Uploading and extracting topics...'}</p>
+                    <p style={styles.uploadHint}>This may take a moment per file</p>
                   </>
                 ) : (
                   <>
                     <span style={styles.uploadIcon}>☁️</span>
-                    <p style={styles.uploadText}>Click to upload a file</p>
-                    <p style={styles.uploadHint}>.txt or .pdf — max 10MB</p>
+                    <p style={styles.uploadText}>Click to upload files</p>
+                    <p style={styles.uploadHint}>.txt or .pdf - select multiple, max 10MB each</p>
                   </>
                 )}
               </div>
@@ -302,13 +322,15 @@ const Subject = () => {
                 {topics.map(topic => (
                   <div key={topic.id} style={styles.topicTag}>
                     <span>{topic.topic_name}</span>
-                    <button
-                      style={styles.topicDeleteBtn}
-                      onclick={() => handleDeleteTopic(topic.id)}
-                      title = "Delete topic"
-                    >
-                      x
-                    </button>
+                    {user?.is_admin && (
+                      <button
+                        style={styles.topicDeleteBtn}
+                        onClick={() => handleDeleteTopic(topic.id)}
+                        title = "Delete topic"
+                      >
+                        x
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

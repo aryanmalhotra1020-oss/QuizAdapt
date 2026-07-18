@@ -2,7 +2,7 @@ import re
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import Note, Topic, Subject
+from app.models import Note, Topic, Subject, User
 from keybert import KeyBERT
 import fitz  # PyMuPDF
 from app.services import embed_texts
@@ -286,6 +286,10 @@ def get_topics(subject_id):
 @jwt_required()
 def delete_topic(subject_id, topic_id):
     user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.is_admin:
+        return jsonify({'error': 'Admin access required'}), 403
+
     subject = Subject.query.filter_by(id=subject_id, user_id=user_id).first()
     if not subject:
         return jsonify({'error': 'Subject not found'}), 404

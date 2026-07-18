@@ -85,8 +85,8 @@ def generate_quiz(subject_id):
     if not topics:
         return jsonify({'error': 'No topics found. Please upload notes first.'}), 400
 
-    note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
-    if not note:
+    notes_exist = Note.query.filter_by(subject_id=subject_id).first()
+    if not notes_exist:
         return jsonify({'error': 'No notes found for this subject.'}), 400
 
     performances = {
@@ -119,10 +119,17 @@ def generate_quiz(subject_id):
     db.session.commit()
 
     topic_names_all = [t.topic_name for t in topics]
+    note_cache = {}
     questions_generated = []
 
     for topic in selected_topics:
         try:
+            if topic.note_id not in note_cache:
+                note_cache[topic.note_id] = Note.query.get(topic.note_id)
+            note = note_cache[topic.note_id]
+            if not note:
+                continue
+
             chosen_type = random.choice(question_types)
             other_topic_names = [t.topic_name for t in topics if t.id != topic.id]
             display_topic_name = topic.topic_name
@@ -181,7 +188,7 @@ def generate_quiz(subject_id):
             questions_generated.append({
                 'id': question.id,
                 'question_text': question_text,
-                'topic': topic.topic_name,
+                'topic': display_topic_name,
                 'classification': bkt.classify(performances.get(topic.id, bkt.p_know)),
                 'question_type': q_type,
                 'options': json.loads(options_json) if options_json else None
@@ -206,26 +213,30 @@ def generate_quiz(subject_id):
 def generate_diagnostic(subject_id):
     user_id = get_jwt_identity()
 
-    # Get all topics for this subject
     topics = Topic.query.filter_by(subject_id=subject_id).all()
     if not topics:
         return jsonify({'error': 'No topics found'}), 400
 
-    # Get most recent note
-    note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
-    if not note:
+    notes_exist = Note.query.filter_by(subject_id=subject_id).first()
+    if not notes_exist:
         return jsonify({'error': 'No notes found'}), 400
 
-    # Create diagnostic quiz
     quiz = Quiz(subject_id=subject_id, type='diagnostic')
     db.session.add(quiz)
     db.session.commit()
 
     diagnostic_topics = random.sample(topics, min(5, len(topics)))
+    note_cache = {}
     questions_generated = []
 
     for topic in diagnostic_topics:
         try:
+            if topic.note_id not in note_cache:
+                note_cache[topic.note_id] = Note.query.get(topic.note_id)
+            note = note_cache[topic.note_id]
+            if not note:
+                continue
+
             other_topic_names = [t.topic_name for t in topics if t.id != topic.id]
             mcq = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names)
 
@@ -249,7 +260,6 @@ def generate_diagnostic(subject_id):
             })
         except Exception as e:
             print(f"Error generating diagnostic question: {e}")
-            traceback.print_exc()
             continue
 
     return jsonify({

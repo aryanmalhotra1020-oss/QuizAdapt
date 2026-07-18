@@ -15,11 +15,17 @@ review_bp = Blueprint('review', __name__)
 def get_due_reviews(subject_id):
     user_id = get_jwt_identity()
 
-    note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
-    if not note:
+    notes_exist = Note.query.filter_by(subject_id=subject_id).first()
+    if not notes_exist:
         return jsonify({'error': 'No notes found for this subject.'}), 400
 
     now = datetime.now(timezone.utc)
+    note_cache = {}
+
+    def get_note_for_topic(topic):
+        if topic.note_id not in note_cache:
+            note_cache[topic.note_id] = Note.query.get(topic.note_id)
+        return note_cache[topic.note_id]
 
     due_schedules = ReviewSchedule.query.filter(
         ReviewSchedule.user_id == user_id,
@@ -33,7 +39,6 @@ def get_due_reviews(subject_id):
         subject_id=subject_id
     ).all()
 
-    # Topics with performance history but no review schedule yet are due immediately
     unscheduled_due = [
         p for p in performances
         if p.topic_id not in scheduled_topic_ids and
@@ -45,6 +50,9 @@ def get_due_reviews(subject_id):
     for schedule in due_schedules:
         topic = Topic.query.get(schedule.topic_id)
         if not topic:
+            continue
+        note = get_note_for_topic(topic)
+        if not note:
             continue
         try:
             question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
@@ -74,6 +82,9 @@ def get_due_reviews(subject_id):
     for perf in unscheduled_due:
         topic = Topic.query.get(perf.topic_id)
         if not topic:
+            continue
+        note = get_note_for_topic(topic)
+        if not note:
             continue
         try:
             question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
