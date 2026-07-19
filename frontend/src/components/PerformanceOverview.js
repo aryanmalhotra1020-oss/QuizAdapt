@@ -323,7 +323,7 @@ const styles = {
   statNum: { fontFamily: tokens.headingFont, fontSize: '1.8rem', fontWeight: '700', color: tokens.foreground },
   statLabel: { fontSize: '0.75rem', color: tokens.bodyMuted, display: 'flex', alignItems: 'center', gap: '0.4rem' },
   statDot: { width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0 },
-  mainGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' },
+  mainGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' },
   card: { backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minWidth: 0 },
   cardTitle: { fontFamily: tokens.headingFont, fontSize: '1.1rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
   cardSubtitle: { color: tokens.bodyMuted, fontSize: '0.85rem', marginBottom: '1.25rem' },

@@ -12,7 +12,7 @@ const tokens = {
   bgLight: '#F8FAFC',
   bgWhite: '#FFFFFF',
   foreground: '#1E293B',
-  onDarkMuted: '#94A3B8',
+  onDarkMuted: '#F1F5F9',
   bodyMuted: '#64748B',
   border: '#E2E8F0',
   danger: '#DC2626',

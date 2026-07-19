@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import PerformanceOverview from '../components/PerformanceOverview';
+
+const tokens = {
+  primary: '#2563EB',
+  primaryHover: '#1D4ED8',
+  primarySoft: '#DBEAFE',
+  foreground: '#1E293B',
+  bodyMuted: '#64748B',
+  border: '#E2E8F0',
+  bgLight: '#F8FAFC',
+  bgWhite: '#FFFFFF',
+  danger: '#DC2626',
+  success: '#16A34A',
+  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
+  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
+};
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -24,6 +39,69 @@ const DIFFICULTY_OPTIONS = [
   { key: 'hard', label: 'Hard' },
 ];
 
+const UploadIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
+const CloudUploadIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" />
+  </svg>
+);
+
+const DocIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tokens.primary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><polyline points="14 2 14 8 20 8" />
+  </svg>
+);
+
+const SpinnerIcon = () => (
+  <svg className="subj-spinner" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke={tokens.border} strokeWidth="3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke={tokens.primary} strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+const TagIcon = ({ size = 18, color = tokens.bodyMuted }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.41 12.41A2 2 0 0 1 2 11V4a2 2 0 0 1 2-2h7a2 2 0 0 1 1.41.59l8.18 8.18a2 2 0 0 1 0 2.83Z" />
+    <circle cx="7.5" cy="7.5" r="1.5" fill={color} stroke="none" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+    <path d="M3 21v-5h5" />
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
 const Subject = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -44,6 +122,7 @@ const Subject = () => {
     fetchSubjectName();
     fetchNotes();
     fetchTopics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchSubjectName = async () => {
@@ -75,7 +154,7 @@ const Subject = () => {
 
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files);
-    if (files.legnth === 0) return;
+    if (files.length === 0) return;
 
     setUploading(true);
     setError('');
@@ -84,8 +163,8 @@ const Subject = () => {
     let successCount = 0;
     let failCount = 0;
 
-    for (let i=0; i<files.length; i++) {
-      setUploadProgress(`Uploading ${i+1} of ${files.length}: ${files[i].name}`);
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress(`Uploading ${i + 1} of ${files.length}: ${files[i].name}`);
       const formData = new FormData();
       formData.append('file', files[i]);
 
@@ -105,7 +184,7 @@ const Subject = () => {
       setSuccess(`${successCount} file${successCount > 1 ? 's' : ''} uploaded and topics extracted successfully!`);
     }
     if (failCount > 0) {
-      setError(`${failCount} file${failCount > 1 ? 's': ''} failed to upload.`);
+      setError(`${failCount} file${failCount > 1 ? 's' : ''} failed to upload.`);
     }
 
     fetchNotes();
@@ -148,308 +227,366 @@ const Subject = () => {
     }
   };
 
+  const goToReview = () => navigate(`/review/${id}`);
+  const handleReviewKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goToReview();
+    }
+  };
+
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>
-          ← Dashboard
-        </button>
-        <h1 style={styles.title}>{subjectName || 'Subject'}</h1>
-      </div>
+    <div style={styles.page}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-      <div style={styles.tabBar}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              ...styles.tabBtn,
-              ...(activeTab === tab.key ? styles.tabBtnActive : {}),
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+        .subj-back-link:hover { color: ${tokens.primaryHover} !important; }
+        .subj-tab-btn { cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+        .subj-tab-btn:hover { color: ${tokens.foreground}; }
+        a, button { cursor: pointer; }
+        a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
+          outline: 2px solid ${tokens.primary}; outline-offset: 2px;
+        }
+        .subj-type-option:hover { border-color: #CBD5E1; }
+        .subj-diff-btn:hover { border-color: #CBD5E1; }
+        .subj-generate-btn:hover:not(:disabled) { background-color: ${tokens.primaryHover} !important; }
+        .subj-dropzone-label:hover .subj-dropzone { border-color: ${tokens.primary}; background-color: ${tokens.bgLight}; }
+        .subj-topic-delete:hover { color: ${tokens.danger} !important; }
+        .subj-review-card:hover { border-color: ${tokens.primary}; background-color: ${tokens.bgWhite}; box-shadow: 0 2px 12px rgba(15,23,42,0.06); }
 
-      {error && <div style={styles.errorBanner}>{error}</div>}
-      {success && <div style={styles.successBanner}>{success}</div>}
+        @media (prefers-reduced-motion: no-preference) {
+          .subj-spinner { animation: subj-spin 0.8s linear infinite; }
+        }
+        @keyframes subj-spin { to { transform: rotate(360deg); } }
 
-      {activeTab === 'overview' && (
-        <PerformanceOverview subjectId={id} onContinueLearning={() => setActiveTab('adaptive')} />
-      )}
+        @media (max-width: 860px) {
+          .subj-files-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 520px) {
+          .subj-type-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
-      {activeTab === 'adaptive' && (
-        <div style={styles.configCard}>
-          <h2 style={styles.configTitle}>Configure your quiz</h2>
-          <p style={styles.configSubtitle}>
-            Still adaptive under the hood — weighted toward your weak topics. Pick how you want to be tested.
-          </p>
-
-          <div style={styles.configSection}>
-            <h3 style={styles.configSectionLabel}>Question Types</h3>
-            <div style={styles.typeGrid}>
-              {QUESTION_TYPE_OPTIONS.map((opt) => {
-                const isSelected = selectedTypes.includes(opt.key);
-                return (
-                  <div
-                    key={opt.key}
-                    style={{
-                      ...styles.typeOption,
-                      ...(isSelected ? styles.typeOptionSelected : {}),
-                    }}
-                    onClick={() => toggleType(opt.key)}
-                  >
-                    <div style={styles.typeOptionHeader}>
-                      <div style={{
-                        ...styles.checkbox,
-                        ...(isSelected ? styles.checkboxChecked : {}),
-                      }}>
-                        {isSelected && '✓'}
-                      </div>
-                      <span style={styles.typeOptionLabel}>{opt.label}</span>
-                    </div>
-                    <p style={styles.typeOptionDesc}>{opt.desc}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={styles.configSection}>
-            <h3 style={styles.configSectionLabel}>Difficulty</h3>
-            <div style={styles.difficultyRow}>
-              {DIFFICULTY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => setDifficulty(opt.key)}
-                  style={{
-                    ...styles.difficultyBtn,
-                    ...(difficulty === opt.key ? styles.difficultyBtnActive : {}),
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {selectedTypes.length === 0 && (
-            <p style={styles.configHint}>Select at least one question type to continue</p>
-          )}
-
-          <button
-            style={{
-              ...styles.generateBtn,
-              opacity: (selectedTypes.length === 0 || generating) ? 0.5 : 1,
-              cursor: (selectedTypes.length === 0 || generating) ? 'not-allowed' : 'pointer',
-            }}
-            onClick={handleGenerateQuiz}
-            disabled={selectedTypes.length === 0 || generating}
-          >
-            {generating ? 'Generating Quiz...' : 'Generate Quiz →'}
-          </button>
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <Link to="/dashboard" className="subj-back-link" style={styles.backLink}>← Dashboard</Link>
+          <h1 style={styles.title}>{subjectName || 'Subject'}</h1>
         </div>
-      )}
 
-      {activeTab === 'files' && (
-        <div style={styles.grid}>
-          <div style={styles.card}>
-            <h2 style={styles.cardTitle}>📄 Upload Notes</h2>
-            <p style={styles.cardSubtitle}>Supported: .txt and .pdf files</p>
-            <label style={styles.uploadLabel}>
-              <input
-                type="file"
-                accept=".txt,.pdf"
-                multiple
-                onChange={handleUpload}
-                style={styles.fileInput}
-                disabled={uploading}
-              />
-              <div style={styles.uploadBox}>
-                {uploading ? (
-                  <>
-                    <span style={styles.uploadIcon}>⏳</span>
-                    <p style={styles.uploadText}>{uploadProgress || 'Uploading and extracting topics...'}</p>
-                    <p style={styles.uploadHint}>This may take a moment per file</p>
-                  </>
-                ) : (
-                  <>
-                    <span style={styles.uploadIcon}>☁️</span>
-                    <p style={styles.uploadText}>Click to upload files</p>
-                    <p style={styles.uploadHint}>.txt or .pdf - select multiple, max 10MB each</p>
-                  </>
-                )}
-              </div>
-            </label>
+        <div style={styles.tabBar} role="tablist">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className="subj-tab-btn"
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                ...styles.tabBtn,
+                ...(activeTab === tab.key ? styles.tabBtnActive : {}),
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-            {notes.length > 0 && (
-              <div style={styles.notesList}>
-                <h3 style={styles.notesTitle}>Uploaded Files</h3>
-                {notes.map(note => (
-                  <div key={note.id} style={styles.noteItem}>
-                    <span style={styles.noteIcon}>
-                      {note.filename.endsWith('.pdf') ? '📕' : '📄'}
-                    </span>
-                    <div>
-                      <p style={styles.noteName}>{note.filename}</p>
-                      <p style={styles.noteDate}>
-                        {new Date(note.uploaded_at).toLocaleDateString('en-GB', {
-                          day: 'numeric', month: 'short', year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {error && <div style={styles.errorBanner} role="alert" aria-live="polite">{error}</div>}
+        {success && <div style={styles.successBanner} role="status" aria-live="polite">{success}</div>}
 
-          <div style={styles.card}>
-            <h2 style={styles.cardTitle}>🏷️ Extracted Topics</h2>
-            <p style={styles.cardSubtitle}>
-              {topics.length > 0
-                ? `${topics.length} topics identified from your notes`
-                : 'Upload notes to see extracted topics'}
+        {activeTab === 'overview' && (
+          <PerformanceOverview subjectId={id} onContinueLearning={() => setActiveTab('adaptive')} />
+        )}
+
+        {activeTab === 'adaptive' && (
+          <div style={styles.configCard}>
+            <h2 style={styles.configTitle}>Configure your quiz</h2>
+            <p style={styles.configSubtitle}>
+              Still adaptive under the hood — weighted toward your weak topics. Pick how you want to be tested.
             </p>
-            {topics.length === 0 ? (
-              <div style={styles.emptyTopics}>
-                <span style={styles.emptyIcon}>📝</span>
-                <p>No topics yet — upload your notes to get started</p>
+
+            <div style={styles.configSection}>
+              <h3 style={styles.configSectionLabel}>Question Types</h3>
+              <div style={styles.typeGrid} className="subj-type-grid">
+                {QUESTION_TYPE_OPTIONS.map((opt) => {
+                  const isSelected = selectedTypes.includes(opt.key);
+                  return (
+                    <div
+                      key={opt.key}
+                      className="subj-type-option"
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      style={{
+                        ...styles.typeOption,
+                        ...(isSelected ? styles.typeOptionSelected : {}),
+                      }}
+                      onClick={() => toggleType(opt.key)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleType(opt.key); } }}
+                    >
+                      <div style={styles.typeOptionHeader}>
+                        <div style={{
+                          ...styles.checkbox,
+                          ...(isSelected ? styles.checkboxChecked : {}),
+                        }}>
+                          {isSelected && <CheckIcon />}
+                        </div>
+                        <span style={styles.typeOptionLabel}>{opt.label}</span>
+                      </div>
+                      <p style={styles.typeOptionDesc}>{opt.desc}</p>
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <div style={styles.topicsGrid}>
-                {topics.map(topic => (
-                  <div key={topic.id} style={styles.topicTag}>
-                    <span>{topic.topic_name}</span>
-                    {user?.is_admin && (
-                      <button
-                        style={styles.topicDeleteBtn}
-                        onClick={() => handleDeleteTopic(topic.id)}
-                        title = "Delete topic"
-                      >
-                        x
-                      </button>
-                    )}
-                  </div>
+            </div>
+
+            <div style={styles.configSection}>
+              <h3 style={styles.configSectionLabel}>Difficulty</h3>
+              <div style={styles.difficultyRow}>
+                {DIFFICULTY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    className="subj-diff-btn"
+                    onClick={() => setDifficulty(opt.key)}
+                    style={{
+                      ...styles.difficultyBtn,
+                      ...(difficulty === opt.key ? styles.difficultyBtnActive : {}),
+                    }}
+                  >
+                    {opt.label}
+                  </button>
                 ))}
               </div>
+            </div>
+
+            {selectedTypes.length === 0 && (
+              <p style={styles.configHint} role="alert">Select at least one question type to continue</p>
             )}
 
-            <div style={styles.reviewCard} onClick={() => navigate(`/review/${id}`)}>
-              <span style={styles.actionIcon}>🔁</span>
-              <div>
-                <h3 style={styles.actionTitle}>Review Due Topics</h3>
-                <p style={styles.actionDesc}>Spaced repetition for topics you're due to revisit</p>
+            <button
+              className="subj-generate-btn"
+              style={{
+                ...styles.generateBtn,
+                opacity: (selectedTypes.length === 0 || generating) ? 0.5 : 1,
+                cursor: (selectedTypes.length === 0 || generating) ? 'not-allowed' : 'pointer',
+              }}
+              onClick={handleGenerateQuiz}
+              disabled={selectedTypes.length === 0 || generating}
+            >
+              {generating ? 'Generating Quiz...' : 'Generate Quiz →'}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'files' && (
+          <div style={styles.filesGrid} className="subj-files-grid">
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}><UploadIcon /> Upload Notes</h2>
+              <p style={styles.cardSubtitle}>Supported: .txt and .pdf files</p>
+              <label style={styles.uploadLabel} className="subj-dropzone-label">
+                <input
+                  type="file"
+                  accept=".txt,.pdf"
+                  multiple
+                  onChange={handleUpload}
+                  style={styles.fileInput}
+                  disabled={uploading}
+                />
+                <div style={styles.uploadBox} className="subj-dropzone">
+                  {uploading ? (
+                    <>
+                      <span style={styles.uploadIconWrap}><SpinnerIcon /></span>
+                      <p style={styles.uploadText}>{uploadProgress || 'Uploading and extracting topics...'}</p>
+                      <p style={styles.uploadHint}>This may take a moment per file</p>
+                    </>
+                  ) : (
+                    <>
+                      <span style={styles.uploadIconWrap}><CloudUploadIcon /></span>
+                      <p style={styles.uploadText}>Click to upload files</p>
+                      <p style={styles.uploadHint}>.txt or .pdf — select multiple, max 10MB each</p>
+                    </>
+                  )}
+                </div>
+              </label>
+
+              {notes.length > 0 && (
+                <div style={styles.notesList}>
+                  <h3 style={styles.notesTitle}>Uploaded Files</h3>
+                  {notes.map(note => (
+                    <div key={note.id} style={styles.noteItem}>
+                      <span style={styles.noteIconWrap}><DocIcon /></span>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={styles.noteName}>{note.filename}</p>
+                        <p style={styles.noteDate}>
+                          {new Date(note.uploaded_at).toLocaleDateString('en-GB', {
+                            day: 'numeric', month: 'short', year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}><TagIcon /> Extracted Topics</h2>
+              <p style={styles.cardSubtitle}>
+                {topics.length > 0
+                  ? `${topics.length} topics identified from your notes`
+                  : 'Upload notes to see extracted topics'}
+              </p>
+              {topics.length === 0 ? (
+                <div style={styles.emptyTopics}>
+                  <span style={styles.emptyIconWrap}><TagIcon size={30} color="#CBD5E1" /></span>
+                  <p style={{ margin: 0 }}>No topics yet — upload your notes to get started</p>
+                </div>
+              ) : (
+                <div style={styles.topicsGrid}>
+                  {topics.map(topic => (
+                    <div key={topic.id} style={styles.topicTag}>
+                      <span>{topic.topic_name}</span>
+                      {user?.is_admin && (
+                        <button
+                          className="subj-topic-delete"
+                          style={styles.topicDeleteBtn}
+                          onClick={() => handleDeleteTopic(topic.id)}
+                          aria-label={`Delete topic ${topic.topic_name}`}
+                        >
+                          <XIcon />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div
+                className="subj-review-card"
+                style={styles.reviewCard}
+                onClick={goToReview}
+                role="button"
+                tabIndex={0}
+                onKeyDown={handleReviewKeyDown}
+              >
+                <span style={styles.actionIconWrap}><RefreshIcon /></span>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={styles.actionTitle}>Review Due Topics</h3>
+                  <p style={styles.actionDesc}>Spaced repetition for topics you're due to revisit</p>
+                </div>
+                <span style={styles.actionArrow}>→</span>
               </div>
-              <span style={styles.actionArrow}>→</span>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'samples' && (
-        <div style={styles.comingSoonCard}>
-          <span style={styles.comingSoonIcon}>🔒</span>
-          <h3 style={styles.comingSoonTitle}>Sample Papers — coming soon</h3>
-          <p style={styles.comingSoonText}>
-            Full-length practice papers styled after real exams, generated from your notes.
-          </p>
-        </div>
-      )}
+        {activeTab === 'samples' && (
+          <div style={styles.comingSoonCard}>
+            <span style={styles.comingSoonIconWrap}><LockIcon /></span>
+            <h3 style={styles.comingSoonTitle}>Sample Papers — coming soon</h3>
+            <p style={styles.comingSoonText}>
+              Full-length practice papers styled after real exams, generated from your notes.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 const styles = {
+  page: { backgroundColor: tokens.bgLight, minHeight: '100vh', fontFamily: tokens.bodyFont },
   container: { maxWidth: '1100px', margin: '0 auto', padding: '2rem' },
   header: { marginBottom: '1.5rem' },
-  backBtn: { background: 'none', border: 'none', color: '#00B4D8', fontSize: '0.9rem', cursor: 'pointer', padding: 0, marginBottom: '0.75rem', display: 'block', fontWeight: '500' },
-  title: { fontSize: '2rem', fontWeight: '800', color: '#1A1A2E', marginBottom: '0.3rem' },
-  tabBar: { display: 'flex', gap: '0.5rem', borderBottom: '2px solid #E2E8F0', marginBottom: '1.5rem', flexWrap: 'wrap' },
+  backLink: {
+    display: 'inline-block', color: tokens.primary, fontSize: '0.9rem', fontWeight: '600',
+    textDecoration: 'none', marginBottom: '0.9rem', transition: 'color 0.15s',
+  },
+  title: { fontFamily: tokens.headingFont, fontSize: '1.9rem', fontWeight: '700', color: tokens.foreground, margin: 0 },
+  tabBar: { display: 'flex', gap: '0.5rem', borderBottom: `2px solid ${tokens.border}`, marginBottom: '1.75rem', flexWrap: 'wrap' },
   tabBtn: {
     background: 'none', border: 'none', padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: '600',
-    color: '#94A3B8', cursor: 'pointer', borderBottom: '3px solid transparent', marginBottom: '-2px',
+    color: tokens.bodyMuted, borderBottom: '3px solid transparent', marginBottom: '-2px', fontFamily: 'inherit',
   },
-  tabBtnActive: { color: '#00B4D8', borderBottom: '3px solid #00B4D8' },
-  errorBanner: { backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
-  successBanner: { backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
+  tabBtnActive: { color: tokens.primary, borderBottom: `3px solid ${tokens.primary}` },
+  errorBanner: { backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: tokens.danger, padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.9rem' },
+  successBanner: { backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: tokens.success, padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.9rem' },
 
   configCard: {
-    backgroundColor: '#fff', borderRadius: '16px', padding: '2rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', maxWidth: '680px',
+    backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '2rem',
+    boxShadow: '0 2px 12px rgba(15,23,42,0.06)', maxWidth: '680px', border: `1px solid ${tokens.border}`,
   },
-  configTitle: { fontSize: '1.3rem', fontWeight: '800', color: '#1A1A2E', margin: '0 0 0.4rem' },
-  configSubtitle: { color: '#94A3B8', fontSize: '0.9rem', margin: '0 0 1.75rem', lineHeight: '1.5' },
+  configTitle: { fontFamily: tokens.headingFont, fontSize: '1.3rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.4rem' },
+  configSubtitle: { color: tokens.bodyMuted, fontSize: '0.9rem', margin: '0 0 1.75rem', lineHeight: '1.5' },
   configSection: { marginBottom: '1.75rem' },
   configSectionLabel: {
-    fontSize: '0.8rem', fontWeight: '700', color: '#64748B', textTransform: 'uppercase',
+    fontSize: '0.8rem', fontWeight: '700', color: tokens.bodyMuted, textTransform: 'uppercase',
     letterSpacing: '0.05em', margin: '0 0 0.9rem',
   },
   typeGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' },
   typeOption: {
-    border: '2px solid #E2E8F0', borderRadius: '12px', padding: '0.9rem 1rem',
-    cursor: 'pointer', transition: 'all 0.15s',
+    border: `2px solid ${tokens.border}`, borderRadius: '12px', padding: '0.9rem 1rem',
+    cursor: 'pointer', transition: 'border-color 0.15s, background-color 0.15s',
   },
-  typeOptionSelected: { borderColor: '#00B4D8', backgroundColor: '#EFFCFF' },
+  typeOptionSelected: { borderColor: tokens.primary, backgroundColor: tokens.primarySoft },
   typeOptionHeader: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' },
   checkbox: {
     width: '18px', height: '18px', borderRadius: '5px', border: '2px solid #CBD5E1',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '0.7rem', color: '#fff', flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  checkboxChecked: { backgroundColor: '#00B4D8', borderColor: '#00B4D8' },
-  typeOptionLabel: { fontSize: '0.9rem', fontWeight: '700', color: '#1A1A2E' },
-  typeOptionDesc: { fontSize: '0.78rem', color: '#94A3B8', margin: 0, paddingLeft: '1.65rem' },
+  checkboxChecked: { backgroundColor: tokens.primary, borderColor: tokens.primary },
+  typeOptionLabel: { fontSize: '0.9rem', fontWeight: '700', color: tokens.foreground },
+  typeOptionDesc: { fontSize: '0.78rem', color: tokens.bodyMuted, margin: 0, paddingLeft: '1.65rem' },
   difficultyRow: { display: 'flex', gap: '0.6rem' },
   difficultyBtn: {
-    flex: 1, padding: '0.65rem', borderRadius: '10px', border: '2px solid #E2E8F0',
-    backgroundColor: '#fff', color: '#64748B', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
+    flex: 1, padding: '0.65rem', borderRadius: '10px', border: `2px solid ${tokens.border}`,
+    backgroundColor: tokens.bgWhite, color: tokens.bodyMuted, fontWeight: '700', fontSize: '0.85rem', fontFamily: 'inherit',
   },
-  difficultyBtnActive: { borderColor: '#00B4D8', backgroundColor: '#EFFCFF', color: '#00838F' },
-  configHint: { color: '#EF4444', fontSize: '0.8rem', marginBottom: '1rem' },
+  difficultyBtnActive: { borderColor: tokens.primary, backgroundColor: tokens.primarySoft, color: tokens.primaryHover },
+  configHint: { color: tokens.danger, fontSize: '0.8rem', marginBottom: '1rem' },
   generateBtn: {
-    width: '100%', padding: '0.95rem', backgroundColor: '#1A1A2E', color: '#00B4D8',
-    border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '700',
+    width: '100%', padding: '0.95rem', backgroundColor: tokens.primary, color: '#fff',
+    border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '700', transition: 'background-color 0.15s',
   },
 
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' },
-  card: { backgroundColor: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
-  cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.3rem' },
-  cardSubtitle: { color: '#94A3B8', fontSize: '0.85rem', marginBottom: '1rem' },
+  filesGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' },
+  card: { backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(15,23,42,0.06)', border: `1px solid ${tokens.border}`, minWidth: 0 },
+  cardTitle: { fontFamily: tokens.headingFont, fontSize: '1.1rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  cardSubtitle: { color: tokens.bodyMuted, fontSize: '0.85rem', marginBottom: '1.25rem' },
   uploadLabel: { cursor: 'pointer', display: 'block' },
   fileInput: { display: 'none' },
-  uploadBox: { border: '2px dashed #E2E8F0', borderRadius: '12px', padding: '2rem', textAlign: 'center' },
-  uploadIcon: { fontSize: '2rem', display: 'block', marginBottom: '0.5rem' },
-  uploadText: { color: '#1A1A2E', fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.25rem' },
-  uploadHint: { color: '#94A3B8', fontSize: '0.8rem' },
-  notesList: { marginTop: '1rem', borderTop: '1px solid #F1F5F9', paddingTop: '1rem' },
-  notesTitle: { fontSize: '0.85rem', fontWeight: '600', color: '#94A3B8', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  noteItem: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid #F8FAFC' },
-  noteIcon: { fontSize: '1.2rem' },
-  noteName: { fontSize: '0.9rem', fontWeight: '500', color: '#1A1A2E', margin: 0 },
-  noteDate: { fontSize: '0.75rem', color: '#94A3B8', margin: 0 },
-  emptyTopics: { textAlign: 'center', padding: '2rem', color: '#94A3B8', fontSize: '0.9rem' },
-  emptyIcon: { fontSize: '2rem', display: 'block', marginBottom: '0.5rem' },
+  uploadBox: { border: `2px dashed ${tokens.border}`, borderRadius: '12px', padding: '2rem', textAlign: 'center', transition: 'border-color 0.15s, background-color 0.15s' },
+  uploadIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' },
+  uploadText: { color: tokens.foreground, fontWeight: '600', fontSize: '0.95rem', margin: '0 0 0.25rem' },
+  uploadHint: { color: tokens.bodyMuted, fontSize: '0.8rem', margin: 0 },
+  notesList: { marginTop: '1.25rem', borderTop: `1px solid ${tokens.border}`, paddingTop: '1rem' },
+  notesTitle: { fontSize: '0.78rem', fontWeight: '700', color: tokens.bodyMuted, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  noteItem: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid #F1F5F9' },
+  noteIconWrap: { flexShrink: 0, display: 'flex' },
+  noteName: { fontSize: '0.9rem', fontWeight: '600', color: tokens.foreground, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  noteDate: { fontSize: '0.75rem', color: tokens.bodyMuted, margin: 0 },
+  emptyTopics: { textAlign: 'center', padding: '2rem 1rem', color: tokens.bodyMuted, fontSize: '0.9rem' },
+  emptyIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' },
   topicsGrid: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
-  topicTag: { backgroundColor: '#EFF6FF', color: '#2563EB', padding: '0.35rem 0.6rem 0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap:'0.4rem'},
-  topicDeleteBtn: {background:'none', border: 'none', color: '#93C55D', fontSize: '0.75rem', cursor: 'pointer', padding: '0.1rem 0.2rem', lineHeight: 1},
+  topicTag: { backgroundColor: tokens.primarySoft, color: tokens.primary, padding: '0.35rem 0.6rem 0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.4rem' },
+  topicDeleteBtn: { background: 'none', border: 'none', color: tokens.bodyMuted, cursor: 'pointer', padding: '0.2rem', lineHeight: 1, display: 'flex', transition: 'color 0.15s' },
   reviewCard: {
-    marginTop: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '12px', padding: '1.1rem',
-    display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', border: '1px solid #F1F5F9',
+    marginTop: '1.25rem', backgroundColor: tokens.bgLight, borderRadius: '12px', padding: '1.1rem',
+    display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', border: `1px solid ${tokens.border}`,
+    transition: 'border-color 0.15s, background-color 0.15s, box-shadow 0.15s',
   },
-  actionIcon: { fontSize: '1.5rem', flexShrink: 0 },
-  actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.2rem' },
-  actionDesc: { fontSize: '0.8rem', color: '#94A3B8' },
-  actionArrow: { marginLeft: 'auto', color: '#CBD5E1', fontSize: '1.1rem', flexShrink: 0 },
+  actionIconWrap: { flexShrink: 0, color: tokens.primary, display: 'flex' },
+  actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.2rem' },
+  actionDesc: { fontSize: '0.8rem', color: tokens.bodyMuted, margin: 0 },
+  actionArrow: { marginLeft: 'auto', color: tokens.bodyMuted, fontSize: '1.1rem', flexShrink: 0 },
 
   comingSoonCard: {
-    backgroundColor: '#fff', borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', maxWidth: '560px',
+    backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
+    boxShadow: '0 2px 12px rgba(15,23,42,0.06)', maxWidth: '560px', border: `1px solid ${tokens.border}`,
   },
-  comingSoonIcon: { fontSize: '2.5rem', display: 'block', marginBottom: '1rem' },
-  comingSoonTitle: { fontSize: '1.2rem', fontWeight: '700', color: '#1A1A2E', marginBottom: '0.5rem' },
-  comingSoonText: { color: '#94A3B8', fontSize: '0.9rem', lineHeight: '1.6' },
+  comingSoonIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '1rem' },
+  comingSoonTitle: { fontFamily: tokens.headingFont, fontSize: '1.2rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.5rem' },
+  comingSoonText: { color: tokens.bodyMuted, fontSize: '0.9rem', lineHeight: '1.6', margin: 0 },
 };
 
 export default Subject;
