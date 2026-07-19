@@ -147,6 +147,9 @@ def is_low_quality_sentence(sentence, min_prose_ratio=0.85, min_words=4):
         return True
     if _prose_ratio(sentence) < min_prose_ratio:
         return True
+    first_word = sentence.strip().split()[0].lower() if sentence.strip() else ''
+    if first_word in ('and', 'or', 'but', 'so', 'because'):
+        return True
     return False
 
 def load_qg_model():

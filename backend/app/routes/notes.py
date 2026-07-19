@@ -48,6 +48,15 @@ def filter_admin_pages(pages_text):
         return pages_text
     return filtered
 
+def filter_numeric_topics(keywords, max_digit_ratio=0.4):
+    filtered = []
+    for kw, score in keywords:
+        digit_count = sum(1 for c in kw if c.isdigit())
+        if len(kw) > 0 and (digit_count / len(kw)) > max_digit_ratio:
+            continue
+        filtered.append((kw, score))
+    return filtered
+
 def strip_repeated_boilerplate(pages_text, min_pages=3):
     if len(pages_text) < min_pages:
         return pages_text
@@ -176,6 +185,27 @@ def deduplicate_topics(keywords, similarity_threshold=0.85):
 
     return keep
 
+def deduplicate_against_existing(keywords, existing_topic_names, similarity_threshold=0.85):
+    if not keywords or not existing_topic_names:
+        return keywords
+
+    existing_embeddings = embed_texts(existing_topic_names)
+    candidate_phrases = [kw for kw, score in keywords]
+    candidate_embeddings = embed_texts(candidate_phrases)
+
+    keep = []
+    for i, (phrase, score) in enumerate(keywords):
+        is_duplicate = False
+        for existing_emb in existing_embeddings:
+            sim = F.cosine_similarity(candidate_embeddings[i].unsqueeze(0), existing_emb.unsqueeze(0)).item()
+            if sim > similarity_threshold:
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            keep.append((phrase, score))
+
+    return keep
+
 CONTRACTION_FRAGMENTS = {'ve', 're', 'll', 'm', 's', 't', 'd'}
 
 def filter_fragment_topics(keywords, max_word_length=20, min_words=2):
@@ -233,6 +263,11 @@ def upload_note(subject_id):
     keywords = filter_admin_topics(keywords)
     keywords = filter_fragment_topics(keywords)
     keywords = filter_symbol_contaminated_topics(keywords)
+    keywords = filter_numeric_topics(keywords)
+
+    existing_topics = Topic.query.filter_by(subject_id = subject_id).all()
+    existing_topic_names = [t.topic_name for t in existing_topics]
+    keywords = deduplicate_against_existing(keywords, existing_topic_names)
     keywords = sorted(keywords, key=lambda x: x[1], reverse=True)[:10]
 
     for keyword, _score in keywords:
