@@ -156,6 +156,11 @@ const CreateSubject = () => {
                       <span style={styles.uploadIcon}><CloudUploadIcon /></span>
                       <p style={styles.uploadText}>Click to upload a file</p>
                       <p style={styles.uploadHint}>.txt or .pdf — max 10MB</p>
+                      <p style={styles.uploadTip}>
+                        Tip: notes with real explanatory sentences (definitions, examples, discussion)
+                        work best. Slides that are mostly diagrams, citations, or pure formulas may
+                        produce lower-quality questions.
+                      </p>
                     </>
                   )}
                 </div>
@@ -301,6 +306,13 @@ const styles = {
     fontWeight: '700',
     marginTop: '0.25rem',
     transition: 'background-color 0.15s',
+  },
+  uploadTip: {
+    color: '#94A3B8',
+    fontSize: '0.78rem',
+    marginTop: '0.6rem',
+    lineHeight: '1.5',
+    fontStyle: 'italic',
   },
 };
 

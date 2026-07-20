@@ -76,7 +76,16 @@ def strip_repeated_boilerplate(pages_text, min_pages=3):
     return ['\n'.join(l for l in lines if l not in boilerplate) for lines in pages_lines]
 
 _DUPLICATE_RUN_PATTERN = re.compile(r'\b([\w|]{2,40})\1\b')
-_DUPLICATE_WORD_PATTERN = re.compile(r'\b(\w+)\s+\1\b', re.IGNORECASE)
+_DUPLICATE_WORD_PATTERN = re.compile(r'\b([\w-]+),?\s+\1\b', re.IGNORECASE)
+_DUPLICATE_PUNCT_PATTERN = re.compile(r'\b(\w{2,40}[:;,])\1')
+_CITATION_PATTERN = re.compile(
+    r'\b(springer|elsevier|ieee|acm|wiley|nature|science direct|arxiv|proceedings|'
+    r'transactions on|journal of|conference on|slide credit|image credit|credit:|'
+    r'source:|adapted from)\b',
+    re.IGNORECASE
+)
+def filter_citation_topics(keywords):
+    return [(kw, score) for kw, score in keywords if not _CITATION_PATTERN.search(kw)]
 
 def repair_duplicated_text(text):
     cleaned = text
@@ -87,6 +96,7 @@ def repair_duplicated_text(text):
         previous = cleaned
         cleaned = _DUPLICATE_RUN_PATTERN.sub(r'\1', cleaned)
         cleaned = _DUPLICATE_WORD_PATTERN.sub(r'\1', cleaned)
+        cleaned = _DUPLICATE_PUNCT_PATTERN.sub(r'\1', cleaned)
     cleaned = cleaned.replace('|', ' ')
     return cleaned
 
@@ -261,6 +271,7 @@ def upload_note(subject_id):
     keywords = deduplicate_topics(keywords)
     keywords = filter_named_entities(keywords, entity_strings)
     keywords = filter_admin_topics(keywords)
+    keywords = filter_citation_topics(keywords)
     keywords = filter_fragment_topics(keywords)
     keywords = filter_symbol_contaminated_topics(keywords)
     keywords = filter_numeric_topics(keywords)

@@ -136,6 +136,8 @@ def generate_quiz(subject_id):
 
             if chosen_type == 'mcq':
                 result = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names, difficulty=difficulty)
+                if result is None:
+                    continue
                 q_type = 'mcq'
                 correct_answer = result['correct_answer']
                 options_json = json.dumps(result['options'])
@@ -144,6 +146,8 @@ def generate_quiz(subject_id):
 
             elif chosen_type == 'fill_blank':
                 result = generate_fill_blank_question(note.raw_text, topic.topic_name, other_topic_names, difficulty=difficulty)
+                if result is None:
+                    continue
                 q_type = 'fill_blank'
                 correct_answer = result['correct_answer']
                 options_json = json.dumps(result['options'])

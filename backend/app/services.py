@@ -90,7 +90,7 @@ def generate_mcq_question(raw_text, topic, other_topic_names, difficulty='medium
     context = extract_relevant_sentences(raw_text, topic, max_sentences=4, difficulty=difficulty)
     result = generate_mcq_with_flan(context, topic)
 
-    if result and not is_malformed_question(result['question']):
+    if result and not is_malformed_question(result['question']) and not is_malformed_answer(result['correct']):
         options = [result['correct'], result['wrong1'], result['wrong2'], result['wrong3']]
         random.shuffle(options)
         return {
@@ -100,6 +100,8 @@ def generate_mcq_question(raw_text, topic, other_topic_names, difficulty='medium
         }
 
     fib = generate_fill_in_blank(raw_text, topic, difficulty=difficulty)
+    if fib is None:
+        return None
     options = generate_mcq_options(topic, other_topic_names)
     return {
         'question_text': fib['question_text'],
@@ -279,13 +281,12 @@ def generate_mcq_options(topic_name, other_topic_names, num_options=4):
     random.shuffle(options)
     return options
 
-def generate_fill_in_blank(raw_text, topic, difficulty='medium'):
+def generate_fill_in_blank(raw_text, topic, difficulty='medium', min_fallback_similarity=0.3):
     sentences = split_into_clean_sentences(raw_text)
     pattern = re.compile(re.escape(topic), re.IGNORECASE)
 
     matches = [s for s in sentences if pattern.search(s)]
     if matches:
-        # For difficulty, prefer earlier matches for 'easy', later for 'hard'
         if difficulty == 'easy':
             chosen = matches[0]
         elif difficulty == 'hard':
@@ -299,20 +300,26 @@ def generate_fill_in_blank(raw_text, topic, difficulty='medium'):
             'correct_answer': topic,
             'from_real_sentence': True
         }
+    
+    if not sentences:
+        return None
 
-    if sentences:
-        try:
-            embeddings = embed_texts([topic] + sentences)
-            topic_emb = embeddings[0].unsqueeze(0)
-            sentence_embs = embeddings[1:]
-            similarities = F.cosine_similarity(topic_emb, sentence_embs).tolist()
-            best_idx = similarities.index(max(similarities))
-            base_sentence = sentences[best_idx]
-        except Exception as e:
-            print(f"Fallback sentence ranking failed: {e}")
-            base_sentence = sentences[0]
-    else:
-        base_sentence = topic
+    try:
+        embeddings = embed_texts([topic] + sentences)
+        topic_emb = embeddings[0].unsqueeze(0)
+        sentence_embs = embeddings[1:]
+        similarities = F.cosine_similarity(topic_emb, sentence_embs).tolist()
+        best_idx = similarities.index(max(similarities))
+        best_score = similarities[best_idx]
+        
+    except Exception as e:
+        print(f"Fallback sentence ranking failed: {e}")
+        return None
+    
+    if best_score < min_fallback_similarity:
+        return None
+
+    base_sentence = sentences[best_idx]
 
     return {
         'question_text': f"_____ is best described as: {base_sentence}",
@@ -371,10 +378,12 @@ def is_malformed_question(question_text, min_words=4):
 
 def generate_fill_blank_question(raw_text, topic, other_topic_names, difficulty='medium'):
     fib = generate_fill_in_blank(raw_text, topic, difficulty=difficulty)
+    if fib is None:
+        return None
     options = generate_mcq_options(topic, other_topic_names)
     return {
         'question_text': fib['question_text'],
-        'correct_answer': topic,
+        'correct_answer': fib['correct_answer'],
         'options': options
     }
 
