@@ -3,27 +3,27 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const tokens = {
-  primary: '#2563EB',
-  primaryHover: '#1D4ED8',
-  primarySoft: '#DBEAFE',
-  darkSurface: '#0F172A',
-  bgLight: '#F8FAFC',
-  bgWhite: '#FFFFFF',
-  foreground: '#1E293B',
-  onDarkMuted: '#F1F5F9',
-  bodyMuted: '#64748B',
-  border: '#E2E8F0',
+  ink: '#211D1C',
+  inkSoft: '#5C5750',
+  accent: '#FF8A4C',
+  accentHover: '#FF9D66',
+  accentSoft: '#FFE4D1',
+  paper: '#FBF7F2',
+  card: '#FFFFFF',
+  border: '#E8E1D8',
+  onInkMuted: '#C9C4BD',
   danger: '#DC2626',
-  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
-  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
+  displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
+  bodyFont: "'Karla', 'Segoe UI', sans-serif",
+  monoFont: "'IBM Plex Mono', 'Courier New', monospace",
 };
 
 const LogoMark = ({ size = 26 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect width="24" height="24" rx="6" fill={tokens.primary} />
-    <rect x="5" y="13" width="3.2" height="6" rx="1" fill="#FFFFFF" />
-    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill="#FFFFFF" />
-    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#93C5FD" />
+    <rect width="24" height="24" rx="7" fill={tokens.accent} />
+    <rect x="5" y="13" width="3.2" height="6" rx="1" fill={tokens.ink} />
+    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill={tokens.ink} />
+    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#FFFFFF" opacity="0.9" />
   </svg>
 );
 
@@ -45,7 +45,7 @@ const EyeIcon = ({ off }) => (
 );
 
 const CheckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tokens.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tokens.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M20 6 9 17l-5-5" />
   </svg>
 );
@@ -77,28 +77,28 @@ const Register = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
         .auth-input {
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .auth-input:focus {
           outline: none;
-          border-color: ${tokens.primary} !important;
-          box-shadow: 0 0 0 3px ${tokens.primarySoft};
+          border-color: ${tokens.accent} !important;
+          box-shadow: 0 0 0 3px ${tokens.accentSoft};
         }
         .auth-btn:hover:not(:disabled) {
-          background-color: ${tokens.primaryHover} !important;
+          background-color: ${tokens.accentHover} !important;
         }
         a, button {
           cursor: pointer;
         }
         a:focus-visible, button:focus-visible {
-          outline: 2px solid ${tokens.primary};
+          outline: 2px solid ${tokens.ink};
           outline-offset: 2px;
         }
         .password-toggle:hover {
-          color: ${tokens.foreground} !important;
+          color: ${tokens.ink} !important;
         }
 
         @media (max-width: 900px) {
@@ -197,7 +197,7 @@ const Register = () => {
         <div style={styles.brandContent}>
           <h2 style={styles.brandHeadline}>Turn your notes into a personal trainer.</h2>
           <p style={styles.brandSubhead}>
-            Upload your notes once, Let QuizAdapt handle the rest.
+            Upload your notes once, let QuizAdapt handle the rest.
           </p>
 
           <div style={styles.featureCard}>
@@ -230,7 +230,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.bgWhite,
+    backgroundColor: tokens.paper,
     padding: '3rem 2rem',
   },
   formWrap: {
@@ -241,23 +241,23 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '0.6rem',
-    fontFamily: tokens.headingFont,
+    fontFamily: tokens.displayFont,
     fontSize: '1.15rem',
-    fontWeight: '600',
-    color: tokens.foreground,
+    fontWeight: '700',
+    color: tokens.ink,
     textDecoration: 'none',
     marginBottom: '2rem',
   },
   title: {
     margin: '0 0 0.4rem',
-    color: tokens.foreground,
-    fontFamily: tokens.headingFont,
+    color: tokens.ink,
+    fontFamily: tokens.displayFont,
     fontSize: '1.7rem',
     fontWeight: '700',
   },
   subtitle: {
     margin: '0 0 1.75rem',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
     fontSize: '0.95rem',
   },
   errorBanner: {
@@ -276,9 +276,10 @@ const styles = {
   },
   label: {
     display: 'block',
-    fontSize: '0.8rem',
+    fontSize: '0.75rem',
+    fontFamily: tokens.monoFont,
     fontWeight: '600',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
     marginBottom: '0.4rem',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
@@ -289,9 +290,11 @@ const styles = {
     borderRadius: '10px',
     border: `2px solid ${tokens.border}`,
     fontSize: '0.95rem',
-    color: tokens.foreground,
+    color: tokens.ink,
     outline: 'none',
     boxSizing: 'border-box',
+    fontFamily: 'inherit',
+    backgroundColor: tokens.card,
   },
   passwordWrap: {
     position: 'relative',
@@ -304,16 +307,16 @@ const styles = {
     background: 'none',
     border: 'none',
     padding: '0.25rem',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
     display: 'flex',
     alignItems: 'center',
   },
   button: {
     padding: '0.85rem',
-    backgroundColor: tokens.primary,
-    color: '#fff',
+    backgroundColor: tokens.accent,
+    color: tokens.ink,
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '999px',
     fontSize: '1rem',
     fontWeight: '700',
     marginTop: '0.25rem',
@@ -323,12 +326,12 @@ const styles = {
     marginTop: '1.75rem',
     textAlign: 'center',
     fontSize: '0.85rem',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
   },
   linkAccent: {
-    color: tokens.primary,
-    fontWeight: '600',
-    textDecoration: 'none',
+    color: tokens.ink,
+    fontWeight: '700',
+    textDecoration: 'underline',
   },
   brandSide: {
     flex: '1 1 480px',
@@ -336,7 +339,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.darkSurface,
+    backgroundColor: tokens.ink,
     padding: '3rem',
   },
   brandContent: {
@@ -344,22 +347,23 @@ const styles = {
   },
   brandHeadline: {
     color: '#FFFFFF',
-    fontFamily: tokens.headingFont,
+    fontFamily: tokens.displayFont,
     fontSize: '2rem',
     fontWeight: '700',
-    lineHeight: '1.2',
-    margin: '0 0 0.75rem',
+    lineHeight: '1.25',
+    margin: '0 0 0.9rem',
+    letterSpacing: '-0.5px',
   },
   brandSubhead: {
-    color: tokens.onDarkMuted,
+    color: tokens.onInkMuted,
     fontSize: '1rem',
     lineHeight: '1.6',
     margin: '0 0 2rem',
   },
   featureCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '14px',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '16px',
     padding: '1.5rem',
     display: 'flex',
     flexDirection: 'column',
@@ -371,7 +375,7 @@ const styles = {
     gap: '0.75rem',
   },
   featureText: {
-    color: '#E2E8F0',
+    color: '#EDEAE6',
     fontSize: '0.9rem',
     lineHeight: '1.5',
   },

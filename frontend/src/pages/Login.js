@@ -4,27 +4,27 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
 const tokens = {
-  primary: '#2563EB',
-  primaryHover: '#1D4ED8',
-  primarySoft: '#DBEAFE',
-  darkSurface: '#0F172A',
-  bgLight: '#F8FAFC',
-  bgWhite: '#FFFFFF',
-  foreground: '#1E293B',
-  onDarkMuted: '#F1F5F9',
-  bodyMuted: '#64748B',
-  border: '#E2E8F0',
+  ink: '#211D1C',
+  inkSoft: '#5C5750',
+  accent: '#FF8A4C',
+  accentHover: '#FF9D66',
+  accentSoft: '#FFE4D1',
+  paper: '#FBF7F2',
+  card: '#FFFFFF',
+  border: '#E8E1D8',
+  onInkMuted: '#C9C4BD',
   danger: '#DC2626',
-  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
-  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
+  displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
+  bodyFont: "'Karla', 'Segoe UI', sans-serif",
+  monoFont: "'IBM Plex Mono', 'Courier New', monospace",
 };
 
 const LogoMark = ({ size = 26 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect width="24" height="24" rx="6" fill={tokens.primary} />
-    <rect x="5" y="13" width="3.2" height="6" rx="1" fill="#FFFFFF" />
-    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill="#FFFFFF" />
-    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#93C5FD" />
+    <rect width="24" height="24" rx="7" fill={tokens.accent} />
+    <rect x="5" y="13" width="3.2" height="6" rx="1" fill={tokens.ink} />
+    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill={tokens.ink} />
+    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#FFFFFF" opacity="0.9" />
   </svg>
 );
 
@@ -42,6 +42,15 @@ const EyeIcon = ({ off }) => (
         <circle cx="12" cy="12" r="3" />
       </>
     )}
+  </svg>
+);
+
+const CircleDoodle = ({ style }) => (
+  <svg viewBox="0 0 220 90" style={style} aria-hidden="true">
+    <path
+      d="M12 46 C10 20, 55 6, 112 7 C172 8, 210 20, 207 48 C204 74, 155 84, 100 83 C48 82, 14 70, 12 46Z"
+      fill="none" stroke={tokens.accent} strokeWidth="4" strokeLinecap="round"
+    />
   </svg>
 );
 
@@ -83,28 +92,28 @@ const Login = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
         .auth-input {
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .auth-input:focus {
           outline: none;
-          border-color: ${tokens.primary} !important;
-          box-shadow: 0 0 0 3px ${tokens.primarySoft};
+          border-color: ${tokens.accent} !important;
+          box-shadow: 0 0 0 3px ${tokens.accentSoft};
         }
         .auth-btn:hover:not(:disabled) {
-          background-color: ${tokens.primaryHover} !important;
+          background-color: ${tokens.accentHover} !important;
         }
         a, button {
           cursor: pointer;
         }
         a:focus-visible, button:focus-visible {
-          outline: 2px solid ${tokens.primary};
+          outline: 2px solid ${tokens.ink};
           outline-offset: 2px;
         }
         .password-toggle:hover {
-          color: ${tokens.foreground} !important;
+          color: ${tokens.ink} !important;
         }
 
         @media (max-width: 900px) {
@@ -187,7 +196,13 @@ const Login = () => {
 
       <div style={styles.brandSide} className="brand-side">
         <div style={styles.brandContent}>
-          <h2 style={styles.brandHeadline}>Learn what you don't know yet.</h2>
+          <h2 style={styles.brandHeadline}>
+            Learn what you<br />
+            <span style={styles.headlineDoodleWrap}>
+              don&rsquo;t know yet.
+              <CircleDoodle style={styles.circleDoodle} />
+            </span>
+          </h2>
           <p style={styles.brandSubhead}>
             QuizAdapt turns your notes into quizzes that target your weak spots.
           </p>
@@ -198,7 +213,7 @@ const Login = () => {
               What is the primary goal of Machine Learning?
             </p>
             <div style={styles.demoOptions}>
-              <div style={styles.demoOption}>A. PManually label data for computers to 
+              <div style={styles.demoOption}>A. Manually label data for computers to
                 memorize known outcomes</div>
               <div style={{ ...styles.demoOption, ...styles.demoOptionCorrect }}>
                 B. Develop methods that detect patterns and predict future data
@@ -224,7 +239,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.bgWhite,
+    backgroundColor: tokens.paper,
     padding: '3rem 2rem',
   },
   formWrap: {
@@ -235,23 +250,23 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '0.6rem',
-    fontFamily: tokens.headingFont,
+    fontFamily: tokens.displayFont,
     fontSize: '1.15rem',
-    fontWeight: '600',
-    color: tokens.foreground,
+    fontWeight: '700',
+    color: tokens.ink,
     textDecoration: 'none',
     marginBottom: '2rem',
   },
   title: {
     margin: '0 0 0.4rem',
-    color: tokens.foreground,
-    fontFamily: tokens.headingFont,
+    color: tokens.ink,
+    fontFamily: tokens.displayFont,
     fontSize: '1.7rem',
     fontWeight: '700',
   },
   subtitle: {
     margin: '0 0 1.75rem',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
     fontSize: '0.95rem',
   },
   errorBanner: {
@@ -270,9 +285,10 @@ const styles = {
   },
   label: {
     display: 'block',
-    fontSize: '0.8rem',
+    fontSize: '0.75rem',
+    fontFamily: tokens.monoFont,
     fontWeight: '600',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
     marginBottom: '0.4rem',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
@@ -283,9 +299,11 @@ const styles = {
     borderRadius: '10px',
     border: `2px solid ${tokens.border}`,
     fontSize: '0.95rem',
-    color: tokens.foreground,
+    color: tokens.ink,
     outline: 'none',
     boxSizing: 'border-box',
+    fontFamily: 'inherit',
+    backgroundColor: tokens.card,
   },
   passwordWrap: {
     position: 'relative',
@@ -298,16 +316,16 @@ const styles = {
     background: 'none',
     border: 'none',
     padding: '0.25rem',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
     display: 'flex',
     alignItems: 'center',
   },
   button: {
     padding: '0.85rem',
-    backgroundColor: tokens.primary,
-    color: '#fff',
+    backgroundColor: tokens.accent,
+    color: tokens.ink,
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '999px',
     fontSize: '1rem',
     fontWeight: '700',
     marginTop: '0.25rem',
@@ -317,12 +335,12 @@ const styles = {
     marginTop: '1.75rem',
     textAlign: 'center',
     fontSize: '0.85rem',
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
   },
   linkAccent: {
-    color: tokens.primary,
-    fontWeight: '600',
-    textDecoration: 'none',
+    color: tokens.ink,
+    fontWeight: '700',
+    textDecoration: 'underline',
   },
   brandSide: {
     flex: '1 1 480px',
@@ -330,7 +348,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.darkSurface,
+    backgroundColor: tokens.ink,
     padding: '3rem',
   },
   brandContent: {
@@ -338,28 +356,31 @@ const styles = {
   },
   brandHeadline: {
     color: '#FFFFFF',
-    fontFamily: tokens.headingFont,
+    fontFamily: tokens.displayFont,
     fontSize: '2rem',
     fontWeight: '700',
-    lineHeight: '1.2',
-    margin: '0 0 0.75rem',
+    lineHeight: '1.25',
+    margin: '0 0 0.9rem',
+    letterSpacing: '-0.5px',
   },
+  headlineDoodleWrap: { position: 'relative', display: 'inline-block' },
+  circleDoodle: { position: 'absolute', left: '-12px', top: '-16px', width: 'calc(100% + 24px)', height: 'calc(100% + 28px)', pointerEvents: 'none' },
   brandSubhead: {
-    color: tokens.onDarkMuted,
+    color: tokens.onInkMuted,
     fontSize: '1rem',
     lineHeight: '1.6',
     margin: '0 0 2rem',
   },
   demoCard: {
-    backgroundColor: tokens.bgWhite,
-    borderRadius: '14px',
+    backgroundColor: tokens.card,
+    borderRadius: '16px',
     padding: '1.5rem',
     boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
   },
   demoBadge: {
     display: 'inline-block',
-    backgroundColor: tokens.primarySoft,
-    color: tokens.primaryHover,
+    backgroundColor: tokens.accentSoft,
+    color: '#B45414',
     fontSize: '0.7rem',
     fontWeight: '700',
     padding: '0.28rem 0.6rem',
@@ -367,10 +388,11 @@ const styles = {
     marginBottom: '0.75rem',
   },
   demoQuestion: {
+    fontFamily: tokens.displayFont,
     fontSize: '0.95rem',
-    fontWeight: '600',
+    fontWeight: '700',
     margin: '0 0 0.85rem',
-    color: tokens.foreground,
+    color: tokens.ink,
   },
   demoOptions: {
     display: 'flex',
@@ -380,14 +402,14 @@ const styles = {
   demoOption: {
     fontSize: '0.85rem',
     padding: '0.5rem 0.7rem',
-    borderRadius: '8px',
+    borderRadius: '10px',
     border: `1px solid ${tokens.border}`,
-    color: tokens.bodyMuted,
+    color: tokens.inkSoft,
   },
   demoOptionCorrect: {
-    borderColor: tokens.primary,
-    backgroundColor: tokens.primarySoft,
-    color: tokens.foreground,
+    borderColor: tokens.accent,
+    backgroundColor: tokens.accentSoft,
+    color: tokens.ink,
     fontWeight: '600',
   },
 };

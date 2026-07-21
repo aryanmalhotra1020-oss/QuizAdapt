@@ -171,6 +171,7 @@ const Landing = () => {
             Learn what you<br />
             <span style={styles.headlineDoodleWrap}>
               don&rsquo;t know yet.
+              <CircleDoodle style={styles.circleDoodle} />
             </span>
           </h1>
           <p style={styles.subheadline}>
