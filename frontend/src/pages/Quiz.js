@@ -1,6 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { tokens, fontImport } from '../theme';
+
+const SpinnerIcon = () => (
+  <svg className="quiz-spinner" width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke={tokens.border} strokeWidth="3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke={tokens.accent} strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+const TrophyIcon = ({ color }) => (
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M8 21h8" /><path d="M12 17v4" />
+    <path d="M7 4h10v5a5 5 0 0 1-10 0Z" />
+    <path d="M17 5h2.5a1.5 1.5 0 0 1 0 3H17" />
+    <path d="M7 5H4.5a1.5 1.5 0 0 0 0 3H7" />
+  </svg>
+);
+
+const TargetIcon = ({ color }) => (
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" fill={color} stroke="none" />
+  </svg>
+);
+
+const BookIcon = ({ color }) => (
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+  </svg>
+);
+
+const CheckCircleIcon = ({ color }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const XCircleIcon = ({ color }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
 
 const Quiz = () => {
   const { quizId } = useParams();
@@ -92,15 +135,21 @@ const Quiz = () => {
   };
 
   const getScoreColor = (pct) => {
-    if (pct >= 70) return '#22C55E';
-    if (pct >= 40) return '#F59E0B';
-    return '#EF4444';
+    if (pct >= 70) return tokens.good;
+    if (pct >= 40) return tokens.moderate;
+    return tokens.critical;
   };
 
   if (loading) return (
     <div style={styles.centered}>
+      <style>{`${fontImport}
+        @media (prefers-reduced-motion: no-preference) {
+          .quiz-spinner { animation: quiz-spin 0.8s linear infinite; }
+        }
+        @keyframes quiz-spin { to { transform: rotate(360deg); } }
+      `}</style>
       <div style={styles.loadingCard}>
-        <span style={styles.loadingIcon}>🧠</span>
+        <span style={styles.loadingIconWrap}><SpinnerIcon /></span>
         <h2 style={styles.loadingTitle}>Generating your quiz...</h2>
         <p style={styles.loadingText}>
           Each question is being written specifically for you — this can take a minute or two. Hang tight.
@@ -112,16 +161,21 @@ const Quiz = () => {
   if (submitted) {
     const { correct, total } = getScore();
     const percentage = Math.round((correct / total) * 100);
+    const scoreColor = getScoreColor(percentage);
+    const ResultIcon = percentage >= 70 ? TrophyIcon : percentage >= 40 ? TargetIcon : BookIcon;
     return (
       <div style={styles.centered}>
+        <style>{`${fontImport}
+          .quiz-back-btn:hover { background-color: ${tokens.accentHover} !important; }
+          button { cursor: pointer; }
+          button:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
+        `}</style>
         <div style={styles.resultsCard}>
           <div style={styles.resultsHeader}>
-            <span style={styles.resultsEmoji}>
-              {percentage >= 70 ? '🎉' : percentage >= 40 ? '💪' : '📚'}
-            </span>
+            <span style={styles.resultsIconWrap}><ResultIcon color={scoreColor} /></span>
             <h2 style={styles.resultsTitle}>Quiz Complete!</h2>
-            <div style={{ ...styles.scoreCircle, borderColor: getScoreColor(percentage) }}>
-              <span style={{ ...styles.scoreNum, color: getScoreColor(percentage) }}>{percentage}%</span>
+            <div style={{ ...styles.scoreCircle, borderColor: scoreColor }}>
+              <span style={{ ...styles.scoreNum, color: scoreColor }}>{percentage}%</span>
               <span style={styles.scoreLabel}>{correct}/{total} correct</span>
             </div>
             <p style={styles.resultsFeedback}>
@@ -139,15 +193,17 @@ const Quiz = () => {
               return (
                 <div key={i} style={{
                   ...styles.resultItem,
-                  borderLeft: `4px solid ${result.is_correct ? '#22C55E' : '#EF4444'}`
+                  borderLeft: `4px solid ${result.is_correct ? tokens.good : tokens.critical}`
                 }}>
                   <div style={styles.resultHeader}>
                     <span style={{
                       ...styles.resultBadge,
-                      backgroundColor: result.is_correct ? '#F0FDF4' : '#FEF2F2',
-                      color: result.is_correct ? '#16A34A' : '#DC2626'
+                      backgroundColor: result.is_correct ? tokens.successSoft : tokens.dangerSoft,
+                      color: result.is_correct ? tokens.successText : tokens.dangerText
                     }}>
-                      {result.is_correct ? '✓ Correct' : '✗ Incorrect'}
+                      {result.is_correct
+                        ? <><CheckCircleIcon color={tokens.successText} /> Correct</>
+                        : <><XCircleIcon color={tokens.dangerText} /> Incorrect</>}
                     </span>
                   </div>
                   <p style={styles.resultQuestion}>{question?.question_text}</p>
@@ -156,7 +212,7 @@ const Quiz = () => {
                   </p>
                   {!result.is_correct && (
                     <p style={styles.correctAnswer}>
-                      ✓ Correct answer: <strong>{formatAnswerForDisplay(question, result.correct_answer)}</strong>
+                      <CheckCircleIcon color={tokens.successText} /> Correct answer: <strong>{formatAnswerForDisplay(question, result.correct_answer)}</strong>
                     </p>
                   )}
                 </div>
@@ -164,7 +220,7 @@ const Quiz = () => {
             })}
           </div>
 
-          <button style={styles.primaryBtn} onClick={() => navigate(`/subject/${subjectId}`)}>
+          <button className="quiz-back-btn" style={styles.primaryBtn} onClick={() => navigate(`/subject/${subjectId}`)}>
             Back to Subject →
           </button>
         </div>
@@ -174,6 +230,12 @@ const Quiz = () => {
 
   return (
     <div style={styles.pageContainer}>
+      <style>{`${fontImport}
+        .quiz-option-btn:hover { border-color: #D8CFC3; }
+        .quiz-submit-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
+        button { cursor: pointer; }
+        button:focus-visible, select:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
+      `}</style>
       <div style={styles.quizWrapper}>
         <div style={styles.header}>
           <h1 style={styles.headerTitle}>Adaptive Quiz</h1>
@@ -212,6 +274,7 @@ const Quiz = () => {
                       return (
                         <button
                           key={i}
+                          className="quiz-option-btn"
                           style={{
                             ...styles.optionBtn,
                             ...(isSelected ? styles.optionBtnSelected : {}),
@@ -235,6 +298,7 @@ const Quiz = () => {
                         return (
                           <button
                             key={i}
+                            className="quiz-option-btn"
                             style={{
                               ...styles.optionBtn,
                               ...styles.checkboxOptionBtn,
@@ -246,7 +310,7 @@ const Quiz = () => {
                               ...styles.miniCheckbox,
                               ...(isSelected ? styles.miniCheckboxChecked : {}),
                             }}>
-                              {isSelected && '✓'}
+                              {isSelected && <CheckCircleIcon color="#FFFFFF" />}
                             </span>
                             {option}
                           </button>
@@ -275,11 +339,12 @@ const Quiz = () => {
             <p style={styles.submitHint}>Answer all {questions.length} questions to submit</p>
           )}
           <button
+            className="quiz-submit-btn"
             style={{ ...styles.submitBtn, opacity: (!allAnswered || submitting) ? 0.5 : 1 }}
             onClick={handleSubmit}
             disabled={!allAnswered || submitting}
           >
-            {submitting ? 'Submitting...' : 'Submit Quiz ✓'}
+            {submitting ? 'Submitting...' : 'Submit Quiz →'}
           </button>
         </div>
       </div>
@@ -290,91 +355,91 @@ const Quiz = () => {
 const styles = {
   centered: {
     display: 'flex', justifyContent: 'center', alignItems: 'center',
-    minHeight: 'calc(100vh - 64px)', backgroundColor: '#F0F4F8', padding: '2rem',
+    minHeight: '100vh', backgroundColor: tokens.paper, padding: '2rem', fontFamily: tokens.bodyFont,
   },
   loadingCard: {
-    backgroundColor: '#fff', borderRadius: '16px', padding: '3rem', textAlign: 'center',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)', maxWidth: '420px',
+    backgroundColor: tokens.card, borderRadius: '16px', padding: '3rem', textAlign: 'center',
+    border: `1px solid ${tokens.border}`, boxShadow: '0 4px 20px rgba(33,29,28,0.08)', maxWidth: '420px',
   },
-  loadingIcon: { fontSize: '2.5rem', display: 'block', marginBottom: '1rem' },
-  loadingTitle: { color: '#1A1A2E', fontSize: '1.3rem', marginBottom: '0.75rem' },
-  loadingText: { color: '#64748B', fontSize: '0.9rem', lineHeight: '1.5' },
-  pageContainer: { backgroundColor: '#F0F4F8', minHeight: 'calc(100vh - 64px)', padding: '2rem' },
+  loadingIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '1rem' },
+  loadingTitle: { fontFamily: tokens.displayFont, color: tokens.ink, fontSize: '1.3rem', fontWeight: '700', marginBottom: '0.75rem' },
+  loadingText: { color: tokens.inkSoft, fontSize: '0.9rem', lineHeight: '1.5' },
+  pageContainer: { backgroundColor: tokens.paper, minHeight: '100vh', padding: '2rem', fontFamily: tokens.bodyFont },
   quizWrapper: { maxWidth: '720px', margin: '0 auto' },
   header: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem',
-    position: 'sticky', top: 0, backgroundColor: '#F0F4F8', padding: '0.5rem 0', zIndex: 10,
+    position: 'sticky', top: 0, backgroundColor: tokens.paper, padding: '0.5rem 0', zIndex: 10,
   },
-  headerTitle: { fontSize: '1.5rem', fontWeight: '800', color: '#1A1A2E', margin: 0 },
+  headerTitle: { fontFamily: tokens.displayFont, fontSize: '1.5rem', fontWeight: '700', color: tokens.ink, margin: 0 },
   progressBadge: {
-    backgroundColor: '#fff', color: '#00B4D8', fontWeight: '700', fontSize: '0.85rem',
-    padding: '0.4rem 0.9rem', borderRadius: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    backgroundColor: tokens.card, color: tokens.accentText, fontWeight: '700', fontSize: '0.85rem',
+    padding: '0.4rem 0.9rem', borderRadius: '20px', border: `1px solid ${tokens.border}`, boxShadow: '0 2px 8px rgba(33,29,28,0.06)',
   },
   questionCard: {
-    backgroundColor: '#fff', borderRadius: '16px', padding: '1.75rem', marginBottom: '1.25rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    backgroundColor: tokens.card, borderRadius: '16px', padding: '1.75rem', marginBottom: '1.25rem',
+    border: `1px solid ${tokens.border}`, boxShadow: '0 2px 12px rgba(33,29,28,0.06)',
   },
   questionNumber: {
-    display: 'inline-block', backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '0.75rem',
+    display: 'inline-block', backgroundColor: tokens.accentSoft, color: tokens.accentText, fontSize: '0.75rem',
     fontWeight: '700', padding: '0.25rem 0.75rem', borderRadius: '20px', marginBottom: '0.9rem',
     letterSpacing: '0.05em',
   },
-  questionText: { fontSize: '1.15rem', color: '#1A1A2E', lineHeight: '1.5', fontWeight: '600', margin: '0 0 1.25rem' },
-  fillBlankSentence: { fontSize: '1.1rem', color: '#1A1A2E', lineHeight: '2.2', fontWeight: '500' },
+  questionText: { fontSize: '1.15rem', color: tokens.ink, lineHeight: '1.5', fontWeight: '600', margin: '0 0 1.25rem' },
+  fillBlankSentence: { fontSize: '1.1rem', color: tokens.ink, lineHeight: '2.2', fontWeight: '500' },
   inlineSelect: {
     display: 'inline-block', margin: '0 0.4rem', padding: '0.3rem 0.6rem', borderRadius: '8px',
-    border: '2px solid #00B4D8', backgroundColor: '#EFFCFF', color: '#00838F', fontWeight: '700',
-    fontSize: '1rem', cursor: 'pointer',
+    border: `2px solid ${tokens.accent}`, backgroundColor: tokens.accentSoft, color: tokens.accentText, fontWeight: '700',
+    fontSize: '1rem', cursor: 'pointer', fontFamily: 'inherit',
   },
-  multiSelectHint: { color: '#94A3B8', fontSize: '0.8rem', margin: '-0.75rem 0 1rem' },
+  multiSelectHint: { color: tokens.inkSoft, fontSize: '0.8rem', margin: '-0.75rem 0 1rem' },
   optionsGrid: { display: 'flex', flexDirection: 'column', gap: '0.65rem' },
   optionBtn: {
-    width: '100%', padding: '0.85rem 1.1rem', backgroundColor: '#fff', color: '#1A1A2E',
-    border: '2px solid #E2E8F0', borderRadius: '10px', fontSize: '0.95rem', fontWeight: '600',
-    cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+    width: '100%', padding: '0.85rem 1.1rem', backgroundColor: tokens.card, color: tokens.ink,
+    border: `2px solid ${tokens.border}`, borderRadius: '10px', fontSize: '0.95rem', fontWeight: '600',
+    cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', fontFamily: 'inherit',
   },
-  optionBtnSelected: { borderColor: '#00B4D8', backgroundColor: '#EFFCFF', color: '#00838F' },
+  optionBtnSelected: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft, color: tokens.accentText },
   checkboxOptionBtn: { display: 'flex', alignItems: 'center', gap: '0.7rem' },
   miniCheckbox: {
-    width: '18px', height: '18px', borderRadius: '5px', border: '2px solid #CBD5E1',
+    width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${tokens.border}`,
     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem',
-    color: '#fff', flexShrink: 0,
+    flexShrink: 0,
   },
-  miniCheckboxChecked: { backgroundColor: '#00B4D8', borderColor: '#00B4D8' },
+  miniCheckboxChecked: { backgroundColor: tokens.accent, borderColor: tokens.accent },
   answerInput: {
-    width: '100%', padding: '0.85rem 1rem', borderRadius: '10px', border: '2px solid #E2E8F0',
-    fontSize: '0.95rem', color: '#1A1A2E', boxSizing: 'border-box',
+    width: '100%', padding: '0.85rem 1rem', borderRadius: '10px', border: `2px solid ${tokens.border}`,
+    fontSize: '0.95rem', color: tokens.ink, boxSizing: 'border-box', fontFamily: 'inherit', backgroundColor: tokens.card,
   },
   submitSection: { textAlign: 'center', paddingTop: '0.5rem', paddingBottom: '2rem' },
-  submitHint: { color: '#94A3B8', fontSize: '0.85rem', marginBottom: '0.75rem' },
+  submitHint: { color: tokens.inkSoft, fontSize: '0.85rem', marginBottom: '0.75rem' },
   submitBtn: {
-    padding: '0.95rem 2.5rem', backgroundColor: '#00B4D8', color: '#fff', border: 'none',
-    borderRadius: '10px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
+    padding: '0.95rem 2.5rem', backgroundColor: tokens.accent, color: tokens.onAccent, border: 'none',
+    borderRadius: '999px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', transition: 'background-color 0.15s',
   },
   resultsCard: {
-    backgroundColor: '#fff', borderRadius: '20px', padding: '2.5rem', width: '100%',
-    maxWidth: '680px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+    backgroundColor: tokens.card, borderRadius: '20px', padding: '2.5rem', width: '100%',
+    maxWidth: '680px', border: `1px solid ${tokens.border}`, boxShadow: '0 4px 24px rgba(33,29,28,0.08)',
   },
-  resultsHeader: { textAlign: 'center', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid #F1F5F9' },
-  resultsEmoji: { fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' },
-  resultsTitle: { fontSize: '1.8rem', color: '#1A1A2E', fontWeight: '800', marginBottom: '1.5rem' },
+  resultsHeader: { textAlign: 'center', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: `1px solid ${tokens.paper}` },
+  resultsIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' },
+  resultsTitle: { fontFamily: tokens.displayFont, fontSize: '1.8rem', color: tokens.ink, fontWeight: '700', marginBottom: '1.5rem' },
   scoreCircle: {
     width: '120px', height: '120px', borderRadius: '50%', border: '4px solid', display: 'flex',
     flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem',
   },
-  scoreNum: { fontSize: '2rem', fontWeight: '800', lineHeight: 1 },
-  scoreLabel: { fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.25rem' },
-  resultsFeedback: { color: '#64748B', fontSize: '0.95rem', lineHeight: '1.5' },
+  scoreNum: { fontFamily: tokens.displayFont, fontSize: '2rem', fontWeight: '700', lineHeight: 1 },
+  scoreLabel: { fontSize: '0.75rem', color: tokens.inkSoft, marginTop: '0.25rem' },
+  resultsFeedback: { color: tokens.inkSoft, fontSize: '0.95rem', lineHeight: '1.5' },
   resultsList: { display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' },
-  resultItem: { padding: '1rem', backgroundColor: '#F8FAFC', borderRadius: '10px' },
+  resultItem: { padding: '1rem', backgroundColor: tokens.paper, borderRadius: '10px' },
   resultHeader: { marginBottom: '0.5rem' },
-  resultBadge: { display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' },
-  resultQuestion: { margin: '0 0 0.4rem', fontWeight: '600', color: '#1A1A2E', fontSize: '0.95rem' },
-  resultAnswer: { margin: '0 0 0.25rem', color: '#64748B', fontSize: '0.85rem' },
-  correctAnswer: { margin: 0, color: '#16A34A', fontSize: '0.85rem' },
+  resultBadge: { display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' },
+  resultQuestion: { margin: '0 0 0.4rem', fontWeight: '600', color: tokens.ink, fontSize: '0.95rem' },
+  resultAnswer: { margin: '0 0 0.25rem', color: tokens.inkSoft, fontSize: '0.85rem' },
+  correctAnswer: { margin: 0, color: tokens.successText, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' },
   primaryBtn: {
-    width: '100%', padding: '0.9rem', backgroundColor: '#00B4D8', color: '#fff', border: 'none',
-    borderRadius: '10px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer',
+    width: '100%', padding: '0.9rem', backgroundColor: tokens.accent, color: tokens.onAccent, border: 'none',
+    borderRadius: '999px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', transition: 'background-color 0.15s',
   },
 };
 

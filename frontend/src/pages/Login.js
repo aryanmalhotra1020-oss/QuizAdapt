@@ -4,15 +4,18 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
 const tokens = {
-  ink: '#211D1C',
-  inkSoft: '#5C5750',
-  accent: '#FF8A4C',
-  accentHover: '#FF9D66',
-  accentSoft: '#FFE4D1',
-  paper: '#FBF7F2',
+  ink: '#334155',
+  inkSoft: '#64748B',
+  accent: '#2563EB',
+  accentHover: '#1D4ED8',
+  accentSoft: '#DBEAFE',
+  accentText: '#1D4ED8',
+  onAccent: '#FFFFFF',
+  paper: '#F8FAFC',
   card: '#FFFFFF',
-  border: '#E8E1D8',
-  onInkMuted: '#C9C4BD',
+  border: '#E2E8F0',
+  darkSurface: '#0F172A',
+  onInkMuted: '#CBD5E1',
   danger: '#DC2626',
   displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
   bodyFont: "'Karla', 'Segoe UI', sans-serif",
@@ -109,7 +112,7 @@ const Login = () => {
           cursor: pointer;
         }
         a:focus-visible, button:focus-visible {
-          outline: 2px solid ${tokens.ink};
+          outline: 2px solid ${tokens.accent};
           outline-offset: 2px;
         }
         .password-toggle:hover {
@@ -323,7 +326,7 @@ const styles = {
   button: {
     padding: '0.85rem',
     backgroundColor: tokens.accent,
-    color: tokens.ink,
+    color: tokens.onAccent,
     border: 'none',
     borderRadius: '999px',
     fontSize: '1rem',
@@ -348,7 +351,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.ink,
+    backgroundColor: tokens.darkSurface,
     padding: '3rem',
   },
   brandContent: {
@@ -380,7 +383,7 @@ const styles = {
   demoBadge: {
     display: 'inline-block',
     backgroundColor: tokens.accentSoft,
-    color: '#B45414',
+    color: tokens.accentText,
     fontSize: '0.7rem',
     fontWeight: '700',
     padding: '0.28rem 0.6rem',

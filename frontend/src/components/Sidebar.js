@@ -2,30 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { tokens, fontImport, LogoMark } from '../theme';
 
-const tokens = {
-  primary: '#2563EB',
-  darkSurface: '#0F172A',
-  darkSurfaceAlt: '#16213E',
-  onDarkMuted: '#F1F5F9',
-  onDarkFaint: 'rgba(255,255,255,0.62)',
-  border: '#374151',
-  warning: '#F59E0B',
-  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
-  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
-};
-
-const LogoMark = ({ size = 22 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect width="24" height="24" rx="6" fill={tokens.primary} />
-    <rect x="5" y="13" width="3.2" height="6" rx="1" fill="#FFFFFF" />
-    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill="#FFFFFF" />
-    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#93C5FD" />
-  </svg>
-);
 
 const AlertIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={tokens.warning} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={tokens.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
     <line x1="12" y1="9" x2="12" y2="13" />
     <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -96,7 +77,7 @@ const Sidebar = ({ isOpen = false, onClose = () => {}, collapsed = false, onTogg
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        ${fontImport}
 
         .sidebar-nav-link:hover { background-color: ${tokens.darkSurfaceAlt}; }
         .sidebar-user-link:hover { background-color: ${tokens.darkSurfaceAlt}; }
@@ -104,7 +85,7 @@ const Sidebar = ({ isOpen = false, onClose = () => {}, collapsed = false, onTogg
         .sidebar-close-btn { display: none; }
         .sidebar-backdrop { display: none; }
         button, a { cursor: pointer; }
-        a:focus-visible, button:focus-visible { outline: 2px solid ${tokens.primary}; outline-offset: 2px; }
+        a:focus-visible, button:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
 
         @media (max-width: 768px) {
           .app-sidebar {
@@ -142,7 +123,7 @@ const Sidebar = ({ isOpen = false, onClose = () => {}, collapsed = false, onTogg
       >
         <div style={{ ...styles.topRow, ...(collapsed ? styles.topRowCollapsed : {}) }}>
           <Link to="/dashboard" style={styles.brand} title="QuizAdapt">
-            <LogoMark />
+            <LogoMark dark />
             {!collapsed && 'QuizAdapt'}
           </Link>
           <button
@@ -279,9 +260,9 @@ const styles = {
   brand: {
     color: '#FFFFFF',
     textDecoration: 'none',
-    fontFamily: tokens.headingFont,
+    fontFamily: tokens.displayFont,
     fontSize: '1.1rem',
-    fontWeight: '600',
+    fontWeight: '700',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
@@ -291,7 +272,7 @@ const styles = {
   closeBtn: {
     background: 'none',
     border: 'none',
-    color: tokens.onDarkMuted,
+    color: tokens.onInkMuted,
     padding: '0.35rem',
     borderRadius: '6px',
     alignItems: 'center',
@@ -299,8 +280,8 @@ const styles = {
   },
   toggleBtn: {
     background: 'none',
-    border: `1px solid ${tokens.border}`,
-    color: tokens.onDarkMuted,
+    border: `1px solid ${tokens.onInkBorder}`,
+    color: tokens.onInkMuted,
     padding: '0.35rem',
     borderRadius: '6px',
     display: 'flex',
@@ -315,9 +296,10 @@ const styles = {
     flex: 1,
   },
   navLink: {
-    color: tokens.onDarkMuted,
+    color: tokens.onInkMuted,
     textDecoration: 'none',
     fontSize: '0.95rem',
+    fontWeight: '500',
     padding: '0.65rem 0.75rem',
     borderRadius: '6px',
     transition: 'background-color 0.15s',
@@ -332,19 +314,20 @@ const styles = {
   },
   navLinkActive: {
     backgroundColor: tokens.darkSurfaceAlt,
-    color: tokens.primary,
-    fontWeight: '600',
+    color: '#93C5FD',
+    fontWeight: '700',
   },
   subjectsHeading: {
-    color: tokens.onDarkFaint,
+    color: tokens.onInkMuted,
     fontSize: '0.7rem',
-    fontWeight: '700',
+    fontFamily: tokens.monoFont,
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     padding: '1rem 0.75rem 0.4rem',
   },
   subjectLink: {
-    color: tokens.onDarkMuted,
+    color: tokens.onInkMuted,
     textDecoration: 'none',
     fontSize: '0.9rem',
     padding: '0.55rem 0.75rem',
@@ -364,7 +347,7 @@ const styles = {
     display: 'inline-flex',
   },
   bottomSection: {
-    borderTop: `1px solid ${tokens.border}`,
+    borderTop: `1px solid ${tokens.onInkBorder}`,
     paddingTop: '1rem',
     display: 'flex',
     flexDirection: 'column',
@@ -387,8 +370,8 @@ const styles = {
     width: '32px',
     height: '32px',
     borderRadius: '50%',
-    backgroundColor: tokens.primary,
-    color: '#fff',
+    backgroundColor: tokens.accent,
+    color: tokens.onAccent,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -397,16 +380,17 @@ const styles = {
     flexShrink: 0,
   },
   userName: {
-    color: tokens.onDarkMuted,
+    color: '#FFFFFF',
     fontSize: '0.9rem',
+    fontWeight: '500',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
   logoutBtn: {
     backgroundColor: 'transparent',
-    border: `1px solid ${tokens.border}`,
-    color: tokens.onDarkMuted,
+    border: `1px solid ${tokens.onInkBorder}`,
+    color: tokens.onInkMuted,
     padding: '0.5rem 0.75rem',
     borderRadius: '6px',
     fontSize: '0.85rem',

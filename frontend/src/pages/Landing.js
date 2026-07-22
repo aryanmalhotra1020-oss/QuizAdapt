@@ -2,14 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const tokens = {
-  ink: '#211D1C',
-  inkSoft: '#5C5750',
-  accent: '#FF8A4C',
-  accentSoft: '#FFE4D1',
-  paper: '#FBF7F2',
+  ink: '#334155',
+  inkSoft: '#64748B',
+  accent: '#2563EB',
+  accentText: '#1D4ED8',
+  accentSoft: '#DBEAFE',
+  onAccent: '#FFFFFF',
+  paper: '#F8FAFC',
   card: '#FFFFFF',
-  border: '#E8E1D8',
-  good: '#3F7D58',
+  border: '#E2E8F0',
+  darkSurface: '#0F172A',
+  onInkMuted: '#CBD5E1',
   displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
   bodyFont: "'Karla', 'Segoe UI', sans-serif",
   monoFont: "'IBM Plex Mono', 'Courier New', monospace",
@@ -124,7 +127,7 @@ const Landing = () => {
         a:focus-visible, button:focus-visible {
           outline: 2px solid ${tokens.ink}; outline-offset: 3px;
         }
-        .ld-cta-accent:hover { background-color: #FF9D66 !important; }
+        .ld-cta-accent:hover { background-color: ${tokens.accentText} !important; }
         .ld-cta-ghost:hover { border-color: ${tokens.ink} !important; }
         .ld-nav-link:hover { opacity: 0.75; }
         .ld-bento-card, .ld-step-card {
@@ -133,7 +136,7 @@ const Landing = () => {
         @media (prefers-reduced-motion: no-preference) {
           .ld-bento-card:hover, .ld-step-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 28px rgba(33,29,28,0.12);
+            box-shadow: 0 10px 28px rgba(51,65,85,0.12);
           }
         }
         .ld-bento-card:hover, .ld-step-card:hover { border-color: ${tokens.ink}; }
@@ -428,7 +431,7 @@ const styles = {
   headerLinks: { display: 'flex', alignItems: 'center', gap: '1.5rem' },
   loginLink: { color: tokens.inkSoft, textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500', transition: 'opacity 0.15s' },
   headerCta: {
-    backgroundColor: tokens.accent, color: tokens.ink, textDecoration: 'none',
+    backgroundColor: tokens.accent, color: tokens.onAccent, textDecoration: 'none',
     padding: '0.55rem 1.15rem', borderRadius: '999px', fontSize: '0.88rem', fontWeight: '700',
     transition: 'background-color 0.15s',
   },
@@ -447,7 +450,7 @@ const styles = {
   subheadline: { color: tokens.inkSoft, fontSize: '1.05rem', lineHeight: '1.65', margin: '0 0 2rem' },
   heroCtas: { display: 'flex', flexWrap: 'wrap', gap: '1rem' },
   primaryBtn: {
-    backgroundColor: tokens.accent, color: tokens.ink, textDecoration: 'none',
+    backgroundColor: tokens.accent, color: tokens.onAccent, textDecoration: 'none',
     padding: '0.85rem 1.7rem', borderRadius: '999px', fontWeight: '700', fontSize: '1rem',
     transition: 'background-color 0.15s',
   },
@@ -460,7 +463,7 @@ const styles = {
   demoStack: { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '0.4rem' },
   demoCard: {
     backgroundColor: tokens.card, borderRadius: '16px', padding: '1.5rem',
-    border: `1px solid ${tokens.border}`, boxShadow: '0 10px 28px rgba(33,29,28,0.08)',
+    border: `1px solid ${tokens.border}`, boxShadow: '0 10px 28px rgba(51,65,85,0.08)',
   },
   demoCardAccent: { borderColor: tokens.ink },
   demoCardLabel: {
@@ -471,7 +474,7 @@ const styles = {
   demoArrowRow: { display: 'flex', justifyContent: 'center' },
   demoArrowDoodle: { width: '44px', height: '30px' },
   demoBadge: {
-    display: 'inline-block', backgroundColor: tokens.accentSoft, color: '#B45414',
+    display: 'inline-block', backgroundColor: tokens.accentSoft, color: tokens.accentText,
     fontSize: '0.68rem', fontWeight: '700', padding: '0.28rem 0.6rem', borderRadius: '999px', marginBottom: '0.8rem',
   },
   demoQuestion: { fontFamily: tokens.displayFont, fontSize: '0.98rem', fontWeight: '700', margin: '0 0 0.9rem', color: tokens.ink },
@@ -479,12 +482,12 @@ const styles = {
   demoOption: { fontSize: '0.85rem', padding: '0.55rem 0.75rem', borderRadius: '10px', border: `1px solid ${tokens.border}`, color: tokens.inkSoft },
   demoOptionCorrect: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft, color: tokens.ink, fontWeight: '600' },
   floatBadge: {
-    position: 'absolute', top: '-18px', right: '-14px', backgroundColor: tokens.ink, color: '#fff',
+    position: 'absolute', top: '-18px', right: '-14px', backgroundColor: tokens.darkSurface, color: '#fff',
     borderRadius: '14px', padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.6rem',
-    boxShadow: '0 10px 24px rgba(33,29,28,0.25)',
+    boxShadow: '0 10px 24px rgba(15,23,42,0.3)',
   },
-  floatBadgeNum: { fontFamily: tokens.monoFont, fontSize: '1.1rem', fontWeight: '700', display: 'block', color: tokens.accent },
-  floatBadgeLabel: { fontSize: '0.68rem', color: '#C9C4BD', display: 'block', whiteSpace: 'nowrap' },
+  floatBadgeNum: { fontFamily: tokens.monoFont, fontSize: '1.1rem', fontWeight: '700', display: 'block', color: '#93C5FD' },
+  floatBadgeLabel: { fontSize: '0.68rem', color: tokens.onInkMuted, display: 'block', whiteSpace: 'nowrap' },
 
   mechStrip: {
     display: 'flex', justifyContent: 'center', gap: '2.5rem', flexWrap: 'wrap',
@@ -509,7 +512,7 @@ const styles = {
   mockDashCol: { flex: '1 1 380px', minWidth: 0, display: 'flex', justifyContent: 'center' },
   mockDashCard: {
     backgroundColor: tokens.card, borderRadius: '18px', border: `1px solid ${tokens.border}`,
-    boxShadow: '0 16px 40px rgba(33,29,28,0.1)', width: '100%', maxWidth: '420px', overflow: 'hidden',
+    boxShadow: '0 16px 40px rgba(51,65,85,0.1)', width: '100%', maxWidth: '420px', overflow: 'hidden',
   },
   mockDashHeader: { display: 'flex', gap: '0.4rem', padding: '0.9rem 1.1rem', borderBottom: `1px solid ${tokens.border}` },
   mockDashDot: { width: '9px', height: '9px', borderRadius: '50%', backgroundColor: tokens.border },
@@ -527,10 +530,10 @@ const styles = {
   bentoLabel: { fontFamily: tokens.monoFont, fontSize: '0.68rem', fontWeight: '600', letterSpacing: '0.06em', color: tokens.inkSoft, display: 'block', marginBottom: '0.9rem' },
   bentoNote: { fontSize: '0.88rem', lineHeight: '1.6', color: tokens.ink, margin: 0, fontStyle: 'italic' },
   bentoTags: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
-  bentoTag: { backgroundColor: tokens.accentSoft, color: '#B45414', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: '600' },
+  bentoTag: { backgroundColor: tokens.accentSoft, color: tokens.accentText, padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: '600' },
   bentoDiffRow: { display: 'flex', gap: '0.5rem', marginBottom: '0.9rem' },
   bentoDiffPill: { flex: 1, textAlign: 'center', padding: '0.5rem', borderRadius: '8px', border: `1.5px solid ${tokens.border}`, fontSize: '0.8rem', fontWeight: '700', color: tokens.inkSoft },
-  bentoDiffPillActive: { borderColor: tokens.ink, backgroundColor: tokens.ink, color: '#fff' },
+  bentoDiffPillActive: { borderColor: tokens.darkSurface, backgroundColor: tokens.darkSurface, color: '#fff' },
   bentoSmallNote: { fontSize: '0.82rem', color: tokens.inkSoft, margin: 0, lineHeight: '1.5' },
   bentoQuestion: { fontWeight: '700', fontSize: '0.92rem', margin: '0 0 0.7rem', color: tokens.ink },
   bentoMiniOption: { fontSize: '0.82rem', padding: '0.5rem 0.7rem', borderRadius: '8px', border: `1.5px solid ${tokens.accent}`, backgroundColor: tokens.accentSoft, color: tokens.ink, fontWeight: '600' },
@@ -545,7 +548,7 @@ const styles = {
   builtBody: { fontSize: '0.98rem', color: tokens.inkSoft, lineHeight: '1.65', margin: 0 },
   builtMockCard: {
     backgroundColor: tokens.card, borderRadius: '16px', padding: '1.75rem', border: `1px solid ${tokens.border}`,
-    boxShadow: '0 12px 32px rgba(33,29,28,0.08)', width: '100%', maxWidth: '360px',
+    boxShadow: '0 12px 32px rgba(51,65,85,0.08)', width: '100%', maxWidth: '360px',
   },
   builtMockTitle: { fontWeight: '700', fontSize: '0.95rem', margin: '0 0 0.9rem', color: tokens.ink },
   builtReviewRow: { display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0', borderBottom: `1px solid ${tokens.paper}`, fontSize: '0.88rem', color: tokens.ink, fontWeight: '600' },
@@ -557,14 +560,14 @@ const styles = {
   builtCheckboxChecked: { backgroundColor: tokens.accent, borderColor: tokens.accent },
   builtTypeLabel: { fontSize: '0.78rem', fontWeight: '600', color: tokens.ink },
 
-  statsCta: { backgroundColor: tokens.ink, padding: '5.5rem 3rem', textAlign: 'center' },
+  statsCta: { backgroundColor: tokens.darkSurface, padding: '5.5rem 3rem', textAlign: 'center' },
   statsRow: { display: 'flex', justifyContent: 'center', gap: '3.5rem', flexWrap: 'wrap', marginBottom: '3rem' },
   statItem: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  statNum: { fontFamily: tokens.displayFont, fontSize: '2.4rem', fontWeight: '800', color: tokens.accent, lineHeight: 1 },
-  statLabel: { fontSize: '0.8rem', color: '#C9C4BD', marginTop: '0.5rem' },
+  statNum: { fontFamily: tokens.displayFont, fontSize: '2.4rem', fontWeight: '800', color: '#93C5FD', lineHeight: 1 },
+  statLabel: { fontSize: '0.8rem', color: tokens.onInkMuted, marginTop: '0.5rem' },
   ctaHeadline: { fontFamily: tokens.displayFont, fontSize: '1.8rem', fontWeight: '700', color: '#FFFFFF', maxWidth: '600px', margin: '0 auto 2rem', lineHeight: '1.3' },
   ctaBtn: {
-    display: 'inline-block', backgroundColor: tokens.accent, color: tokens.ink, textDecoration: 'none',
+    display: 'inline-block', backgroundColor: tokens.accent, color: tokens.onAccent, textDecoration: 'none',
     padding: '0.95rem 2rem', borderRadius: '999px', fontWeight: '700', fontSize: '1rem', transition: 'background-color 0.15s',
   },
 };

@@ -1,31 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { tokens, fontImport } from '../theme';
 
-const tokens = {
-  primary: '#2563EB',
-  primaryHover: '#1D4ED8',
-  primarySoft: '#DBEAFE',
-  foreground: '#1E293B',
-  bodyMuted: '#64748B',
-  border: '#E2E8F0',
-  bgLight: '#F8FAFC',
-  bgWhite: '#FFFFFF',
-  good: '#0ca30c',
-  warning: '#fab219',
-  critical: '#d03b3b',
-  typeDiagnostic: '#2563EB',
-  typeDiagnosticSoft: '#EFF6FF',
-  typeAdaptive: '#7C3AED',
-  typeAdaptiveSoft: '#F5F3FF',
-  typeInitial: '#0891B2',
-  typeInitialSoft: '#ECFEFF',
-  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
-  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
+const typeMeta = {
+  typeDiagnostic: '#5C7A99',
+  typeDiagnosticSoft: '#EAF0F5',
+  typeAdaptive: tokens.accentText,
+  typeAdaptiveSoft: tokens.accentSoft,
+  typeInitial: '#2F7A6C',
+  typeInitialSoft: '#E7F3F0',
 };
 
 const getStatus = (pct) => {
   if (pct >= 70) return { color: tokens.good, label: 'Strong' };
-  if (pct >= 40) return { color: tokens.warning, label: 'Moderate' };
+  if (pct >= 40) return { color: tokens.moderate, label: 'Moderate' };
   return { color: tokens.critical, label: 'Weak' };
 };
 
@@ -59,7 +47,7 @@ const ScoreGauge = ({ score }) => {
 };
 
 const ChartIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={tokens.inkSoft} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <line x1="18" y1="20" x2="18" y2="10" />
     <line x1="12" y1="20" x2="12" y2="4" />
     <line x1="6" y1="20" x2="6" y2="14" />
@@ -67,7 +55,7 @@ const ChartIcon = () => (
 );
 
 const HistoryIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tokens.inkSoft} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M3 3v5h5" />
     <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
     <path d="M12 7v5l4 2" />
@@ -106,9 +94,9 @@ const ArrowIcon = () => (
 );
 
 const TYPE_META = {
-  diagnostic: { label: 'Diagnostic', color: tokens.typeDiagnostic, bg: tokens.typeDiagnosticSoft, Icon: ClipboardIcon },
-  adaptive: { label: 'Adaptive', color: tokens.typeAdaptive, bg: tokens.typeAdaptiveSoft, Icon: TargetIcon },
-  initial: { label: 'Initial', color: tokens.typeInitial, bg: tokens.typeInitialSoft, Icon: PencilIcon },
+  diagnostic: { label: 'Diagnostic', color: typeMeta.typeDiagnostic, bg: typeMeta.typeDiagnosticSoft, Icon: ClipboardIcon },
+  adaptive: { label: 'Adaptive', color: typeMeta.typeAdaptive, bg: typeMeta.typeAdaptiveSoft, Icon: TargetIcon },
+  initial: { label: 'Initial', color: typeMeta.typeInitial, bg: typeMeta.typeInitialSoft, Icon: PencilIcon },
 };
 
 const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
@@ -148,14 +136,14 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
   return (
     <div style={styles.root}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        ${fontImport}
         @media (prefers-reduced-motion: no-preference) {
           .score-gauge-fill { transition: stroke-dashoffset 0.8s ease-out; }
           .topic-bar-fill { transition: width 0.6s ease-out; }
         }
-        .continue-btn:hover { background-color: ${tokens.primaryHover} !important; }
+        .continue-btn:hover { background-color: ${tokens.accentHover} !important; }
         button { cursor: pointer; }
-        button:focus-visible { outline: 2px solid ${tokens.primary}; outline-offset: 2px; }
+        button:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
 
         @media (max-width: 900px) {
           .perf-summary-grid { grid-template-columns: 1fr !important; }
@@ -191,8 +179,8 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
             <span style={styles.statLabel}><span style={{ ...styles.statDot, backgroundColor: tokens.critical }} />Weak Topics</span>
             <span style={styles.statNum}>{summary.weak_count}</span>
           </div>
-          <div style={{ ...styles.statCard, borderTopColor: tokens.warning }}>
-            <span style={styles.statLabel}><span style={{ ...styles.statDot, backgroundColor: tokens.warning }} />Moderate</span>
+          <div style={{ ...styles.statCard, borderTopColor: tokens.moderate }}>
+            <span style={styles.statLabel}><span style={{ ...styles.statDot, backgroundColor: tokens.moderate }} />Moderate</span>
             <span style={styles.statNum}>{summary.moderate_count}</span>
           </div>
           <div style={{ ...styles.statCard, borderTopColor: tokens.good }}>
@@ -213,13 +201,13 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
           ) : (
             <div>
               {weak.length > 0 && (
-                <TopicGroup label="Needs Work" color={tokens.critical} topics={weak} />
+                <TopicGroup label="Needs Work" color={tokens.critical} textColor={tokens.dangerText} topics={weak} />
               )}
               {moderate.length > 0 && (
-                <TopicGroup label="Getting There" color={tokens.warning} topics={moderate} />
+                <TopicGroup label="Getting There" color={tokens.moderate} textColor={tokens.warningText} topics={moderate} />
               )}
               {strong.length > 0 && (
-                <TopicGroup label="Strong" color={tokens.good} topics={strong} />
+                <TopicGroup label="Strong" color={tokens.good} textColor={tokens.successText} topics={strong} />
               )}
             </div>
           )}
@@ -267,11 +255,11 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
   );
 };
 
-const TopicGroup = ({ label, color, topics }) => (
+const TopicGroup = ({ label, color, textColor, topics }) => (
   <div style={styles.topicGroup}>
     <div style={styles.groupHeader}>
       <span style={{ ...styles.groupDot, backgroundColor: color }} />
-      <h3 style={{ ...styles.groupTitle, color }}>{label}</h3>
+      <h3 style={{ ...styles.groupTitle, color: textColor }}>{label}</h3>
     </div>
     {topics.map((topic) => (
       <div key={topic.topic_id} style={topicStyles.row}>
@@ -290,20 +278,20 @@ const TopicGroup = ({ label, color, topics }) => (
 
 const topicStyles = {
   row: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.6rem' },
-  name: { width: '140px', fontSize: '0.85rem', color: tokens.foreground, flexShrink: 0, textTransform: 'capitalize', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  barContainer: { flex: 1, minWidth: 0, height: '8px', backgroundColor: tokens.bgLight, borderRadius: '4px', overflow: 'hidden' },
+  name: { width: '140px', fontSize: '0.85rem', color: tokens.ink, flexShrink: 0, textTransform: 'capitalize', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  barContainer: { flex: 1, minWidth: 0, height: '8px', backgroundColor: tokens.paper, borderRadius: '4px', overflow: 'hidden' },
   bar: { height: '100%', borderRadius: '4px' },
-  score: { width: '38px', fontSize: '0.8rem', fontWeight: '600', textAlign: 'right', flexShrink: 0, color: tokens.foreground },
+  score: { width: '38px', fontSize: '0.8rem', fontWeight: '600', textAlign: 'right', flexShrink: 0, color: tokens.ink },
 };
 
 const styles = {
   root: { fontFamily: tokens.bodyFont },
   loadingBox: { textAlign: 'center', padding: '3rem' },
-  loadingText: { color: tokens.bodyMuted, fontSize: '1rem' },
-  error: { color: tokens.critical },
+  loadingText: { color: tokens.inkSoft, fontSize: '1rem' },
+  error: { color: tokens.dangerText },
   summaryGrid: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginBottom: '1.5rem' },
   overallCard: {
-    backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    backgroundColor: tokens.card, borderRadius: '16px', padding: '1.5rem', border: `1px solid ${tokens.border}`, boxShadow: '0 2px 12px rgba(33,29,28,0.06)',
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', textAlign: 'center',
   },
   gaugeWrap: { position: 'relative', width: '130px', height: '130px' },
@@ -311,38 +299,38 @@ const styles = {
     position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
   },
-  gaugeNum: { fontFamily: tokens.headingFont, fontSize: '1.7rem', fontWeight: '700', color: tokens.foreground, lineHeight: 1 },
-  gaugeLabel: { fontSize: '0.7rem', color: tokens.bodyMuted, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  overallTitle: { fontFamily: tokens.headingFont, fontSize: '1rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.3rem' },
-  overallDesc: { fontSize: '0.85rem', color: tokens.bodyMuted, lineHeight: '1.4', margin: 0 },
+  gaugeNum: { fontFamily: tokens.displayFont, fontSize: '1.7rem', fontWeight: '700', color: tokens.ink, lineHeight: 1 },
+  gaugeLabel: { fontSize: '0.7rem', color: tokens.inkSoft, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  overallTitle: { fontFamily: tokens.displayFont, fontSize: '1rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.3rem' },
+  overallDesc: { fontSize: '0.85rem', color: tokens.inkSoft, lineHeight: '1.4', margin: 0 },
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' },
   statCard: {
-    backgroundColor: tokens.bgWhite, borderRadius: '12px', padding: '1.1rem 1rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-    display: 'flex', flexDirection: 'column', gap: '0.6rem', borderTop: '3px solid #CBD5E1', minWidth: 0,
+    backgroundColor: tokens.card, borderRadius: '12px', padding: '1.1rem 1rem', border: `1px solid ${tokens.border}`, boxShadow: '0 2px 12px rgba(33,29,28,0.06)',
+    display: 'flex', flexDirection: 'column', gap: '0.6rem', borderTop: `3px solid ${tokens.border}`, minWidth: 0,
   },
-  statNum: { fontFamily: tokens.headingFont, fontSize: '1.8rem', fontWeight: '700', color: tokens.foreground },
-  statLabel: { fontSize: '0.75rem', color: tokens.bodyMuted, display: 'flex', alignItems: 'center', gap: '0.4rem' },
+  statNum: { fontFamily: tokens.displayFont, fontSize: '1.8rem', fontWeight: '700', color: tokens.ink },
+  statLabel: { fontSize: '0.75rem', color: tokens.inkSoft, display: 'flex', alignItems: 'center', gap: '0.4rem' },
   statDot: { width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0 },
   mainGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' },
-  card: { backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', minWidth: 0 },
-  cardTitle: { fontFamily: tokens.headingFont, fontSize: '1.1rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  cardSubtitle: { color: tokens.bodyMuted, fontSize: '0.85rem', marginBottom: '1.25rem' },
+  card: { backgroundColor: tokens.card, borderRadius: '16px', padding: '1.5rem', border: `1px solid ${tokens.border}`, boxShadow: '0 2px 12px rgba(33,29,28,0.06)', minWidth: 0 },
+  cardTitle: { fontFamily: tokens.displayFont, fontSize: '1.1rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  cardSubtitle: { color: tokens.inkSoft, fontSize: '0.85rem', marginBottom: '1.25rem' },
   topicGroup: { marginBottom: '1.25rem' },
   groupHeader: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' },
   groupDot: { width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0 },
   groupTitle: { fontSize: '0.85rem', fontWeight: '700', margin: 0 },
-  empty: { textAlign: 'center', padding: '2rem', color: tokens.bodyMuted, fontSize: '0.9rem' },
+  empty: { textAlign: 'center', padding: '2rem', color: tokens.inkSoft, fontSize: '0.9rem' },
   historyList: { display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.5rem' },
-  historyItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: tokens.bgLight, borderRadius: '10px', border: `1px solid ${tokens.border}`, flexWrap: 'wrap', gap: '0.5rem' },
+  historyItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: tokens.paper, borderRadius: '10px', border: `1px solid ${tokens.border}`, flexWrap: 'wrap', gap: '0.5rem' },
   historyLeft: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
   typeBadge: { padding: '0.25rem 0.7rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' },
-  historyDate: { color: tokens.bodyMuted, fontSize: '0.8rem' },
+  historyDate: { color: tokens.inkSoft, fontSize: '0.8rem' },
   historyRight: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
-  historyScore: { fontWeight: '700', color: tokens.foreground, fontSize: '0.9rem' },
-  historyPct: { fontWeight: '700', fontSize: '0.9rem', color: tokens.foreground },
+  historyScore: { fontWeight: '700', color: tokens.ink, fontSize: '0.9rem' },
+  historyPct: { fontWeight: '700', fontSize: '0.9rem', color: tokens.ink },
   continueBtn: {
-    width: '100%', padding: '0.85rem', backgroundColor: tokens.primary, color: '#fff', border: 'none',
-    borderRadius: '10px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center',
+    width: '100%', padding: '0.85rem', backgroundColor: tokens.accent, color: tokens.onAccent, border: 'none',
+    borderRadius: '999px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: '0.5rem', transition: 'background-color 0.15s',
   },
 };

@@ -3,21 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import PerformanceOverview from '../components/PerformanceOverview';
-
-const tokens = {
-  primary: '#2563EB',
-  primaryHover: '#1D4ED8',
-  primarySoft: '#DBEAFE',
-  foreground: '#1E293B',
-  bodyMuted: '#64748B',
-  border: '#E2E8F0',
-  bgLight: '#F8FAFC',
-  bgWhite: '#FFFFFF',
-  danger: '#DC2626',
-  success: '#16A34A',
-  headingFont: "'Space Grotesk', 'Segoe UI', sans-serif",
-  bodyFont: "'DM Sans', 'Segoe UI', sans-serif",
-};
+import { tokens, fontImport } from '../theme';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -40,7 +26,7 @@ const DIFFICULTY_OPTIONS = [
 ];
 
 const UploadIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={tokens.inkSoft} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
     <line x1="12" y1="3" x2="12" y2="15" />
@@ -48,13 +34,13 @@ const UploadIcon = () => (
 );
 
 const CloudUploadIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={tokens.inkSoft} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" />
   </svg>
 );
 
 const DocIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tokens.primary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={tokens.accentText} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><polyline points="14 2 14 8 20 8" />
   </svg>
 );
@@ -62,11 +48,11 @@ const DocIcon = () => (
 const SpinnerIcon = () => (
   <svg className="subj-spinner" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="12" r="9" stroke={tokens.border} strokeWidth="3" />
-    <path d="M21 12a9 9 0 0 0-9-9" stroke={tokens.primary} strokeWidth="3" strokeLinecap="round" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke={tokens.accent} strokeWidth="3" strokeLinecap="round" />
   </svg>
 );
 
-const TagIcon = ({ size = 18, color = tokens.bodyMuted }) => (
+const TagIcon = ({ size = 18, color = tokens.inkSoft }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.41 12.41A2 2 0 0 1 2 11V4a2 2 0 0 1 2-2h7a2 2 0 0 1 1.41.59l8.18 8.18a2 2 0 0 1 0 2.83Z" />
     <circle cx="7.5" cy="7.5" r="1.5" fill={color} stroke="none" />
@@ -83,14 +69,14 @@ const RefreshIcon = () => (
 );
 
 const LockIcon = () => (
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={tokens.bodyMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={tokens.inkSoft} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <rect x="5" y="11" width="14" height="10" rx="2" />
     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
@@ -238,21 +224,21 @@ const Subject = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        ${fontImport}
 
-        .subj-back-link:hover { color: ${tokens.primaryHover} !important; }
+        .subj-back-link:hover { color: ${tokens.ink} !important; }
         .subj-tab-btn { cursor: pointer; transition: color 0.15s, border-color 0.15s; }
-        .subj-tab-btn:hover { color: ${tokens.foreground}; }
+        .subj-tab-btn:hover { color: ${tokens.ink}; }
         a, button { cursor: pointer; }
         a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
-          outline: 2px solid ${tokens.primary}; outline-offset: 2px;
+          outline: 2px solid ${tokens.accent}; outline-offset: 2px;
         }
-        .subj-type-option:hover { border-color: #CBD5E1; }
-        .subj-diff-btn:hover { border-color: #CBD5E1; }
-        .subj-generate-btn:hover:not(:disabled) { background-color: ${tokens.primaryHover} !important; }
-        .subj-dropzone-label:hover .subj-dropzone { border-color: ${tokens.primary}; background-color: ${tokens.bgLight}; }
-        .subj-topic-delete:hover { color: ${tokens.danger} !important; }
-        .subj-review-card:hover { border-color: ${tokens.primary}; background-color: ${tokens.bgWhite}; box-shadow: 0 2px 12px rgba(15,23,42,0.06); }
+        .subj-type-option:hover { border-color: #D8CFC3; }
+        .subj-diff-btn:hover { border-color: #D8CFC3; }
+        .subj-generate-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
+        .subj-dropzone-label:hover .subj-dropzone { border-color: ${tokens.accent}; background-color: ${tokens.paper}; }
+        .subj-topic-delete:hover { color: ${tokens.dangerText} !important; }
+        .subj-review-card:hover { border-color: ${tokens.accent}; background-color: ${tokens.card}; box-shadow: 0 2px 12px rgba(33,29,28,0.06); }
 
         @media (prefers-reduced-motion: no-preference) {
           .subj-spinner { animation: subj-spin 0.8s linear infinite; }
@@ -438,7 +424,7 @@ const Subject = () => {
               </p>
               {topics.length === 0 ? (
                 <div style={styles.emptyTopics}>
-                  <span style={styles.emptyIconWrap}><TagIcon size={30} color="#CBD5E1" /></span>
+                  <span style={styles.emptyIconWrap}><TagIcon size={30} color={tokens.border} /></span>
                   <p style={{ margin: 0 }}>No topics yet — upload your notes to get started</p>
                 </div>
               ) : (
@@ -495,32 +481,32 @@ const Subject = () => {
 };
 
 const styles = {
-  page: { backgroundColor: tokens.bgLight, minHeight: '100vh', fontFamily: tokens.bodyFont },
+  page: { backgroundColor: tokens.paper, minHeight: '100vh', fontFamily: tokens.bodyFont },
   container: { maxWidth: '1100px', margin: '0 auto', padding: '2rem' },
   header: { marginBottom: '1.5rem' },
   backLink: {
-    display: 'inline-block', color: tokens.primary, fontSize: '0.9rem', fontWeight: '600',
+    display: 'inline-block', color: tokens.inkSoft, fontSize: '0.9rem', fontWeight: '600',
     textDecoration: 'none', marginBottom: '0.9rem', transition: 'color 0.15s',
   },
-  title: { fontFamily: tokens.headingFont, fontSize: '1.9rem', fontWeight: '700', color: tokens.foreground, margin: 0 },
+  title: { fontFamily: tokens.displayFont, fontSize: '1.9rem', fontWeight: '700', color: tokens.ink, margin: 0 },
   tabBar: { display: 'flex', gap: '0.5rem', borderBottom: `2px solid ${tokens.border}`, marginBottom: '1.75rem', flexWrap: 'wrap' },
   tabBtn: {
     background: 'none', border: 'none', padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: '600',
-    color: tokens.bodyMuted, borderBottom: '3px solid transparent', marginBottom: '-2px', fontFamily: 'inherit',
+    color: tokens.inkSoft, borderBottom: '3px solid transparent', marginBottom: '-2px', fontFamily: 'inherit',
   },
-  tabBtnActive: { color: tokens.primary, borderBottom: `3px solid ${tokens.primary}` },
-  errorBanner: { backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: tokens.danger, padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.9rem' },
-  successBanner: { backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: tokens.success, padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.9rem' },
+  tabBtnActive: { color: tokens.accentText, borderBottom: `3px solid ${tokens.accent}` },
+  errorBanner: { backgroundColor: tokens.dangerSoft, border: `1px solid ${tokens.dangerBorder}`, color: tokens.dangerText, padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.9rem' },
+  successBanner: { backgroundColor: tokens.successSoft, border: `1px solid ${tokens.successBorder}`, color: tokens.successText, padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.9rem' },
 
   configCard: {
-    backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '2rem',
-    boxShadow: '0 2px 12px rgba(15,23,42,0.06)', maxWidth: '680px', border: `1px solid ${tokens.border}`,
+    backgroundColor: tokens.card, borderRadius: '16px', padding: '2rem',
+    boxShadow: '0 2px 12px rgba(33,29,28,0.06)', maxWidth: '680px', border: `1px solid ${tokens.border}`,
   },
-  configTitle: { fontFamily: tokens.headingFont, fontSize: '1.3rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.4rem' },
-  configSubtitle: { color: tokens.bodyMuted, fontSize: '0.9rem', margin: '0 0 1.75rem', lineHeight: '1.5' },
+  configTitle: { fontFamily: tokens.displayFont, fontSize: '1.3rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.4rem' },
+  configSubtitle: { color: tokens.inkSoft, fontSize: '0.9rem', margin: '0 0 1.75rem', lineHeight: '1.5' },
   configSection: { marginBottom: '1.75rem' },
   configSectionLabel: {
-    fontSize: '0.8rem', fontWeight: '700', color: tokens.bodyMuted, textTransform: 'uppercase',
+    fontSize: '0.75rem', fontFamily: tokens.monoFont, fontWeight: '600', color: tokens.inkSoft, textTransform: 'uppercase',
     letterSpacing: '0.05em', margin: '0 0 0.9rem',
   },
   typeGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' },
@@ -528,65 +514,65 @@ const styles = {
     border: `2px solid ${tokens.border}`, borderRadius: '12px', padding: '0.9rem 1rem',
     cursor: 'pointer', transition: 'border-color 0.15s, background-color 0.15s',
   },
-  typeOptionSelected: { borderColor: tokens.primary, backgroundColor: tokens.primarySoft },
+  typeOptionSelected: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft },
   typeOptionHeader: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' },
   checkbox: {
-    width: '18px', height: '18px', borderRadius: '5px', border: '2px solid #CBD5E1',
+    width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${tokens.border}`,
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  checkboxChecked: { backgroundColor: tokens.primary, borderColor: tokens.primary },
-  typeOptionLabel: { fontSize: '0.9rem', fontWeight: '700', color: tokens.foreground },
-  typeOptionDesc: { fontSize: '0.78rem', color: tokens.bodyMuted, margin: 0, paddingLeft: '1.65rem' },
+  checkboxChecked: { backgroundColor: tokens.accent, borderColor: tokens.accent },
+  typeOptionLabel: { fontSize: '0.9rem', fontWeight: '700', color: tokens.ink },
+  typeOptionDesc: { fontSize: '0.78rem', color: tokens.inkSoft, margin: 0, paddingLeft: '1.65rem' },
   difficultyRow: { display: 'flex', gap: '0.6rem' },
   difficultyBtn: {
     flex: 1, padding: '0.65rem', borderRadius: '10px', border: `2px solid ${tokens.border}`,
-    backgroundColor: tokens.bgWhite, color: tokens.bodyMuted, fontWeight: '700', fontSize: '0.85rem', fontFamily: 'inherit',
+    backgroundColor: tokens.card, color: tokens.inkSoft, fontWeight: '700', fontSize: '0.85rem', fontFamily: 'inherit',
   },
-  difficultyBtnActive: { borderColor: tokens.primary, backgroundColor: tokens.primarySoft, color: tokens.primaryHover },
-  configHint: { color: tokens.danger, fontSize: '0.8rem', marginBottom: '1rem' },
+  difficultyBtnActive: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft, color: tokens.accentText },
+  configHint: { color: tokens.dangerText, fontSize: '0.8rem', marginBottom: '1rem' },
   generateBtn: {
-    width: '100%', padding: '0.95rem', backgroundColor: tokens.primary, color: '#fff',
-    border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '700', transition: 'background-color 0.15s',
+    width: '100%', padding: '0.95rem', backgroundColor: tokens.accent, color: tokens.onAccent,
+    border: 'none', borderRadius: '999px', fontSize: '1rem', fontWeight: '700', transition: 'background-color 0.15s',
   },
 
   filesGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' },
-  card: { backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(15,23,42,0.06)', border: `1px solid ${tokens.border}`, minWidth: 0 },
-  cardTitle: { fontFamily: tokens.headingFont, fontSize: '1.1rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  cardSubtitle: { color: tokens.bodyMuted, fontSize: '0.85rem', marginBottom: '1.25rem' },
+  card: { backgroundColor: tokens.card, borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(33,29,28,0.06)', border: `1px solid ${tokens.border}`, minWidth: 0 },
+  cardTitle: { fontFamily: tokens.displayFont, fontSize: '1.1rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  cardSubtitle: { color: tokens.inkSoft, fontSize: '0.85rem', marginBottom: '1.25rem' },
   uploadLabel: { cursor: 'pointer', display: 'block' },
   fileInput: { display: 'none' },
   uploadBox: { border: `2px dashed ${tokens.border}`, borderRadius: '12px', padding: '2rem', textAlign: 'center', transition: 'border-color 0.15s, background-color 0.15s' },
   uploadIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' },
-  uploadText: { color: tokens.foreground, fontWeight: '600', fontSize: '0.95rem', margin: '0 0 0.25rem' },
-  uploadHint: { color: tokens.bodyMuted, fontSize: '0.8rem', margin: 0 },
+  uploadText: { color: tokens.ink, fontWeight: '600', fontSize: '0.95rem', margin: '0 0 0.25rem' },
+  uploadHint: { color: tokens.inkSoft, fontSize: '0.8rem', margin: 0 },
   notesList: { marginTop: '1.25rem', borderTop: `1px solid ${tokens.border}`, paddingTop: '1rem' },
-  notesTitle: { fontSize: '0.78rem', fontWeight: '700', color: tokens.bodyMuted, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  noteItem: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid #F1F5F9' },
+  notesTitle: { fontSize: '0.75rem', fontFamily: tokens.monoFont, fontWeight: '600', color: tokens.inkSoft, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  noteItem: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: `1px solid ${tokens.paper}` },
   noteIconWrap: { flexShrink: 0, display: 'flex' },
-  noteName: { fontSize: '0.9rem', fontWeight: '600', color: tokens.foreground, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  noteDate: { fontSize: '0.75rem', color: tokens.bodyMuted, margin: 0 },
-  emptyTopics: { textAlign: 'center', padding: '2rem 1rem', color: tokens.bodyMuted, fontSize: '0.9rem' },
+  noteName: { fontSize: '0.9rem', fontWeight: '600', color: tokens.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  noteDate: { fontSize: '0.75rem', color: tokens.inkSoft, margin: 0 },
+  emptyTopics: { textAlign: 'center', padding: '2rem 1rem', color: tokens.inkSoft, fontSize: '0.9rem' },
   emptyIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' },
   topicsGrid: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
-  topicTag: { backgroundColor: tokens.primarySoft, color: tokens.primary, padding: '0.35rem 0.6rem 0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.4rem' },
-  topicDeleteBtn: { background: 'none', border: 'none', color: tokens.bodyMuted, cursor: 'pointer', padding: '0.2rem', lineHeight: 1, display: 'flex', transition: 'color 0.15s' },
+  topicTag: { backgroundColor: tokens.accentSoft, color: tokens.accentText, padding: '0.35rem 0.6rem 0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #BFDBFE', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.4rem' },
+  topicDeleteBtn: { background: 'none', border: 'none', color: tokens.inkSoft, cursor: 'pointer', padding: '0.2rem', lineHeight: 1, display: 'flex', transition: 'color 0.15s' },
   reviewCard: {
-    marginTop: '1.25rem', backgroundColor: tokens.bgLight, borderRadius: '12px', padding: '1.1rem',
+    marginTop: '1.25rem', backgroundColor: tokens.paper, borderRadius: '12px', padding: '1.1rem',
     display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', border: `1px solid ${tokens.border}`,
     transition: 'border-color 0.15s, background-color 0.15s, box-shadow 0.15s',
   },
-  actionIconWrap: { flexShrink: 0, color: tokens.primary, display: 'flex' },
-  actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.2rem' },
-  actionDesc: { fontSize: '0.8rem', color: tokens.bodyMuted, margin: 0 },
-  actionArrow: { marginLeft: 'auto', color: tokens.bodyMuted, fontSize: '1.1rem', flexShrink: 0 },
+  actionIconWrap: { flexShrink: 0, color: tokens.accentText, display: 'flex' },
+  actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.2rem' },
+  actionDesc: { fontSize: '0.8rem', color: tokens.inkSoft, margin: 0 },
+  actionArrow: { marginLeft: 'auto', color: tokens.inkSoft, fontSize: '1.1rem', flexShrink: 0 },
 
   comingSoonCard: {
-    backgroundColor: tokens.bgWhite, borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
-    boxShadow: '0 2px 12px rgba(15,23,42,0.06)', maxWidth: '560px', border: `1px solid ${tokens.border}`,
+    backgroundColor: tokens.card, borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
+    boxShadow: '0 2px 12px rgba(33,29,28,0.06)', maxWidth: '560px', border: `1px solid ${tokens.border}`,
   },
   comingSoonIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '1rem' },
-  comingSoonTitle: { fontFamily: tokens.headingFont, fontSize: '1.2rem', fontWeight: '700', color: tokens.foreground, margin: '0 0 0.5rem' },
-  comingSoonText: { color: tokens.bodyMuted, fontSize: '0.9rem', lineHeight: '1.6', margin: 0 },
+  comingSoonTitle: { fontFamily: tokens.displayFont, fontSize: '1.2rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.5rem' },
+  comingSoonText: { color: tokens.inkSoft, fontSize: '0.9rem', lineHeight: '1.6', margin: 0 },
 };
 
 export default Subject;
