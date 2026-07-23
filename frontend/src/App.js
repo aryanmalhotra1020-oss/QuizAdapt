@@ -7,7 +7,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Subject from './pages/Subject';
-import Subjects from './pages/Subjects';
 import CreateSubject from './pages/CreateSubject';
 import Profile from './pages/Profile';
 import Quiz from './pages/Quiz';
@@ -28,11 +27,6 @@ function App() {
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/subjects" element={
-              <ProtectedRoute>
-                <Subjects />
               </ProtectedRoute>
             } />
             <Route path="/subjects/new" element={

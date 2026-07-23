@@ -2,7 +2,6 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration, AutoTokenizer,
 import torch
 import os
 import torch.nn.functional as F
-from sentence_transformers import SentenceTransformer, util
 import random
 import re
 

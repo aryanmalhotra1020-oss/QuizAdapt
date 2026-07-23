@@ -7,7 +7,6 @@ import random
 from app.bkt import BKTModel
 from app.services import generate_question_for_topic, score_answer, generate_mcq_options
 import json
-import traceback
 
 quiz_bp = Blueprint('quiz', __name__)
 
