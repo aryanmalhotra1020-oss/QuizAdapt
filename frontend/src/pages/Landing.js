@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logoLight from '../logo/logo-light.png';
 
 const tokens = {
   ink: '#334155',
@@ -17,15 +18,6 @@ const tokens = {
   bodyFont: "'Karla', 'Segoe UI', sans-serif",
   monoFont: "'IBM Plex Mono', 'Courier New', monospace",
 };
-
-const LogoMark = ({ size = 26, dark = false }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect width="24" height="24" rx="7" fill={dark ? tokens.ink : tokens.accent} />
-    <rect x="5" y="13" width="3.2" height="6" rx="1" fill={dark ? tokens.accent : tokens.ink} />
-    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill={dark ? tokens.accent : tokens.ink} />
-    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill={dark ? '#FFFFFF' : '#FFFFFF'} opacity="0.9" />
-  </svg>
-);
 
 /* Hand-drawn marker annotations — the page's signature device */
 const CircleDoodle = ({ style }) => (
@@ -157,8 +149,7 @@ const Landing = () => {
       {/* Header */}
       <header style={styles.header} className="ld-header">
         <div style={styles.brand}>
-          <LogoMark />
-          QuizAdapt
+          <img src={logoLight} alt="QuizAdapt" style={styles.brandLogo} />
         </div>
         <nav style={styles.headerLinks}>
           <Link to="/login" style={styles.loginLink} className="ld-nav-link">Log in</Link>
@@ -425,9 +416,9 @@ const styles = {
     padding: '1.25rem 3rem', backgroundColor: 'transparent',
   },
   brand: {
-    color: tokens.ink, fontFamily: tokens.displayFont, fontSize: '1.2rem', fontWeight: '700',
-    display: 'flex', alignItems: 'center', gap: '0.6rem', letterSpacing: '-0.2px',
+    display: 'flex', alignItems: 'center',
   },
+  brandLogo: { height: '100px', width: 'auto', display: 'block', borderRadius: '8px' },
   headerLinks: { display: 'flex', alignItems: 'center', gap: '1.5rem' },
   loginLink: { color: tokens.inkSoft, textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500', transition: 'opacity 0.15s' },
   headerCta: {

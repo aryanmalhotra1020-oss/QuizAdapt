@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { tokens, fontImport, LogoMark } from '../theme';
+import { tokens, fontImport } from '../theme';
+import logoDark from '../logo/logo-dark.png';
+import logoShort from '../logo/logo-short.png';
 
 
 const AlertIcon = () => (
@@ -123,8 +125,11 @@ const Sidebar = ({ isOpen = false, onClose = () => {}, collapsed = false, onTogg
       >
         <div style={{ ...styles.topRow, ...(collapsed ? styles.topRowCollapsed : {}) }}>
           <Link to="/dashboard" style={styles.brand} title="QuizAdapt">
-            <LogoMark dark />
-            {!collapsed && 'QuizAdapt'}
+            {collapsed ? (
+              <img src={logoShort} alt="QuizAdapt" style={styles.brandLogoShort} />
+            ) : (
+              <img src={logoDark} alt="QuizAdapt" style={styles.brandLogo} />
+            )}
           </Link>
           <button
             className="sidebar-close-btn"
@@ -258,17 +263,12 @@ const styles = {
     padding: 0,
   },
   brand: {
-    color: '#FFFFFF',
     textDecoration: 'none',
-    fontFamily: tokens.displayFont,
-    fontSize: '1.1rem',
-    fontWeight: '700',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    letterSpacing: '-0.3px',
-    whiteSpace: 'nowrap',
   },
+  brandLogo: { height: '70px', width: 'auto', display: 'block', borderRadius: '10px' },
+  brandLogoShort: { height: '34px', width: '34px', display: 'block', borderRadius: '7px' },
   closeBtn: {
     background: 'none',
     border: 'none',

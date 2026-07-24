@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import logoLight from '../logo/logo-light.png';
 
 const tokens = {
   ink: '#334155',
@@ -21,15 +22,6 @@ const tokens = {
   bodyFont: "'Karla', 'Segoe UI', sans-serif",
   monoFont: "'IBM Plex Mono', 'Courier New', monospace",
 };
-
-const LogoMark = ({ size = 26 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect width="24" height="24" rx="7" fill={tokens.accent} />
-    <rect x="5" y="13" width="3.2" height="6" rx="1" fill={tokens.ink} />
-    <rect x="10.4" y="9" width="3.2" height="10" rx="1" fill={tokens.ink} />
-    <rect x="15.8" y="5" width="3.2" height="14" rx="1" fill="#FFFFFF" opacity="0.9" />
-  </svg>
-);
 
 const EyeIcon = ({ off }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -128,8 +120,7 @@ const Login = () => {
       <div style={styles.formSide} className="form-side">
         <div style={styles.formWrap}>
           <Link to="/" style={styles.brandLink}>
-            <LogoMark />
-            QuizAdapt
+            <img src={logoLight} alt="QuizAdapt" style={styles.brandLogo} />
           </Link>
 
           <h1 style={styles.title}>Welcome back</h1>
@@ -250,16 +241,11 @@ const styles = {
     maxWidth: '380px',
   },
   brandLink: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.6rem',
-    fontFamily: tokens.displayFont,
-    fontSize: '1.15rem',
-    fontWeight: '700',
-    color: tokens.ink,
+    display: 'inline-block',
     textDecoration: 'none',
     marginBottom: '2rem',
   },
+  brandLogo: { height: '100px', width: 'auto', display: 'block', borderRadius: '12px' },
   title: {
     margin: '0 0 0.4rem',
     color: tokens.ink,
