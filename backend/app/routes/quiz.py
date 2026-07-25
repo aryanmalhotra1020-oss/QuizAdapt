@@ -7,6 +7,7 @@ import random
 from app.bkt import BKTModel
 from app.services import generate_question_for_topic, score_answer, generate_mcq_options
 import json
+from app.adaptive import select_adaptive_topics
 
 quiz_bp = Blueprint('quiz', __name__)
 
@@ -93,24 +94,7 @@ def generate_quiz(subject_id):
         for p in TopicPerformance.query.filter_by(user_id=user_id, subject_id=subject_id).all()
     }
 
-    weak_topics, moderate_topics, strong_topics = [], [], []
-    for topic in topics:
-        score = performances.get(topic.id, bkt.p_know)
-        classification = bkt.classify(score)
-        if classification == 'weak':
-            weak_topics.append(topic)
-        elif classification == 'moderate':
-            moderate_topics.append(topic)
-        else:
-            strong_topics.append(topic)
-
-    selected_topics = []
-    selected_topics += random.sample(weak_topics, min(5, len(weak_topics)))
-    selected_topics += random.sample(moderate_topics, min(3, len(moderate_topics)))
-    selected_topics += random.sample(strong_topics, min(2, len(strong_topics)))
-    if len(selected_topics) < 5:
-        remaining = [t for t in topics if t not in selected_topics]
-        selected_topics += random.sample(remaining, min(5 - len(selected_topics), len(remaining)))
+    selected_topics, weak_topics, moderate_topics, strong_topics = select_adaptive_topics(topics, performances, bkt)
 
     quiz_type = 'adaptive' if performances else 'initial'
     quiz = Quiz(subject_id=subject_id, type=quiz_type)
