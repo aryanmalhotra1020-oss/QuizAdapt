@@ -4,9 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import PerformanceOverview from '../components/PerformanceOverview';
 import { tokens, fontImport } from '../theme';
+import NotesSummary from '../components/NotesSummary';
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
+  { key: 'summary', label: 'Summary of Notes' },
   { key: 'adaptive', label: 'Adaptive Quiz' },
   { key: 'files', label: 'Files & Revision' },
   { key: 'samples', label: 'Sample Papers' },
@@ -282,6 +284,10 @@ const Subject = () => {
 
         {activeTab === 'overview' && (
           <PerformanceOverview subjectId={id} onContinueLearning={() => setActiveTab('adaptive')} />
+        )}
+
+        {activeTab === 'summary' && (
+          <NotesSummary subjectId={id} />
         )}
 
         {activeTab === 'adaptive' && (

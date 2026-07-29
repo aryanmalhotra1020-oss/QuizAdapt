@@ -105,3 +105,10 @@ class ReviewSchedule(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (db.UniqueConstraint('user_id', 'topic_id', name='uq_user_topic_review'),)
+
+class Summary(db.Model):
+    __tablename__ = 'summaries'
+    id = db.Column(db.Integer, primary_key=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False, unique=True)
+    content = db.Column(db.Text, nullable=False)  # JSON-encoded list of sections
+    generated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

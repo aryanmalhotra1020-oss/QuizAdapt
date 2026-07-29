@@ -8,6 +8,11 @@ import fitz  # PyMuPDF
 from app.services import embed_texts
 import torch.nn.functional as F
 import spacy
+from app.services import extract_summary_sentences
+from app.models import Summary
+import json as json_module
+from sqlalchemy.exc import IntegrityError
+from app.services import extract_summary_sentences, generate_abstractive_summary
 
 
 notes_bp = Blueprint('notes', __name__)
@@ -290,6 +295,9 @@ def upload_note(subject_id):
         db.session.add(topic)
     db.session.commit()
 
+    Summary.query.filter_by(subject_id=subject_id).delete()
+    db.session.commit()
+
     return jsonify({
         'message': 'Note uploaded and topics extracted',
         'note_id': note.id,
@@ -346,4 +354,105 @@ def delete_topic(subject_id, topic_id):
 
     db.session.delete(topic)
     db.session.commit()
+
+    Summary.query.filter_by(subject_id=subject_id).delete()
+    db.session.commit()
+    
     return jsonify({'message': 'Topic deleted'}), 200
+
+_WEEK_NUMBER_PATTERN = re.compile(r'(?:week|wk)[\s_]*?(\d+)', re.IGNORECASE)
+
+def extract_week_number(filename):
+    match = _WEEK_NUMBER_PATTERN.search(filename)
+    return int(match.group(1)) if match else None
+
+@notes_bp.route('/<int:subject_id>/summary', methods=['GET'])
+@jwt_required()
+def get_subject_summary(subject_id):
+    user_id = get_jwt_identity()
+    subject = Subject.query.filter_by(id=subject_id, user_id=user_id).first()
+    if not subject:
+        return jsonify({'error': 'Subject not found'}), 404
+
+    existing = Summary.query.filter_by(subject_id=subject_id).first()
+    if existing:
+        return jsonify({
+            'subject_id': subject_id,
+            'sections': json_module.loads(existing.content),
+            'generated_at': existing.generated_at,
+            'cached': True
+        }), 200
+
+    sections = _build_summary_sections(subject_id)
+    if sections is None:
+        return jsonify({'error': 'No notes found for this subject'}), 400
+
+    try:
+        summary = Summary(subject_id=subject_id, content=json_module.dumps(sections))
+        db.session.add(summary)
+        db.session.commit()
+    except IntegrityError:
+        # Another concurrent request already inserted a summary for this
+        # subject between our check and our insert - roll back our own
+        # attempt and just return the one that won the race
+        db.session.rollback()
+        existing = Summary.query.filter_by(subject_id=subject_id).first()
+        return jsonify({
+            'subject_id': subject_id,
+            'sections': json_module.loads(existing.content),
+            'generated_at': existing.generated_at,
+            'cached': True
+        }), 200
+
+    return jsonify({
+        'subject_id': subject_id,
+        'sections': sections,
+        'generated_at': summary.generated_at,
+        'cached': False
+    }), 200
+
+
+def _build_summary_sections(subject_id):
+    notes = Note.query.filter_by(subject_id=subject_id).all()
+    if not notes:
+        return None
+
+    def sort_key(note):
+        week_num = extract_week_number(note.filename)
+        return (0, week_num) if week_num is not None else (1, note.id)
+
+    ordered_notes = sorted(notes, key=sort_key)
+
+    sections = []
+    for note in ordered_notes:
+        sections.append({
+            'note_id': note.id,
+            'filename': note.filename,
+            'week_number': extract_week_number(note.filename),
+            'summary': extract_summary_sentences(note.raw_text)
+        })
+    return sections
+
+def _build_summary_sections(subject_id):
+    notes = Note.query.filter_by(subject_id=subject_id).all()
+    if not notes:
+        return None
+
+    def sort_key(note):
+        week_num = extract_week_number(note.filename)
+        return (0, week_num) if week_num is not None else (1, note.id)
+
+    ordered_notes = sorted(notes, key=sort_key)
+
+    sections = []
+    for note in ordered_notes:
+        key_sentences = extract_summary_sentences(note.raw_text)
+        paragraph = generate_abstractive_summary(key_sentences) if key_sentences else None
+        sections.append({
+            'note_id': note.id,
+            'filename': note.filename,
+            'week_number': extract_week_number(note.filename),
+            'summary_paragraph': paragraph,
+            'key_sentences': key_sentences  # kept as a fallback/reference, not necessarily shown
+        })
+    return sections

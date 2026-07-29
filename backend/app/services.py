@@ -490,3 +490,103 @@ def get_cluster_for_topic(topic, all_topic_names, similarity_threshold=0.45):
         if topic in cluster:
             return cluster
     return [topic]
+
+_CITATION_SENTENCE_PATTERN = re.compile(r'\bet al\b|\b\d{4}\)\.|arxiv', re.IGNORECASE)
+
+def deduplicate_sentences(sentences, similarity_threshold=0.9):
+    if not sentences:
+        return sentences
+    try:
+        embeddings = embed_texts(sentences)
+    except Exception:
+        return sentences
+
+    keep = []
+    keep_embeddings = []
+    for i, sentence in enumerate(sentences):
+        is_duplicate = False
+        for kept_emb in keep_embeddings:
+            sim = F.cosine_similarity(embeddings[i].unsqueeze(0), kept_emb.unsqueeze(0)).item()
+            if sim > similarity_threshold:
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            keep.append(sentence)
+            keep_embeddings.append(embeddings[i])
+    return keep
+
+
+def extract_summary_sentences(raw_text, max_sentences=6, min_words=8, diversity_lambda=0.7):
+    sentences = split_into_clean_sentences(raw_text)
+    sentences = [
+        s for s in sentences
+        if len(s.split()) >= min_words
+        and s.strip().endswith(('.', '!', '?', ':'))
+        and not _CITATION_SENTENCE_PATTERN.search(s)
+    ]
+    sentences = deduplicate_sentences(sentences)
+
+    if len(sentences) <= max_sentences:
+        return sentences
+
+    try:
+        embeddings = embed_texts(sentences)
+    except Exception as e:
+        print(f"Summary sentence embedding failed: {e}")
+        return sentences[:max_sentences]
+
+    n = len(sentences)
+    sim_matrix = (embeddings @ embeddings.T).tolist()
+    centrality = [(sum(sim_matrix[i]) - 1) / max(1, n - 1) for i in range(n)]
+
+    selected_indices = []
+    remaining = set(range(n))
+
+    while remaining and len(selected_indices) < max_sentences:
+        best_idx, best_score = None, float('-inf')
+        for i in remaining:
+            max_sim_to_selected = max((sim_matrix[i][j] for j in selected_indices), default=0)
+            mmr_score = diversity_lambda * centrality[i] - (1 - diversity_lambda) * max_sim_to_selected
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = i
+        selected_indices.append(best_idx)
+        remaining.remove(best_idx)
+
+    selected_indices.sort()
+    return [sentences[i] for i in selected_indices]
+
+SUMMARY_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'summary_model')
+
+summary_tokenizer = None
+summary_model = None
+
+def load_summary_model():
+    global summary_tokenizer, summary_model
+    if summary_model is None:
+        summary_tokenizer = T5TokenizerFast.from_pretrained(SUMMARY_MODEL_PATH)
+        summary_model = T5ForConditionalGeneration.from_pretrained(SUMMARY_MODEL_PATH)
+        summary_model.tie_weights()
+        summary_model.eval()
+    return summary_tokenizer, summary_model
+
+
+def generate_abstractive_summary(key_sentences):
+    if not key_sentences:
+        return None
+
+    tok, mdl = load_summary_model()
+    input_text = "Combine the following key points into a short, flowing summary:\n" + \
+                 "\n".join(f"- {s}" for s in key_sentences)
+    input_ids = tok(input_text, return_tensors="pt", max_length=512, truncation=True).input_ids
+
+    with torch.no_grad():
+        outputs = mdl.generate(
+            input_ids,
+            max_length=150,
+            num_beams=4,
+            no_repeat_ngram_size=3,
+            early_stopping=True
+        )
+
+    return tok.decode(outputs[0], skip_special_tokens=True)
