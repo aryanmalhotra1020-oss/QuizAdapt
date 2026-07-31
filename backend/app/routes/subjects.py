@@ -41,7 +41,6 @@ def get_last_accessed_subject():
         }
     }), 200
 
-
 @subjects_bp.route('/<int:subject_id>', methods=['GET'])
 @jwt_required()
 def get_subject(subject_id):

@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { tokens, fontImport } from '../theme';
+
+const SmallCheckIcon = ({ color }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const SmallXIcon = ({ color }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
 
 const DiagnosticQuiz = () => {
   const { subjectId } = useParams();
@@ -16,6 +30,7 @@ const DiagnosticQuiz = () => {
 
   useEffect(() => {
     generateDiagnostic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateDiagnostic = async () => {
@@ -57,6 +72,7 @@ const DiagnosticQuiz = () => {
 
   if (loading) return (
     <div style={styles.loadingContainer}>
+      <style>{`${fontImport}`}</style>
       <div style={styles.loadingCard}>
         <h2 style={styles.loadingTitle}>Generating Diagnostic Quiz...</h2>
         <p style={styles.loadingText}>
@@ -68,9 +84,12 @@ const DiagnosticQuiz = () => {
 
   if (error) return (
     <div style={styles.loadingContainer}>
+      <style>{`${fontImport}
+        .diag-btn:hover { background-color: ${tokens.accentHover} !important; }
+      `}</style>
       <div style={styles.loadingCard}>
-        <p style={styles.error}>{error}</p>
-        <button style={styles.button} onClick={() => navigate(-1)}>Go Back</button>
+        <p style={styles.error} role="alert">{error}</p>
+        <button className="diag-btn" style={styles.button} onClick={() => navigate(-1)}>Go Back</button>
       </div>
     </div>
   );
@@ -79,6 +98,9 @@ const DiagnosticQuiz = () => {
     const correct = results.filter(r => r.is_correct).length;
     return (
       <div style={styles.container}>
+        <style>{`${fontImport}
+          .diag-btn:hover { background-color: ${tokens.accentHover} !important; }
+        `}</style>
         <div style={styles.card}>
           <div style={styles.diagnosticBadge}>Diagnostic Complete</div>
           <h2 style={styles.resultsTitle}>Knowledge Baseline Set!</h2>
@@ -96,12 +118,17 @@ const DiagnosticQuiz = () => {
             {results.map((result, i) => (
               <div key={i} style={{
                 ...styles.resultItem,
-                borderLeft: `4px solid ${result.is_correct ? '#22C55E' : '#EF4444'}`
+                borderLeft: `4px solid ${result.is_correct ? tokens.good : tokens.critical}`
               }}>
                 <div style={styles.resultHeader}>
                   <span style={styles.topicTag}>{questions[i]?.topic}</span>
-                  <span style={{ color: result.is_correct ? '#22C55E' : '#EF4444', fontWeight: 'bold' }}>
-                    {result.is_correct ? '✓ Known' : '✗ Needs Work'}
+                  <span style={{
+                    ...styles.resultStatus,
+                    color: result.is_correct ? tokens.successText : tokens.dangerText,
+                  }}>
+                    {result.is_correct
+                      ? <><SmallCheckIcon color={tokens.successText} /> Known</>
+                      : <><SmallXIcon color={tokens.dangerText} /> Needs Work</>}
                   </span>
                 </div>
                 <p style={styles.resultQuestion}>{questions[i]?.question_text}</p>
@@ -117,7 +144,7 @@ const DiagnosticQuiz = () => {
             ))}
           </div>
 
-          <button style={styles.button} onClick={() => navigate(`/subject/${subjectId}`)}>
+          <button className="diag-btn" style={styles.button} onClick={() => navigate(`/subject/${subjectId}`)}>
             Start Adaptive Learning →
           </button>
         </div>
@@ -127,6 +154,10 @@ const DiagnosticQuiz = () => {
 
   return (
     <div style={styles.container}>
+      <style>{`${fontImport}
+        .diag-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
+        .diag-option-btn:hover { border-color: #CBD5E1; }
+      `}</style>
       <div style={{ ...styles.card, maxWidth: '720px' }}>
         <div style={styles.headerRow}>
           <div>
@@ -151,6 +182,7 @@ const DiagnosticQuiz = () => {
                   return (
                     <button
                       key={i}
+                      className="diag-option-btn"
                       style={{
                         ...styles.optionBtn,
                         ...(isSelected ? styles.optionBtnSelected : {}),
@@ -178,11 +210,12 @@ const DiagnosticQuiz = () => {
           <p style={styles.submitHint}>Answer all {questions.length} questions to submit</p>
         )}
         <button
+          className="diag-btn"
           style={{ ...styles.button, opacity: (!allAnswered || submitting) ? 0.5 : 1 }}
           onClick={handleSubmit}
           disabled={!allAnswered || submitting}
         >
-          {submitting ? 'Submitting...' : 'Complete Assessment ✓'}
+          {submitting ? 'Submitting...' : 'Complete Assessment →'}
         </button>
       </div>
     </div>
@@ -194,40 +227,46 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    minHeight: 'calc(100vh - 60px)',
-    backgroundColor: '#f0f4f8',
+    minHeight: '100vh',
+    backgroundColor: tokens.paper,
     padding: '2rem',
+    fontFamily: tokens.bodyFont,
   },
   loadingContainer: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 'calc(100vh - 60px)',
-    backgroundColor: '#f0f4f8',
+    minHeight: '100vh',
+    backgroundColor: tokens.paper,
     padding: '2rem',
+    fontFamily: tokens.bodyFont,
   },
   loadingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.card,
     borderRadius: '16px',
     padding: '2.5rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 4px 20px rgba(15,23,42,0.08)',
     width: '100%',
     maxWidth: '500px',
     textAlign: 'center',
   },
   loadingTitle: {
-    color: '#1A1A2E',
+    fontFamily: tokens.displayFont,
+    color: tokens.ink,
+    fontWeight: '700',
     marginBottom: '1rem',
   },
   loadingText: {
-    color: '#666',
+    color: tokens.inkSoft,
     lineHeight: '1.6',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.card,
     borderRadius: '16px',
     padding: '2.5rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 4px 20px rgba(15,23,42,0.08)',
     width: '100%',
   },
   headerRow: {
@@ -236,41 +275,43 @@ const styles = {
     alignItems: 'flex-start',
     gap: '1rem',
     marginBottom: '1.5rem',
+    flexWrap: 'wrap',
   },
   diagnosticBadge: {
     display: 'inline-block',
-    backgroundColor: '#E0F7FA',
-    color: '#00838F',
+    backgroundColor: tokens.accentSoft,
+    color: tokens.accentText,
     padding: '0.3rem 1rem',
     borderRadius: '20px',
     fontSize: '0.85rem',
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: '0.75rem',
   },
   diagnosticInfo: {
-    color: '#666',
+    color: tokens.inkSoft,
     fontSize: '0.9rem',
     lineHeight: '1.6',
     margin: 0,
   },
   progressBadge: {
-    backgroundColor: '#F0F4F8',
-    color: '#00B4D8',
+    backgroundColor: tokens.paper,
+    color: tokens.accentText,
     fontWeight: '700',
     fontSize: '0.8rem',
     padding: '0.4rem 0.9rem',
     borderRadius: '20px',
     whiteSpace: 'nowrap',
+    border: `1px solid ${tokens.border}`,
   },
   questionBlock: {
-    borderTop: '1px solid #F1F5F9',
+    borderTop: `1px solid ${tokens.border}`,
     paddingTop: '1.5rem',
     marginTop: '1.5rem',
   },
   questionNumber: {
     display: 'inline-block',
-    backgroundColor: '#EFF6FF',
-    color: '#2563EB',
+    backgroundColor: tokens.accentSoft,
+    color: tokens.accentText,
     fontSize: '0.75rem',
     fontWeight: '700',
     padding: '0.25rem 0.75rem',
@@ -278,10 +319,12 @@ const styles = {
     marginBottom: '0.75rem',
   },
   question: {
+    fontFamily: tokens.displayFont,
     fontSize: '1.15rem',
-    color: '#1A1A2E',
+    color: tokens.ink,
     marginBottom: '1.25rem',
     lineHeight: '1.5',
+    fontWeight: '700',
   },
   optionsGrid: {
     display: 'flex',
@@ -291,32 +334,36 @@ const styles = {
   optionBtn: {
     width: '100%',
     padding: '0.85rem 1.1rem',
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
-    border: '2px solid #ddd',
-    borderRadius: '8px',
+    backgroundColor: tokens.card,
+    color: tokens.ink,
+    border: `2px solid ${tokens.border}`,
+    borderRadius: '10px',
     fontSize: '0.95rem',
     fontWeight: '600',
     cursor: 'pointer',
     textAlign: 'left',
-    transition: 'all 0.15s',
+    transition: 'border-color 0.15s, background-color 0.15s',
+    fontFamily: 'inherit',
   },
   optionBtnSelected: {
-    borderColor: '#00B4D8',
-    backgroundColor: '#EFFCFF',
-    color: '#00838F',
+    borderColor: tokens.accent,
+    backgroundColor: tokens.accentSoft,
+    color: tokens.accentText,
   },
   input: {
     width: '100%',
     padding: '0.9rem 1rem',
-    borderRadius: '8px',
-    border: '2px solid #ddd',
+    borderRadius: '10px',
+    border: `2px solid ${tokens.border}`,
     fontSize: '1rem',
+    color: tokens.ink,
     outline: 'none',
     boxSizing: 'border-box',
+    fontFamily: 'inherit',
+    backgroundColor: tokens.card,
   },
   submitHint: {
-    color: '#94A3B8',
+    color: tokens.inkSoft,
     fontSize: '0.85rem',
     textAlign: 'center',
     marginTop: '1.5rem',
@@ -325,26 +372,29 @@ const styles = {
   button: {
     width: '100%',
     padding: '0.9rem',
-    backgroundColor: '#00B4D8',
-    color: '#fff',
+    backgroundColor: tokens.accent,
+    color: tokens.onAccent,
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '999px',
     fontSize: '1rem',
-    fontWeight: 'bold',
+    fontWeight: '700',
     cursor: 'pointer',
     marginTop: '0.5rem',
+    transition: 'background-color 0.15s',
   },
   error: {
-    color: 'red',
+    color: tokens.dangerText,
     marginBottom: '1rem',
   },
   resultsTitle: {
+    fontFamily: tokens.displayFont,
     fontSize: '1.8rem',
-    color: '#1A1A2E',
+    color: tokens.ink,
+    fontWeight: '700',
     margin: '0.5rem 0',
   },
   resultsSubtitle: {
-    color: '#666',
+    color: tokens.inkSoft,
     fontSize: '0.95rem',
     marginBottom: '1.5rem',
     lineHeight: '1.6',
@@ -355,17 +405,18 @@ const styles = {
     alignItems: 'center',
     marginBottom: '2rem',
     padding: '1.5rem',
-    backgroundColor: '#f0f4f8',
+    backgroundColor: tokens.paper,
     borderRadius: '12px',
   },
   scoreNum: {
+    fontFamily: tokens.displayFont,
     fontSize: '3rem',
-    fontWeight: 'bold',
-    color: '#00B4D8',
+    fontWeight: '700',
+    color: tokens.accentText,
   },
   scoreLabel: {
     fontSize: '1rem',
-    color: '#666',
+    color: tokens.inkSoft,
   },
   resultsList: {
     display: 'flex',
@@ -375,7 +426,7 @@ const styles = {
   },
   resultItem: {
     padding: '1rem',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: tokens.paper,
     borderRadius: '8px',
   },
   resultHeader: {
@@ -383,28 +434,38 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '0.5rem',
+    flexWrap: 'wrap',
+    gap: '0.5rem',
   },
   topicTag: {
-    backgroundColor: '#E0F7FA',
-    color: '#00838F',
+    backgroundColor: tokens.accentSoft,
+    color: tokens.accentText,
     padding: '0.2rem 0.6rem',
     borderRadius: '12px',
     fontSize: '0.8rem',
-    fontWeight: 'bold',
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  resultStatus: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.3rem',
+    fontWeight: '700',
+    fontSize: '0.85rem',
   },
   resultQuestion: {
     margin: '0 0 0.5rem',
-    color: '#1A1A2E',
+    color: tokens.ink,
     fontSize: '0.95rem',
   },
   userAnswer: {
     margin: '0 0 0.25rem',
-    color: '#475569',
+    color: tokens.inkSoft,
     fontSize: '0.9rem',
   },
   correctAnswer: {
     margin: 0,
-    color: '#22C55E',
+    color: tokens.successText,
     fontSize: '0.9rem',
   },
 };

@@ -2,10 +2,9 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance, Subject
-from app.services import generate_mcq_question, generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question, score_answer, is_malformed_question
+from app.services import generate_mcq_question, generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question, score_answer, is_malformed_question, generate_question_for_topic, score_answer, generate_mcq_options
 import random
 from app.bkt import BKTModel
-from app.services import generate_question_for_topic, score_answer, generate_mcq_options
 import json
 from app.adaptive import select_adaptive_topics
 
@@ -41,6 +40,7 @@ def score_question_answer(question, user_answer):
     # long_answer and any future free-text types
     return score_answer(user_answer, question.correct_answer)
 
+# ============== Routes ==============
 
 @quiz_bp.route('/test-types/<int:subject_id>', methods=['GET'])
 @jwt_required()

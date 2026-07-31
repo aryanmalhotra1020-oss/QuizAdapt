@@ -1,6 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { tokens, fontImport } from '../theme';
+
+const SpinnerIcon = () => (
+  <svg className="review-spinner" width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke={tokens.border} strokeWidth="3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke={tokens.accent} strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+const CheckCircleIcon = ({ size = 34, color = tokens.good }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8.5 12.5 2.5 2.5 5-5" />
+  </svg>
+);
+
+const TrophyIcon = ({ size = 34, color = tokens.good }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M8 21h8" /><path d="M12 17v4" />
+    <path d="M7 4h10v5a5 5 0 0 1-10 0Z" />
+    <path d="M17 5h2.5a1.5 1.5 0 0 1 0 3H17" />
+    <path d="M7 5H4.5a1.5 1.5 0 0 0 0 3H7" />
+  </svg>
+);
+
+const SmallCheckIcon = ({ color }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const SmallXIcon = ({ color }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
 
 const ReviewQueue = () => {
   const { subjectId } = useParams();
@@ -14,6 +51,7 @@ const ReviewQueue = () => {
 
   useEffect(() => {
     fetchDueReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDueReviews = async () => {
@@ -57,13 +95,19 @@ const ReviewQueue = () => {
     setCurrentIndex(prev => prev + 1);
   };
 
-  const getScoreColor = (isCorrect) => (isCorrect ? '#22C55E' : '#EF4444');
+  const getScoreColor = (isCorrect) => (isCorrect ? tokens.good : tokens.critical);
 
   if (loading) {
     return (
       <div style={styles.centered}>
+        <style>{`${fontImport}
+          @media (prefers-reduced-motion: no-preference) {
+            .review-spinner { animation: review-spin 0.8s linear infinite; }
+          }
+          @keyframes review-spin { to { transform: rotate(360deg); } }
+        `}</style>
         <div style={styles.loadingCard}>
-          <span style={styles.loadingIcon}>⏳</span>
+          <span style={styles.loadingIconWrap}><SpinnerIcon /></span>
           <h2 style={styles.loadingTitle}>Loading your review queue...</h2>
         </div>
       </div>
@@ -73,11 +117,14 @@ const ReviewQueue = () => {
   if (items.length === 0) {
     return (
       <div style={styles.centered}>
+        <style>{`${fontImport}
+          .review-secondary-btn:hover { border-color: #CBD5E1; }
+        `}</style>
         <div style={styles.loadingCard}>
-          <span style={styles.loadingIcon}>✅</span>
+          <span style={styles.loadingIconWrap}><CheckCircleIcon /></span>
           <h2 style={styles.loadingTitle}>Nothing due right now</h2>
           <p style={styles.emptyText}>Check back later — topics will surface here as they become due for review.</p>
-          <button style={styles.secondaryBtn} onClick={() => navigate(-1)}>
+          <button className="review-secondary-btn" style={styles.secondaryBtn} onClick={() => navigate(-1)}>
             ← Back to Subject
           </button>
         </div>
@@ -88,19 +135,23 @@ const ReviewQueue = () => {
   if (currentIndex >= items.length) {
     return (
       <div style={styles.centered}>
+        <style>{`${fontImport}
+          .review-secondary-btn:hover { border-color: #CBD5E1; }
+          .review-primary-btn:hover { background-color: ${tokens.accentHover} !important; }
+        `}</style>
         <div style={styles.resultsCard}>
           <div style={styles.resultsHeader}>
-            <span style={styles.resultsEmoji}>🎉</span>
+            <span style={styles.resultsIconWrap}><TrophyIcon /></span>
             <h2 style={styles.resultsTitle}>Review Complete!</h2>
             <p style={styles.resultsFeedback}>
               You've worked through all {items.length} due topic{items.length !== 1 ? 's' : ''}. Nice consistency.
             </p>
           </div>
           <div style={styles.resultsActions}>
-            <button style={styles.secondaryBtn} onClick={() => navigate(-1)}>
+            <button className="review-secondary-btn" style={styles.secondaryBtn} onClick={() => navigate(-1)}>
               ← Back to Subject
             </button>
-            <button style={styles.primaryBtn} onClick={fetchDueReviews}>
+            <button className="review-primary-btn" style={styles.primaryBtn} onClick={fetchDueReviews}>
               Refresh Queue →
             </button>
           </div>
@@ -114,6 +165,10 @@ const ReviewQueue = () => {
 
   return (
     <div style={styles.centered}>
+      <style>{`${fontImport}
+        .review-input:focus { outline: none; border-color: ${tokens.accent} !important; box-shadow: 0 0 0 3px ${tokens.accentSoft}; }
+        .review-primary-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
+      `}</style>
       <div style={styles.quizCard}>
         {/* Progress */}
         <div style={styles.progressSection}>
@@ -138,6 +193,7 @@ const ReviewQueue = () => {
             <div style={styles.answerSection}>
               <label style={styles.answerLabel}>Your Answer</label>
               <input
+                className="review-input"
                 style={styles.answerInput}
                 type="text"
                 placeholder="Type your answer here..."
@@ -152,11 +208,12 @@ const ReviewQueue = () => {
             </div>
 
             <button
+              className="review-primary-btn"
               style={{ ...styles.primaryBtn, opacity: (!answer.trim() || submitting) ? 0.5 : 1 }}
               onClick={handleSubmit}
               disabled={!answer.trim() || submitting}
             >
-              {submitting ? 'Checking...' : 'Submit Answer ✓'}
+              {submitting ? 'Checking...' : 'Submit Answer →'}
             </button>
           </>
         ) : (
@@ -168,10 +225,12 @@ const ReviewQueue = () => {
             }}>
               <span style={{
                 ...styles.resultBadge,
-                backgroundColor: feedback.is_correct ? '#F0FDF4' : '#FEF2F2',
-                color: feedback.is_correct ? '#16A34A' : '#DC2626'
+                backgroundColor: feedback.is_correct ? tokens.successSoft : tokens.dangerSoft,
+                color: feedback.is_correct ? tokens.successText : tokens.dangerText
               }}>
-                {feedback.is_correct ? '✓ Correct' : '✗ Not quite'}
+                {feedback.is_correct
+                  ? <><SmallCheckIcon color={tokens.successText} /> Correct</>
+                  : <><SmallXIcon color={tokens.dangerText} /> Not quite</>}
               </span>
               <p style={styles.resultAnswer}>
                 Next review in <strong>{feedback.interval_days} day{feedback.interval_days !== 1 ? 's' : ''}</strong>
@@ -181,8 +240,8 @@ const ReviewQueue = () => {
               </p>
             </div>
 
-            <button style={styles.primaryBtn} onClick={handleNext}>
-              {currentIndex < items.length - 1 ? 'Next Topic →' : 'Finish Review ✓'}
+            <button className="review-primary-btn" style={styles.primaryBtn} onClick={handleNext}>
+              {currentIndex < items.length - 1 ? 'Next Topic →' : 'Finish Review →'}
             </button>
           </>
         )}
@@ -196,40 +255,45 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    minHeight: 'calc(100vh - 64px)',
-    backgroundColor: '#F0F4F8',
+    minHeight: '100vh',
+    backgroundColor: tokens.paper,
     padding: '2rem',
+    fontFamily: tokens.bodyFont,
   },
   loadingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.card,
     borderRadius: '16px',
     padding: '3rem',
     textAlign: 'center',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 4px 20px rgba(15,23,42,0.08)',
     maxWidth: '480px',
   },
-  loadingIcon: {
-    fontSize: '2.5rem',
-    display: 'block',
+  loadingIconWrap: {
+    display: 'flex',
+    justifyContent: 'center',
     marginBottom: '1rem',
   },
   loadingTitle: {
-    color: '#1A1A2E',
+    fontFamily: tokens.displayFont,
+    color: tokens.ink,
     fontSize: '1.3rem',
+    fontWeight: '700',
     marginBottom: '0.5rem',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: tokens.inkSoft,
     fontSize: '0.9rem',
     marginBottom: '1.5rem',
   },
   quizCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.card,
     borderRadius: '20px',
     padding: '2.5rem',
     width: '100%',
     maxWidth: '680px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 4px 24px rgba(15,23,42,0.08)',
   },
   progressSection: {
     marginBottom: '2.5rem',
@@ -241,23 +305,23 @@ const styles = {
   },
   progressText: {
     fontSize: '0.85rem',
-    color: '#94A3B8',
+    color: tokens.inkSoft,
     fontWeight: '500',
   },
   progressPct: {
     fontSize: '0.85rem',
-    color: '#00B4D8',
+    color: tokens.accentText,
     fontWeight: '600',
   },
   progressBar: {
     height: '6px',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: tokens.paper,
     borderRadius: '3px',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#00B4D8',
+    backgroundColor: tokens.accent,
     borderRadius: '3px',
     transition: 'width 0.4s ease',
   },
@@ -266,8 +330,8 @@ const styles = {
   },
   questionNumber: {
     display: 'inline-block',
-    backgroundColor: '#EFF6FF',
-    color: '#2563EB',
+    backgroundColor: tokens.accentSoft,
+    color: tokens.accentText,
     fontSize: '0.75rem',
     fontWeight: '700',
     padding: '0.25rem 0.75rem',
@@ -277,19 +341,22 @@ const styles = {
     textTransform: 'capitalize',
   },
   questionText: {
+    fontFamily: tokens.displayFont,
     fontSize: '1.4rem',
-    color: '#1A1A2E',
+    color: tokens.ink,
     lineHeight: '1.5',
-    fontWeight: '600',
+    fontWeight: '700',
+    margin: 0,
   },
   answerSection: {
     marginBottom: '1.5rem',
   },
   answerLabel: {
     display: 'block',
-    fontSize: '0.85rem',
+    fontSize: '0.75rem',
+    fontFamily: tokens.monoFont,
     fontWeight: '600',
-    color: '#64748B',
+    color: tokens.inkSoft,
     marginBottom: '0.5rem',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
@@ -298,76 +365,85 @@ const styles = {
     width: '100%',
     padding: '0.9rem 1rem',
     borderRadius: '10px',
-    border: '2px solid #E2E8F0',
+    border: `2px solid ${tokens.border}`,
     fontSize: '1rem',
-    color: '#1A1A2E',
+    color: tokens.ink,
     boxSizing: 'border-box',
     marginBottom: '0.4rem',
+    fontFamily: 'inherit',
+    backgroundColor: tokens.card,
+    transition: 'border-color 0.15s, box-shadow 0.15s',
   },
   answerHint: {
     fontSize: '0.75rem',
-    color: '#94A3B8',
+    color: tokens.inkSoft,
   },
   primaryBtn: {
     width: '100%',
     padding: '0.9rem',
-    backgroundColor: '#00B4D8',
-    color: '#fff',
+    backgroundColor: tokens.accent,
+    color: tokens.onAccent,
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '999px',
     fontSize: '1rem',
     fontWeight: '700',
     cursor: 'pointer',
+    transition: 'background-color 0.15s',
   },
   secondaryBtn: {
     flex: 1,
     padding: '0.9rem',
-    backgroundColor: '#fff',
-    color: '#1A1A2E',
-    border: '2px solid #E2E8F0',
-    borderRadius: '10px',
+    backgroundColor: tokens.card,
+    color: tokens.ink,
+    border: `2px solid ${tokens.border}`,
+    borderRadius: '999px',
     fontSize: '0.95rem',
     fontWeight: '600',
     cursor: 'pointer',
+    transition: 'border-color 0.15s',
   },
   resultsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.card,
     borderRadius: '20px',
     padding: '2.5rem',
     width: '100%',
     maxWidth: '680px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+    border: `1px solid ${tokens.border}`,
+    boxShadow: '0 4px 24px rgba(15,23,42,0.08)',
   },
   resultsHeader: {
     textAlign: 'center',
     marginBottom: '2rem',
     paddingBottom: '2rem',
-    borderBottom: '1px solid #F1F5F9',
+    borderBottom: `1px solid ${tokens.paper}`,
   },
-  resultsEmoji: {
-    fontSize: '2.5rem',
-    display: 'block',
-    marginBottom: '0.5rem',
+  resultsIconWrap: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '0.75rem',
   },
   resultsTitle: {
+    fontFamily: tokens.displayFont,
     fontSize: '1.8rem',
-    color: '#1A1A2E',
-    fontWeight: '800',
+    color: tokens.ink,
+    fontWeight: '700',
     marginBottom: '1rem',
   },
   resultsFeedback: {
-    color: '#64748B',
+    color: tokens.inkSoft,
     fontSize: '0.95rem',
     lineHeight: '1.5',
   },
   resultItem: {
     padding: '1rem',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: tokens.paper,
     borderRadius: '10px',
     marginBottom: '1.5rem',
   },
   resultBadge: {
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.35rem',
     padding: '0.2rem 0.75rem',
     borderRadius: '20px',
     fontSize: '0.8rem',
@@ -376,7 +452,7 @@ const styles = {
   },
   resultAnswer: {
     margin: '0 0 0.25rem',
-    color: '#64748B',
+    color: tokens.inkSoft,
     fontSize: '0.85rem',
   },
   resultsActions: {

@@ -235,8 +235,8 @@ const Subject = () => {
         a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
           outline: 2px solid ${tokens.accent}; outline-offset: 2px;
         }
-        .subj-type-option:hover { border-color: #D8CFC3; }
-        .subj-diff-btn:hover { border-color: #D8CFC3; }
+        .subj-type-option:hover { border-color: #CBD5E1; }
+        .subj-diff-btn:hover { border-color: #CBD5E1; }
         .subj-generate-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
         .subj-dropzone-label:hover .subj-dropzone { border-color: ${tokens.accent}; background-color: ${tokens.paper}; }
         .subj-topic-delete:hover { color: ${tokens.dangerText} !important; }

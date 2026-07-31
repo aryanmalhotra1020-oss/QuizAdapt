@@ -2,23 +2,20 @@ import re
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import Note, Topic, Subject, User
+from app.models import Note, Topic, Subject, User, Summary
 from keybert import KeyBERT
-import fitz  # PyMuPDF
-from app.services import embed_texts
+import fitz  # PDF Extraction
+from app.services import embed_texts, extract_summary_sentences, generate_abstractive_summary
 import torch.nn.functional as F
 import spacy
-from app.services import extract_summary_sentences
-from app.models import Summary
 import json as json_module
 from sqlalchemy.exc import IntegrityError
-from app.services import extract_summary_sentences, generate_abstractive_summary
 
 
 notes_bp = Blueprint('notes', __name__)
 kw_model = KeyBERT()
 
-# ─── PDF text extraction & cleanup ───────────────────────────────
+# ============== Filtering ==============
 
 _VALID_TOPIC_PATTERN = re.compile(r"^[A-Za-z0-9\s\-']+$")
 
@@ -111,6 +108,13 @@ def protect_abbreviations(text):
     # "Classification vs. Regression" down to just "Classification vs"
     return re.sub(r'\bvs\.', 'vs', text, flags=re.IGNORECASE)
 
+_WEEK_NUMBER_PATTERN = re.compile(r'(?:week|wk)[\s_]*?(\d+)', re.IGNORECASE)
+
+def extract_week_number(filename):
+    match = _WEEK_NUMBER_PATTERN.search(filename)
+    return int(match.group(1)) if match else None
+
+# ============== Text Extraction ==============
 
 def extract_text(file):
     filename = file.filename.lower()
@@ -129,7 +133,7 @@ def extract_text(file):
     else:
         return file.read().decode('utf-8', errors='ignore')
 
-# ─── Topic extraction & cleanup ──────────────────────────────────
+# ============== Topic Extraction and Cleanup ==============
 
 _nlp = None
 
@@ -245,7 +249,7 @@ ADMIN_STOPLIST = {
 def filter_admin_topics(keywords):
     return [(kw, score) for kw, score in keywords if not any(w in kw.lower() for w in ADMIN_STOPLIST)]
 
-# ─── Routes ───────────────────────────────────────────────────────
+# ============== Routes ==============
 
 @notes_bp.route('/<int:subject_id>', methods=['POST'])
 @jwt_required()
@@ -360,12 +364,6 @@ def delete_topic(subject_id, topic_id):
     
     return jsonify({'message': 'Topic deleted'}), 200
 
-_WEEK_NUMBER_PATTERN = re.compile(r'(?:week|wk)[\s_]*?(\d+)', re.IGNORECASE)
-
-def extract_week_number(filename):
-    match = _WEEK_NUMBER_PATTERN.search(filename)
-    return int(match.group(1)) if match else None
-
 @notes_bp.route('/<int:subject_id>/summary', methods=['GET'])
 @jwt_required()
 def get_subject_summary(subject_id):
@@ -411,27 +409,7 @@ def get_subject_summary(subject_id):
         'cached': False
     }), 200
 
-
-def _build_summary_sections(subject_id):
-    notes = Note.query.filter_by(subject_id=subject_id).all()
-    if not notes:
-        return None
-
-    def sort_key(note):
-        week_num = extract_week_number(note.filename)
-        return (0, week_num) if week_num is not None else (1, note.id)
-
-    ordered_notes = sorted(notes, key=sort_key)
-
-    sections = []
-    for note in ordered_notes:
-        sections.append({
-            'note_id': note.id,
-            'filename': note.filename,
-            'week_number': extract_week_number(note.filename),
-            'summary': extract_summary_sentences(note.raw_text)
-        })
-    return sections
+# ============== Summary Section ==============
 
 def _build_summary_sections(subject_id):
     notes = Note.query.filter_by(subject_id=subject_id).all()

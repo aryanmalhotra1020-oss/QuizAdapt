@@ -6,9 +6,33 @@ import random
 import re
 
 FLAN_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'mcq_gen_model')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 't5_qg_model')
+SUMMARY_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'summary_model')
 
 flan_tokenizer = None
 flan_model = None
+tokenizer = None
+model = None
+similarity_tokenizer = None
+similarity_model = None
+summary_tokenizer = None
+summary_model = None
+
+_NOISE_PATTERNS = [
+    re.compile(r'\bsyed fawad hussain\b', re.IGNORECASE),
+    re.compile(r'\bfall 2025\b', re.IGNORECASE),
+    re.compile(r'\buniversity of birmingham\b', re.IGNORECASE),
+    re.compile(r'\b\d{1,3}\b'),  # standalone slide/page numbers
+]
+_FUSED_WORD_PATTERN = re.compile(r'[a-z][A-Z]')
+_CITATION_SENTENCE_PATTERN = re.compile(r'\bet al\b|\b\d{4}\)\.|arxiv', re.IGNORECASE)
+
+GENERIC_DECOY_TOPICS = [
+    'photosynthesis', 'supply and demand', 'the French Revolution', 'cellular respiration',
+    'opportunity cost', "Newton's laws of motion", 'DNA replication', 'market equilibrium',
+    'the water cycle', 'plate tectonics', 'the Renaissance', 'inflation rate',
+    'the periodic table', 'natural selection', 'the Cold War', 'the nitrogen cycle'
+]
 
 def load_flan_model():
     global flan_tokenizer, flan_model
@@ -18,7 +42,6 @@ def load_flan_model():
         flan_model.tie_weights()
         flan_model.eval()
     return flan_tokenizer, flan_model
-
 
 def parse_mcq_output(raw_output):
     text = raw_output if raw_output.strip().startswith("Question:") else "Question:" + raw_output
@@ -39,7 +62,6 @@ def parse_mcq_output(raw_output):
     if not all(result.values()):
         return None
     return result
-
 
 def _is_valid_mcq(result):
     options = [result['correct'], result['wrong1'], result['wrong2'], result['wrong3']]
@@ -84,7 +106,6 @@ def generate_mcq_with_flan(context, answer, max_attempts=3):
 
     return None
 
-
 def generate_mcq_question(raw_text, topic, other_topic_names, difficulty='medium'):
     context = extract_relevant_sentences(raw_text, topic, max_sentences=4, difficulty=difficulty)
     result = generate_mcq_with_flan(context, topic)
@@ -107,20 +128,6 @@ def generate_mcq_question(raw_text, topic, other_topic_names, difficulty='medium
         'correct_answer': topic,
         'options': options
     }
-
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 't5_qg_model')
-
-_NOISE_PATTERNS = [
-    re.compile(r'\bsyed fawad hussain\b', re.IGNORECASE),
-    re.compile(r'\bfall 2025\b', re.IGNORECASE),
-    re.compile(r'\buniversity of birmingham\b', re.IGNORECASE),
-    re.compile(r'\b\d{1,3}\b'),  # standalone slide/page numbers
-]
-
-tokenizer = None
-model = None
-similarity_tokenizer = None
-similarity_model = None
 
 def clean_sentence_noise(sentence):
     cleaned = sentence
@@ -199,7 +206,6 @@ def extract_relevant_sentences(text, topic, max_sentences=3, difficulty='medium'
 
     return '. '.join(top_sentences) if top_sentences else '. '.join(sentences[:max_sentences])
     
-
 def generate_question(context, answer):
     tok, mdl = load_qg_model()
     input_text = f"generate question: context: {context} answer: {answer}"
@@ -338,8 +344,6 @@ def mask_topic_in_question(question_text, topic):
         return pattern.sub('_____', question_text)
     return question_text
 
-_FUSED_WORD_PATTERN = re.compile(r'[a-z][A-Z]')
-
 def is_malformed_answer(answer_text):
     if not answer_text or len(answer_text.strip()) < 2:
         return True
@@ -400,13 +404,6 @@ def generate_long_answer_question(raw_text, topic, difficulty='medium'):
         'question_text': f'In your own words, explain what "{topic}" means based on your notes.',
         'correct_answer': topic
     }
-
-GENERIC_DECOY_TOPICS = [
-    'photosynthesis', 'supply and demand', 'the French Revolution', 'cellular respiration',
-    'opportunity cost', "Newton's laws of motion", 'DNA replication', 'market equilibrium',
-    'the water cycle', 'plate tectonics', 'the Renaissance', 'inflation rate',
-    'the periodic table', 'natural selection', 'the Cold War', 'the nitrogen cycle'
-]
 
 def generate_multi_select_question(subject_topic_names, decoy_pool=None, num_correct=2, num_incorrect=3, similarity_threshold=0.45):
     if len(subject_topic_names) < 2:
@@ -483,15 +480,12 @@ def cluster_topics(topic_names, similarity_threshold=0.45):
 
     return list(clusters_map.values())
 
-
 def get_cluster_for_topic(topic, all_topic_names, similarity_threshold=0.45):
     clusters = cluster_topics(all_topic_names, similarity_threshold=similarity_threshold)
     for cluster in clusters:
         if topic in cluster:
             return cluster
     return [topic]
-
-_CITATION_SENTENCE_PATTERN = re.compile(r'\bet al\b|\b\d{4}\)\.|arxiv', re.IGNORECASE)
 
 def deduplicate_sentences(sentences, similarity_threshold=0.9):
     if not sentences:
@@ -514,7 +508,6 @@ def deduplicate_sentences(sentences, similarity_threshold=0.9):
             keep.append(sentence)
             keep_embeddings.append(embeddings[i])
     return keep
-
 
 def extract_summary_sentences(raw_text, max_sentences=6, min_words=8, diversity_lambda=0.7):
     sentences = split_into_clean_sentences(raw_text)
@@ -556,11 +549,6 @@ def extract_summary_sentences(raw_text, max_sentences=6, min_words=8, diversity_
     selected_indices.sort()
     return [sentences[i] for i in selected_indices]
 
-SUMMARY_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'summary_model')
-
-summary_tokenizer = None
-summary_model = None
-
 def load_summary_model():
     global summary_tokenizer, summary_model
     if summary_model is None:
@@ -569,7 +557,6 @@ def load_summary_model():
         summary_model.tie_weights()
         summary_model.eval()
     return summary_tokenizer, summary_model
-
 
 def generate_abstractive_summary(key_sentences):
     if not key_sentences:

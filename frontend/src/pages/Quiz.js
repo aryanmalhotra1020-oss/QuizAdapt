@@ -231,7 +231,7 @@ const Quiz = () => {
   return (
     <div style={styles.pageContainer}>
       <style>{`${fontImport}
-        .quiz-option-btn:hover { border-color: #D8CFC3; }
+        .quiz-option-btn:hover { border-color: #CBD5E1; }
         .quiz-submit-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
         button { cursor: pointer; }
         button:focus-visible, select:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }

@@ -9,7 +9,6 @@ from app.spaced_repetition import score_to_quality, sm2_update, apply_forgetting
 
 review_bp = Blueprint('review', __name__)
 
-
 @review_bp.route('/due/<int:subject_id>', methods=['GET'])
 @jwt_required()
 def get_due_reviews(subject_id):
@@ -108,7 +107,6 @@ def get_due_reviews(subject_id):
         'due_count': len(due_items),
         'due_items': due_items
     }), 200
-
 
 @review_bp.route('/submit', methods=['POST'])
 @jwt_required()
