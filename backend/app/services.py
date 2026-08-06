@@ -26,6 +26,17 @@ _NOISE_PATTERNS = [
 ]
 _FUSED_WORD_PATTERN = re.compile(r'[a-z][A-Z]')
 _CITATION_SENTENCE_PATTERN = re.compile(r'\bet al\b|\b\d{4}\)\.|arxiv', re.IGNORECASE)
+_CITATION_SENTENCE_PATTERN_SUMMARY = re.compile(
+    r'\bet al\b|\b\d{4}\)\.|arxiv|proceedings|transactions on|journal of|'
+    r'conference on|ieee|springer|elsevier',
+    re.IGNORECASE
+)
+_ADMIN_SENTENCE_PATTERN = re.compile(
+    r'\b(available from|due date|due time|decimal cases|marked down|contact me|'
+    r'office hours|not a limit|help deliver|module team|attendance|assessment '
+    r'distribution|slides are for)\b',
+    re.IGNORECASE
+)
 
 GENERIC_DECOY_TOPICS = [
     'photosynthesis', 'supply and demand', 'the French Revolution', 'cellular respiration',
@@ -142,7 +153,12 @@ def split_into_clean_sentences(raw_text):
         parts = re.split(r'(?<=[.?!])\s+', line.strip())
         sentences.extend(parts)
     cleaned = [clean_sentence_noise(s) for s in sentences]
-    return [s for s in cleaned if 4 <= len(s.split()) <= 40 and not is_low_quality_sentence(s)]
+    return [
+        s for s in cleaned
+        if 4 <= len(s.split()) <= 40
+        and not is_low_quality_sentence(s)
+        and not is_admin_or_citation_sentence(s)
+    ]
 
 def _prose_ratio(text):
     if not text:
@@ -515,7 +531,7 @@ def extract_summary_sentences(raw_text, max_sentences=6, min_words=8, diversity_
         s for s in sentences
         if len(s.split()) >= min_words
         and s.strip().endswith(('.', '!', '?', ':'))
-        and not _CITATION_SENTENCE_PATTERN.search(s)
+        and not is_admin_or_citation_sentence(s)
     ]
     sentences = deduplicate_sentences(sentences)
 
@@ -557,6 +573,13 @@ def load_summary_model():
         summary_model.tie_weights()
         summary_model.eval()
     return summary_tokenizer, summary_model
+
+def is_admin_or_citation_sentence(sentence):
+    if _ADMIN_SENTENCE_PATTERN.search(sentence):
+        return True
+    if _CITATION_SENTENCE_PATTERN_SUMMARY.search(sentence):
+        return True
+    return False
 
 def generate_abstractive_summary(key_sentences):
     if not key_sentences:
