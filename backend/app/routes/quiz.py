@@ -494,3 +494,41 @@ def get_performance(subject_id):
             'total_quizzes': len(quiz_history)
         }
     }), 200
+
+@quiz_bp.route('/history/<int:quiz_id>', methods=['GET'])
+@jwt_required()
+def get_quiz_history_detail(quiz_id):
+    user_id = get_jwt_identity()
+    quiz = Quiz.query.get_or_404(quiz_id)
+
+    subject = Subject.query.filter_by(id=quiz.subject_id, user_id=user_id).first()
+    if not subject:
+        return jsonify({'error': 'Not found'}), 404
+
+    attempt = Attempt.query.filter_by(quiz_id=quiz_id, user_id=user_id).order_by(Attempt.id.desc()).first()
+    if not attempt:
+        return jsonify({'error': 'No attempt found for this quiz'}), 404
+
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    answers = {a.question_id: a for a in Answer.query.filter_by(attempt_id=attempt.id).all()}
+
+    results = []
+    for q in questions:
+        ans = answers.get(q.id)
+        results.append({
+            'question_id': q.id,
+            'question_text': q.question_text,
+            'question_type': q.question_type,
+            'options': json.loads(q.options) if q.options else None,
+            'correct_answer': q.correct_answer,
+            'user_answer': ans.user_answer if ans else None,
+            'is_correct': ans.is_correct if ans else None,
+        })
+
+    return jsonify({
+        'quiz_id': quiz.id,
+        'type': quiz.type,
+        'subject_id': quiz.subject_id,
+        'attempted_at': attempt.started_at,
+        'questions': results
+    }), 200

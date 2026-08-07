@@ -291,6 +291,7 @@ const Subject = () => {
         )}
 
         {activeTab === 'adaptive' && (
+          <>
           <div style={styles.configCard}>
             <h2 style={styles.configTitle}>Configure your quiz</h2>
             <p style={styles.configSubtitle}>
@@ -368,6 +369,22 @@ const Subject = () => {
               {generating ? 'Generating Quiz...' : 'Generate Quiz →'}
             </button>
           </div>
+          <div
+              className="subj-review-card"
+              style={styles.reviewCard}
+              onClick={goToReview}
+              role="button"
+              tabIndex={0}
+              onKeyDown={handleReviewKeyDown}
+            >
+              <span style={styles.actionIconWrap}><RefreshIcon /></span>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={styles.actionTitle}>Review Due Topics</h3>
+                <p style={styles.actionDesc}>Spaced repetition for topics you're due to revisit</p>
+              </div>
+              <span style={styles.actionArrow}>→</span>
+            </div>
+          </>
         )}
 
         {activeTab === 'files' && (
@@ -452,22 +469,6 @@ const Subject = () => {
                   ))}
                 </div>
               )}
-
-              <div
-                className="subj-review-card"
-                style={styles.reviewCard}
-                onClick={goToReview}
-                role="button"
-                tabIndex={0}
-                onKeyDown={handleReviewKeyDown}
-              >
-                <span style={styles.actionIconWrap}><RefreshIcon /></span>
-                <div style={{ minWidth: 0 }}>
-                  <h3 style={styles.actionTitle}>Review Due Topics</h3>
-                  <p style={styles.actionDesc}>Spaced repetition for topics you're due to revisit</p>
-                </div>
-                <span style={styles.actionArrow}>→</span>
-              </div>
             </div>
           </div>
         )}

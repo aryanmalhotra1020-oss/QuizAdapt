@@ -14,6 +14,7 @@ import DiagnosticQuiz from './pages/DiagnosticQuiz';
 import Performance from './pages/Performance';
 import ReviewQueue from './pages/ReviewQueue';
 import Landing from './pages/Landing';
+import QuizHistoryDetail from './pages/QuizHistoryDetail';
 
 function App() {
   return (
@@ -47,6 +48,11 @@ function App() {
             <Route path="/quiz/:quizId" element={
               <ProtectedRoute>
                 <Quiz />
+              </ProtectedRoute>
+            } />
+            <Route path="/quiz-history/:quizId" element={
+              <ProtectedRoute>
+                <QuizHistoryDetail />
               </ProtectedRoute>
             } />
             <Route path="/diagnostic/:subjectId" element={

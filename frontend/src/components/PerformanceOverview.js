@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { tokens, fontImport } from '../theme';
 
@@ -100,6 +101,7 @@ const TYPE_META = {
 };
 
 const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -128,6 +130,13 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
 
   if (error) return <p style={styles.error} role="alert">{error}</p>;
 
+  const goToQuizHistory = (quizId) => navigate(`/quiz-history/${quizId}`);
+  const handleHistoryKeyDown = (e, quizId) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goToQuizHistory(quizId);
+    }
+  };
   const { summary, weak, moderate, strong, quiz_history, topic_breakdown } = data;
   const overallScore = topic_breakdown.length > 0
     ? Math.round((topic_breakdown.reduce((sum, t) => sum + t.strength_score, 0) / topic_breakdown.length) * 100)
@@ -142,6 +151,8 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
           .topic-bar-fill { transition: width 0.6s ease-out; }
         }
         .continue-btn:hover { background-color: ${tokens.accentHover} !important; }
+        .perf-history-item:hover { border-color: ${tokens.accent}; box-shadow: 0 2px 8px rgba(33,29,28,0.06); }
+        .perf-history-item:focus-visible {outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
         button { cursor: pointer; }
         button:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
 
@@ -225,7 +236,15 @@ const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
               {quiz_history.slice().reverse().map((quiz) => {
                 const meta = TYPE_META[quiz.type] || TYPE_META.initial;
                 return (
-                  <div key={quiz.quiz_id} style={styles.historyItem}>
+                  <div 
+                    key={quiz.quiz_id} 
+                    className="perf-history-item" 
+                    style={styles.historyItem} 
+                    onClick={() => goToQuizHistory(quiz.quiz_id)} 
+                    role="button" 
+                    tabIndex={0} 
+                    onKeyDown={(e) => handleHistoryKeyDown(e, quiz.quiz_id)}
+                  >
                     <div style={styles.historyLeft}>
                       <span style={{ ...styles.typeBadge, backgroundColor: meta.bg, color: meta.color }}>
                         <meta.Icon /> {meta.label}
@@ -321,7 +340,7 @@ const styles = {
   groupTitle: { fontSize: '0.85rem', fontWeight: '700', margin: 0 },
   empty: { textAlign: 'center', padding: '2rem', color: tokens.inkSoft, fontSize: '0.9rem' },
   historyList: { display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.5rem' },
-  historyItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: tokens.paper, borderRadius: '10px', border: `1px solid ${tokens.border}`, flexWrap: 'wrap', gap: '0.5rem' },
+  historyItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: tokens.paper, borderRadius: '10px', borderWidth: '1px', borderStyle:'solid', borderColor: tokens.border, border: `1px solid ${tokens.border}`, flexWrap: 'wrap', gap: '0.5rem', cursor:'pointer', transition:'border-color 0.15s, box-shadow 0.15s' },
   historyLeft: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
   typeBadge: { padding: '0.25rem 0.7rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' },
   historyDate: { color: tokens.inkSoft, fontSize: '0.8rem' },
