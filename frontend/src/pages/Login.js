@@ -191,11 +191,13 @@ const Login = () => {
       <div style={styles.brandSide} className="brand-side">
         <div style={styles.brandContent}>
           <h2 style={styles.brandHeadline}>
-            Learn what you<br />
+            Learn what you don&rsquo;t know yet.<br />
+            {/*
             <span style={styles.headlineDoodleWrap}>
               don&rsquo;t know yet.
               <CircleDoodle style={styles.circleDoodle} />
             </span>
+            */}
           </h2>
           <p style={styles.brandSubhead}>
             QuizAdapt turns your notes into quizzes that target your weak spots.

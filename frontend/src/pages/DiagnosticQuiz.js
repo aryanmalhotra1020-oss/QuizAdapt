@@ -338,6 +338,7 @@ const styles = {
     color: tokens.ink,
     border: `2px solid ${tokens.border}`,
     borderRadius: '10px',
+    borderColor: tokens.border,
     fontSize: '0.95rem',
     fontWeight: '600',
     cursor: 'pointer',

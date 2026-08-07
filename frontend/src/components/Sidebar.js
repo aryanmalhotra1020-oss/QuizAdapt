@@ -55,7 +55,10 @@ const Sidebar = ({ isOpen = false, onClose = () => {}, collapsed = false, onTogg
 
   useEffect(() => {
     api.get('/subjects/')
-      .then((res) => setSubjects(res.data))
+      .then((res) => {
+        const sorted = [...res.data].sort((a, b) => a.name.localeCompare(b.name));
+        setSubjects(sorted);
+      })
       .catch(() => {});
   }, [location.pathname]);
 

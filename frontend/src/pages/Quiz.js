@@ -395,11 +395,11 @@ const styles = {
   optionsGrid: { display: 'flex', flexDirection: 'column', gap: '0.65rem' },
   optionBtn: {
     width: '100%', padding: '0.85rem 1.1rem', backgroundColor: tokens.card, color: tokens.ink,
-    border: `2px solid ${tokens.border}`, borderRadius: '10px', fontSize: '0.95rem', fontWeight: '600',
+    border: `2px solid ${tokens.border}`, borderRadius: '10px', borderColor: tokens.border, fontSize: '0.95rem', fontWeight: '600',
     cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', fontFamily: 'inherit',
   },
   optionBtnSelected: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft, color: tokens.accentText },
-  checkboxOptionBtn: { display: 'flex', alignItems: 'center', gap: '0.7rem' },
+  checkboxOptionBtn: { display: 'flex', alignItems: 'center', gap: '0.7rem', outline: 'none', },
   miniCheckbox: {
     width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${tokens.border}`,
     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem',

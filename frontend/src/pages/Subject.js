@@ -517,13 +517,13 @@ const styles = {
   },
   typeGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' },
   typeOption: {
-    border: `2px solid ${tokens.border}`, borderRadius: '12px', padding: '0.9rem 1rem',
+    border: `2px solid ${tokens.border}`, borderRadius: '12px', borderColor: tokens.border, padding: '0.9rem 1rem',
     cursor: 'pointer', transition: 'border-color 0.15s, background-color 0.15s',
   },
   typeOptionSelected: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft },
   typeOptionHeader: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' },
   checkbox: {
-    width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${tokens.border}`,
+    width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${tokens.border}`, borderColor: tokens.border,
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   checkboxChecked: { backgroundColor: tokens.accent, borderColor: tokens.accent },
@@ -531,9 +531,9 @@ const styles = {
   typeOptionDesc: { fontSize: '0.78rem', color: tokens.inkSoft, margin: 0, paddingLeft: '1.65rem' },
   difficultyRow: { display: 'flex', gap: '0.6rem' },
   difficultyBtn: {
-    flex: 1, padding: '0.65rem', borderRadius: '10px', border: `2px solid ${tokens.border}`,
+    flex: 1, padding: '0.65rem', borderRadius: '10px', border: `2px solid ${tokens.border}`, borderColor: tokens.border,
     backgroundColor: tokens.card, color: tokens.inkSoft, fontWeight: '700', fontSize: '0.85rem', fontFamily: 'inherit',
-  },
+  }, 
   difficultyBtnActive: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft, color: tokens.accentText },
   configHint: { color: tokens.dangerText, fontSize: '0.8rem', marginBottom: '1rem' },
   generateBtn: {

@@ -83,8 +83,8 @@ const ChartIcon = () => (
 
 const FEATURES = [
   { Icon: UploadIcon, title: 'Upload your notes', body: 'Drop in a PDF or plain text — lecture notes, a textbook chapter, whatever you have.' },
-  { Icon: TagIcon, title: 'Topics get extracted', body: 'QuizAdapt reads your notes and pulls out the concepts they actually cover.' },
-  { Icon: TargetIcon, title: 'Questions target your gaps', body: 'A short diagnostic finds what you already know, then every quiz after that leans toward what you don’t.' },
+  { Icon: TagIcon, title: 'Topics get extracted', body: 'QuizAdapt reads your notes and pulls out the concepts they cover.' },
+  { Icon: TargetIcon, title: 'Questions target your weaknesses', body: 'A short diagnostic finds what you already know, then every quiz after that leans toward what you don’t.' },
   { Icon: RefreshIcon, title: 'Weak spots resurface on schedule', body: 'Spaced repetition brings topics back right before you’d normally forget them.' },
 ];
 
@@ -104,7 +104,7 @@ const BUILT_FOR = [
   {
     eyebrow: 'ANY SUBJECT',
     title: 'Your notes, your format, your call on difficulty.',
-    body: 'Multiple choice, fill-in-the-blank, long answer, or select-all. Easy, medium, or hard. Mix and match per quiz — it’s still weighted toward your weak topics underneath.',
+    body: 'Multiple choice, fill-in-the-blank, long answer, or select-all. Easy, medium, or hard. Mix and match per quiz — it’s still weighted towards your weak topics underneath.',
     mock: 'config',
   },
 ];
@@ -162,18 +162,19 @@ const Landing = () => {
         <div style={styles.heroText}>
           <span style={styles.eyebrow}>ADAPTIVE STUDY, FROM YOUR OWN NOTES</span>
           <h1 style={styles.headline} className="ld-headline">
-            Learn what you<br />
-            <span style={styles.headlineDoodleWrap}>
+            Learn what you don&rsquo;t know yet.<br />
+            {/* <span style={styles.headlineDoodleWrap}>
               don&rsquo;t know yet.
               <CircleDoodle style={styles.circleDoodle} />
             </span>
+            */}
           </h1>
           <p style={styles.subheadline}>
             QuizAdapt turns your own notes into quizzes that target your weak spots -
             not just the topics you already know.
           </p>
           <div style={styles.heroCtas}>
-            <Link to="/register" style={styles.primaryBtn} className="ld-cta-accent">Get Started →</Link>
+            <Link to="/register" style={styles.primaryBtn} className="ld-cta-accent">Get Started</Link>
             <Link to="/login" style={styles.ghostBtn} className="ld-cta-ghost">Log in</Link>
           </div>
         </div>
@@ -219,7 +220,7 @@ const Landing = () => {
       {/* Mechanism strip */}
       <div style={styles.mechStrip} className="ld-mech-strip">
         {[
-          'T5 question generation',
+          'Question generation',
           'Adaptive difficulty',
           'Spaced repetition',
           'Multiple question formats',
@@ -292,7 +293,7 @@ const Landing = () => {
                 <span key={d} style={{ ...styles.bentoDiffPill, ...(i === 1 ? styles.bentoDiffPillActive : {}) }}>{d}</span>
               ))}
             </div>
-            <p style={styles.bentoSmallNote}>Weighted toward weak topics either way.</p>
+            <p style={styles.bentoSmallNote}>Weighted towards weak topics either way.</p>
           </div>
           <div style={styles.bentoCard} className="ld-bento-card">
             <span style={styles.bentoLabel}>04 — QUESTION</span>
@@ -345,7 +346,7 @@ const Landing = () => {
           ))}
         </div>
         <h2 style={styles.ctaHeadline}>Upload your first set of notes and see what it finds.</h2>
-        <Link to="/register" style={styles.ctaBtn} className="ld-cta-accent">Get Started for Free →</Link>
+        <Link to="/register" style={styles.ctaBtn} className="ld-cta-accent">Get Started for Free</Link>
       </section>
     </div>
   );
