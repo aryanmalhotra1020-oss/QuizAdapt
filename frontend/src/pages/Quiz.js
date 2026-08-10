@@ -55,6 +55,7 @@ const Quiz = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [subjectId, setSubjectId] = useState(null);
+  const [quizType, setQuizType] = useState(null);
 
   useEffect(() => {
     fetchQuiz();
@@ -65,6 +66,7 @@ const Quiz = () => {
       const response = await api.get(`/quiz/${quizId}`);
       setQuestions(response.data.questions);
       setSubjectId(response.data.subject_id);
+      setQuizType(response.data.type);
     } catch (err) {
       console.error('Failed to load quiz');
     } finally {
@@ -238,7 +240,9 @@ const Quiz = () => {
       `}</style>
       <div style={styles.quizWrapper}>
         <div style={styles.header}>
-          <h1 style={styles.headerTitle}>Adaptive Quiz</h1>
+          <h1 style={styles.headerTitle}>
+            {quizType === 'sample_paper' ? 'Sample Paper' : 'Adaptive Quiz'}
+          </h1>
           <span style={styles.progressBadge}>{answeredCount} / {questions.length} answered</span>
         </div>
 

@@ -15,6 +15,7 @@ import Performance from './pages/Performance';
 import ReviewQueue from './pages/ReviewQueue';
 import Landing from './pages/Landing';
 import QuizHistoryDetail from './pages/QuizHistoryDetail';
+import SamplePaperReady from './pages/SamplePaperReady';
 
 function App() {
   return (
@@ -68,6 +69,11 @@ function App() {
             <Route path="/review/:subjectId" element={
               <ProtectedRoute>
                 <ReviewQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/sample-paper/:quizId" element={
+              <ProtectedRoute>
+                <SamplePaperReady />
               </ProtectedRoute>
             } />
             <Route path="*" element={<Navigate to="/login" />} />

@@ -70,13 +70,6 @@ const RefreshIcon = () => (
   </svg>
 );
 
-const LockIcon = () => (
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={tokens.inkSoft} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="5" y="11" width="14" height="10" rx="2" />
-    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-  </svg>
-);
-
 const CheckIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polyline points="20 6 9 17 4 12" />
@@ -105,6 +98,10 @@ const Subject = () => {
   const [success, setSuccess] = useState('');
   const [selectedTypes, setSelectedTypes] = useState(['mcq']);
   const [difficulty, setDifficulty] = useState('medium');
+  const [sampleTypes, setSampleTypes] = useState(['mcq']);
+  const [sampleDifficulty, setSampleDifficulty] = useState('medium');
+  const [sampleCount, setSampleCount] = useState(10);
+  const [generatingSample, setGeneratingSample] = useState(false);
 
   useEffect(() => {
     fetchSubjectName();
@@ -202,6 +199,29 @@ const Subject = () => {
     } catch (err) {
       setError('Failed to generate quiz. Make sure you have uploaded notes first.');
       setGenerating(false);
+    }
+  };
+
+  const toggleSampleType = (typeKey) => {
+    setSampleTypes(prev =>
+      prev.includes(typeKey) ? prev.filter(t => t !== typeKey) : [...prev, typeKey]
+    );
+  };
+
+  const handleGenerateSamplePaper = async () => {
+    if (sampleTypes.length === 0) return;
+    setGeneratingSample(true);
+    setError('');
+    try {
+      const response = await api.post(`/quiz/sample-paper/${id}`, {
+        question_types: sampleTypes,
+        difficulty: sampleDifficulty,
+        num_questions: sampleCount,
+      });
+      navigate(`/sample-paper/${response.data.quiz_id}`);
+    } catch (err) {
+      setError('Failed to generate sample paper. Make sure you have uploaded notes first.');
+      setGeneratingSample(false);
     }
   };
 
@@ -474,12 +494,92 @@ const Subject = () => {
         )}
 
         {activeTab === 'samples' && (
-          <div style={styles.comingSoonCard}>
-            <span style={styles.comingSoonIconWrap}><LockIcon /></span>
-            <h3 style={styles.comingSoonTitle}>Sample Papers — coming soon</h3>
-            <p style={styles.comingSoonText}>
-              Full-length practice papers styled after real exams, generated from your notes.
+          <div style={styles.configCard}>
+            <h2 style={styles.configTitle}>Generate a sample paper</h2>
+            <p style={styles.configSubtitle}>
+              A comprehensive practice paper covering topics across the whole subject — not just your weak areas.
             </p>
+
+            <div style={styles.configSection}>
+              <h3 style={styles.configSectionLabel}>Number of Questions</h3>
+              <input
+                type="number"
+                min={1}
+                max={25}
+                value={sampleCount}
+                onChange={(e) => setSampleCount(e.target.value)}
+                style={styles.countInput}
+              />
+              <p style={styles.countHint}>Up to 25. Actual count may be lower if the subject has fewer topics.</p>
+            </div>
+
+            <div style={styles.configSection}>
+              <h3 style={styles.configSectionLabel}>Question Types</h3>
+              <div style={styles.typeGrid} className="subj-type-grid">
+                {QUESTION_TYPE_OPTIONS.map((opt) => {
+                  const isSelected = sampleTypes.includes(opt.key);
+                  return (
+                    <div
+                      key={opt.key}
+                      className="subj-type-option"
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      style={{
+                        ...styles.typeOption,
+                        ...(isSelected ? styles.typeOptionSelected : {}),
+                      }}
+                      onClick={() => toggleSampleType(opt.key)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSampleType(opt.key); } }}
+                    >
+                      <div style={styles.typeOptionHeader}>
+                        <div style={{ ...styles.checkbox, ...(isSelected ? styles.checkboxChecked : {}) }}>
+                          {isSelected && <CheckIcon />}
+                        </div>
+                        <span style={styles.typeOptionLabel}>{opt.label}</span>
+                      </div>
+                      <p style={styles.typeOptionDesc}>{opt.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={styles.configSection}>
+              <h3 style={styles.configSectionLabel}>Difficulty</h3>
+              <div style={styles.difficultyRow}>
+                {DIFFICULTY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    className="subj-diff-btn"
+                    onClick={() => setSampleDifficulty(opt.key)}
+                    style={{
+                      ...styles.difficultyBtn,
+                      ...(sampleDifficulty === opt.key ? styles.difficultyBtnActive : {}),
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {sampleTypes.length === 0 && (
+              <p style={styles.configHint} role="alert">Select at least one question type to continue</p>
+            )}
+
+            <button
+              className="subj-generate-btn"
+              style={{
+                ...styles.generateBtn,
+                opacity: (sampleTypes.length === 0 || generatingSample) ? 0.5 : 1,
+                cursor: (sampleTypes.length === 0 || generatingSample) ? 'not-allowed' : 'pointer',
+              }}
+              onClick={handleGenerateSamplePaper}
+              disabled={sampleTypes.length === 0 || generatingSample}
+            >
+              {generatingSample ? 'Generating Sample Paper...' : 'Generate Sample Paper →'}
+            </button>
           </div>
         )}
       </div>
@@ -572,14 +672,12 @@ const styles = {
   actionTitle: { fontSize: '0.95rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.2rem' },
   actionDesc: { fontSize: '0.8rem', color: tokens.inkSoft, margin: 0 },
   actionArrow: { marginLeft: 'auto', color: tokens.inkSoft, fontSize: '1.1rem', flexShrink: 0 },
-
-  comingSoonCard: {
-    backgroundColor: tokens.card, borderRadius: '16px', padding: '3rem 2rem', textAlign: 'center',
-    boxShadow: '0 2px 12px rgba(33,29,28,0.06)', maxWidth: '560px', border: `1px solid ${tokens.border}`,
+  countInput: {
+  width: '100px', padding: '0.6rem 0.75rem', borderRadius: '10px',
+  borderWidth: '2px', borderStyle: 'solid', borderColor: tokens.border,
+  fontSize: '0.95rem', color: tokens.ink, fontFamily: 'inherit',
   },
-  comingSoonIconWrap: { display: 'flex', justifyContent: 'center', marginBottom: '1rem' },
-  comingSoonTitle: { fontFamily: tokens.displayFont, fontSize: '1.2rem', fontWeight: '700', color: tokens.ink, margin: '0 0 0.5rem' },
-  comingSoonText: { color: tokens.inkSoft, fontSize: '0.9rem', lineHeight: '1.6', margin: 0 },
+  countHint: { color: tokens.inkSoft, fontSize: '0.78rem', margin: '0.5rem 0 0' },
 };
 
 export default Subject;

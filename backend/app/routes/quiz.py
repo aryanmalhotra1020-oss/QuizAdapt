@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance, Subject
@@ -7,8 +7,13 @@ import random
 from app.bkt import BKTModel
 import json
 from app.adaptive import select_adaptive_topics
+import re
+from app.document_builder import build_docx, build_pdf
+
 
 quiz_bp = Blueprint('quiz', __name__)
+
+MAX_SAMPLE_PAPER_QUESTIONS = 25
 
 def find_topic_by_name(topics, name):
     for t in topics:
@@ -532,3 +537,153 @@ def get_quiz_history_detail(quiz_id):
         'attempted_at': attempt.started_at,
         'questions': results
     }), 200
+
+@quiz_bp.route('/sample-paper/<int:subject_id>', methods=['POST'])
+@jwt_required()
+def generate_sample_paper(subject_id):
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    question_types = data.get('question_types') or ['mcq']
+    difficulty = data.get('difficulty', 'medium')
+    num_questions = data.get('num_questions', 10)
+
+    try:
+        num_questions = int(num_questions)
+    except (TypeError, ValueError):
+        num_questions = 10
+    num_questions = max(1, min(num_questions, MAX_SAMPLE_PAPER_QUESTIONS))
+
+    topics = Topic.query.filter_by(subject_id=subject_id).all()
+    if not topics:
+        return jsonify({'error': 'No topics found. Please upload notes first.'}), 400
+
+    notes_exist = Note.query.filter_by(subject_id=subject_id).first()
+    if not notes_exist:
+        return jsonify({'error': 'No notes found for this subject.'}), 400
+
+    selected_topics = random.sample(topics, min(num_questions, len(topics)))
+
+    quiz = Quiz(subject_id=subject_id, type='sample_paper')
+    db.session.add(quiz)
+    db.session.commit()
+
+    topic_names_all = [t.topic_name for t in topics]
+    note_cache = {}
+    questions_generated = []
+
+    for topic in selected_topics:
+        try:
+            if topic.note_id not in note_cache:
+                note_cache[topic.note_id] = Note.query.get(topic.note_id)
+            note = note_cache[topic.note_id]
+            if not note:
+                continue
+
+            chosen_type = random.choice(question_types)
+            other_topic_names = [t.topic_name for t in topics if t.id != topic.id]
+            display_topic_name = topic.topic_name
+
+            if chosen_type == 'mcq':
+                result = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names, difficulty=difficulty)
+                if result is None:
+                    continue
+                q_type = 'mcq'
+                correct_answer = result['correct_answer']
+                options_json = json.dumps(result['options'])
+                question_text = result['question_text']
+                topic_id = topic.id
+
+            elif chosen_type == 'fill_blank':
+                result = generate_fill_blank_question(note.raw_text, topic.topic_name, other_topic_names, difficulty=difficulty)
+                if result is None:
+                    continue
+                q_type = 'fill_blank'
+                correct_answer = result['correct_answer']
+                options_json = json.dumps(result['options'])
+                question_text = result['question_text']
+                topic_id = topic.id
+
+            elif chosen_type == 'long_answer':
+                result = generate_long_answer_question(note.raw_text, topic.topic_name, difficulty=difficulty)
+                q_type = 'long_answer'
+                correct_answer = result['correct_answer']
+                options_json = None
+                question_text = result['question_text']
+                topic_id = topic.id
+
+            elif chosen_type == 'multi_select':
+                result = generate_multi_select_question(topic_names_all)
+                if not result:
+                    continue
+                anchor_topic = find_topic_by_name(topics, result['correct_answers'][0])
+                q_type = 'multi_select'
+                correct_answer = json.dumps(result['correct_answers'])
+                options_json = json.dumps(result['options'])
+                question_text = result['question_text']
+                topic_id = anchor_topic.id if anchor_topic else topic.id
+                display_topic_name = anchor_topic.topic_name if anchor_topic else topic.topic_name
+
+            else:
+                continue
+
+            question = Question(
+                quiz_id=quiz.id,
+                topic_id=topic_id,
+                question_text=question_text,
+                correct_answer=correct_answer,
+                question_type=q_type,
+                difficulty=difficulty,
+                options=options_json
+            )
+            db.session.add(question)
+            db.session.commit()
+
+            questions_generated.append({
+                'id': question.id,
+                'question_text': question_text,
+                'topic': display_topic_name,
+                'question_type': q_type,
+                'options': json.loads(options_json) if options_json else None
+            })
+        except Exception as e:
+            print(f"Error generating sample paper question for topic {topic.topic_name}: {e}")
+            continue
+
+    return jsonify({
+        'quiz_id': quiz.id,
+        'type': 'sample_paper',
+        'questions': questions_generated,
+        'requested': num_questions,
+        'generated': len(questions_generated)
+    }), 201
+
+@quiz_bp.route('/sample-paper/<int:quiz_id>/download', methods=['GET'])
+@jwt_required()
+def download_sample_paper(quiz_id):
+    user_id = get_jwt_identity()
+    doc_type = request.args.get('doc', 'paper')
+    file_format = request.args.get('format', 'pdf')
+
+    quiz = Quiz.query.get_or_404(quiz_id)
+    subject = Subject.query.filter_by(id=quiz.subject_id, user_id=user_id).first()
+    if not subject:
+        return jsonify({'error': 'Not found'}), 404
+
+    questions = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.id).all()
+    if not questions:
+        return jsonify({'error': 'No questions found for this paper'}), 404
+
+    if file_format == 'docx':
+        buffer = build_docx(subject.name, questions, doc_type)
+        mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ext = 'docx'
+    else:
+        buffer = build_pdf(subject.name, questions, doc_type)
+        mimetype = 'application/pdf'
+        ext = 'pdf'
+
+    suffix = 'AnswerKey' if doc_type == 'answers' else 'SamplePaper'
+    safe_subject = re.sub(r'[^A-Za-z0-9]+', '_', subject.name).strip('_')
+    filename = f"{safe_subject}_{suffix}.{ext}"
+
+    return send_file(buffer, mimetype=mimetype, as_attachment=True, download_name=filename)

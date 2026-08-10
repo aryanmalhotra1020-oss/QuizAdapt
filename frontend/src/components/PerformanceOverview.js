@@ -94,10 +94,20 @@ const ArrowIcon = () => (
   </svg>
 );
 
+const ExamIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="9" y1="13" x2="15" y2="13" />
+    <line x1="9" y1="17" x2="13" y2="17" />
+  </svg>
+);
+
 const TYPE_META = {
   diagnostic: { label: 'Diagnostic', color: typeMeta.typeDiagnostic, bg: typeMeta.typeDiagnosticSoft, Icon: ClipboardIcon },
   adaptive: { label: 'Adaptive', color: typeMeta.typeAdaptive, bg: typeMeta.typeAdaptiveSoft, Icon: TargetIcon },
   initial: { label: 'Initial', color: typeMeta.typeInitial, bg: typeMeta.typeInitialSoft, Icon: PencilIcon },
+  sample_paper: {label: 'Sample Paper', color: '#7C3AED', bg: '#F38FF', Icon: ExamIcon},
 };
 
 const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
