@@ -1,13 +1,7 @@
-"""
-BKT Adaptive Weighting Validation Script
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-Validates the core adaptive learning claim: that topics a user consistently
-answers incorrectly get classified as 'weak' and are subsequently selected
-more often in quiz generation, using the REAL production code
-(app.adaptive.select_adaptive_topics), not a re-implementation.
-
-Usage: python validate_bkt.py
-"""
 
 from app import create_app, db
 from app.models import User, Subject, Note, Topic, TopicPerformance

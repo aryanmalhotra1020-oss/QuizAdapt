@@ -1,12 +1,7 @@
-"""
-Question Generation Latency Benchmark
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-Measures real wall-clock generation time per question type, calling the
-actual production generation functions (app.services) directly against a
-real evaluation subject's data - not synthetic timing estimates.
-
-Usage: python benchmark_latency.py <subject_id>
-"""
 
 import sys
 import time

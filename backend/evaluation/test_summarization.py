@@ -1,10 +1,7 @@
-"""
-Quick sanity check: Can the existing fine-tuned Flan-T5 model produce a
-real summary, or has narrow MCQ fine-tuning degraded its general
-summarization ability? Tests directly against real note text.
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-Usage: python test_summarization.py <subject_id>
-"""
 
 import sys
 import torch

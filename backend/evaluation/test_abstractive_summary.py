@@ -1,10 +1,7 @@
-"""
-Test whether a FRESH (non-fine-tuned) flan-t5-base instance can smooth
-already-extracted key sentences into a flowing paragraph, without the
-catastrophic-forgetting issue affecting the MCQ-fine-tuned model.
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-Usage: python test_abstractive_summary.py <subject_id>
-"""
 
 import sys
 import torch

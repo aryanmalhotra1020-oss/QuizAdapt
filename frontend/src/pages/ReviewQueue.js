@@ -44,7 +44,7 @@ const ReviewQueue = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answer, setAnswer] = useState('');
+  const [selectedOption, setSelectedOption] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -61,7 +61,7 @@ const ReviewQueue = () => {
       setItems(response.data.due_items);
       setCurrentIndex(0);
       setFeedback(null);
-      setAnswer('');
+      setSelectedOption(null);
     } catch (err) {
       console.error('Failed to load due reviews');
     } finally {
@@ -70,7 +70,7 @@ const ReviewQueue = () => {
   };
 
   const handleSubmit = async () => {
-    if (!answer.trim()) return;
+    if (!selectedOption) return;
     const item = items[currentIndex];
 
     setSubmitting(true);
@@ -78,7 +78,7 @@ const ReviewQueue = () => {
       const response = await api.post('/review/submit', {
         subject_id: parseInt(subjectId, 10),
         topic_id: item.topic_id,
-        answer,
+        answer: selectedOption,
         correct_answer: item.correct_answer
       });
       setFeedback(response.data);
@@ -90,7 +90,7 @@ const ReviewQueue = () => {
   };
 
   const handleNext = () => {
-    setAnswer('');
+    setSelectedOption(null);
     setFeedback(null);
     setCurrentIndex(prev => prev + 1);
   };
@@ -166,7 +166,9 @@ const ReviewQueue = () => {
   return (
     <div style={styles.centered}>
       <style>{`${fontImport}
-        .review-input:focus { outline: none; border-color: ${tokens.accent} !important; box-shadow: 0 0 0 3px ${tokens.accentSoft}; }
+        .review-option-btn:hover { border-color: #CBD5E1; }
+        button {cursor: pointer; }
+        button:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
         .review-primary-btn:hover:not(:disabled) { background-color: ${tokens.accentHover} !important; }
       `}</style>
       <div style={styles.quizCard}>
@@ -191,29 +193,34 @@ const ReviewQueue = () => {
           <>
             {/* Answer */}
             <div style={styles.answerSection}>
-              <label style={styles.answerLabel}>Your Answer</label>
-              <input
-                className="review-input"
-                style={styles.answerInput}
-                type="text"
-                placeholder="Type your answer here..."
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSubmit();
-                }}
-                autoFocus
-              />
-              <p style={styles.answerHint}>Press Enter or click the button to continue</p>
+              <label style={styles.answerLabel}>Select an Answer</label>
+              <div style = {styles.optionsGrid}>
+                {item.options.map((option,i) => {
+                  const isSelected = selectedOption === option;
+                  return (
+                    <button
+                      key={i}
+                      classname="review-option-btn"
+                      style={{
+                        ...styles.optionBtn,
+                        ...(isSelected ? styles.optionBtnSelected : {}),
+                      }}
+                      onClick = {() => setSelectedOption(option)}
+                      >
+                        {option}
+                      </button>
+                  );
+                })}
+              </div>
             </div>
 
             <button
               className="review-primary-btn"
-              style={{ ...styles.primaryBtn, opacity: (!answer.trim() || submitting) ? 0.5 : 1 }}
+              style={{ ...styles.primaryBtn, opacity: (!selectedOption || submitting) ? 0.5 : 1 }}
               onClick={handleSubmit}
-              disabled={!answer.trim() || submitting}
+              disabled={!selectedOption || submitting}
             >
-              {submitting ? 'Checking...' : 'Submit Answer →'}
+              {submitting ? 'Checking...' : 'Submit Answer'}
             </button>
           </>
         ) : (
@@ -361,23 +368,14 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
-  answerInput: {
-    width: '100%',
-    padding: '0.9rem 1rem',
-    borderRadius: '10px',
-    border: `2px solid ${tokens.border}`,
-    fontSize: '1rem',
-    color: tokens.ink,
-    boxSizing: 'border-box',
-    marginBottom: '0.4rem',
-    fontFamily: 'inherit',
-    backgroundColor: tokens.card,
-    transition: 'border-color 0.15s, box-shadow 0.15s',
+  optionsGrid: { display: 'flex', flexDirection: 'column', gap: '0.65rem' },
+  optionBtn: {
+    width: '100%', padding: '0.85rem 1.1rem', backgroundColor: tokens.card, color: tokens.ink,
+    borderWidth: '2px', borderStyle: 'solid', borderColor: tokens.border,
+    borderRadius: '10px', fontSize: '0.95rem', fontWeight: '600',
+    textAlign: 'left', transition: 'all 0.15s', fontFamily: 'inherit',
   },
-  answerHint: {
-    fontSize: '0.75rem',
-    color: tokens.inkSoft,
-  },
+  optionBtnSelected: { borderColor: tokens.accent, backgroundColor: tokens.accentSoft, color: tokens.accentText },
   primaryBtn: {
     width: '100%',
     padding: '0.9rem',

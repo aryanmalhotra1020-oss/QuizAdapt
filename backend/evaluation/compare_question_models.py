@@ -1,10 +1,6 @@
-"""
-Comparative Evaluation: Question Generation Models
-
-Generates questions for the same real topics using BOTH the original
-T5-small/SQuAD model and the final fine-tuned Flan-T5/SciQ model, so they
-can be scored on the same rubric for a direct, fair comparison.
-"""
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import sys
 import csv

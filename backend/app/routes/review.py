@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timezone
 from app import db
 from app.models import Topic, Note, TopicPerformance, ReviewSchedule
-from app.services import generate_question_for_topic, score_answer
+from app.services import generate_mcq_question
 from app.bkt import BKTModel
 from app.spaced_repetition import score_to_quality, sm2_update, apply_forgetting_curve
 
@@ -21,10 +21,32 @@ def get_due_reviews(subject_id):
     now = datetime.now(timezone.utc)
     note_cache = {}
 
+    all_topics = Topic.query.filter_by(subject_id=subject_id).all()
+    all_topic_names = [t.topic_name for t in all_topics]
+
     def get_note_for_topic(topic):
         if topic.note_id not in note_cache:
             note_cache[topic.note_id] = Note.query.get(topic.note_id)
         return note_cache[topic.note_id]
+
+    def build_mcq_item(topic, note, extra_fields):
+        other_topic_names = [t for t in all_topic_names if t != topic.topic_name]
+        try:
+            result = generate_mcq_question(note.raw_text, topic.topic_name, other_topic_names)
+        except Exception as e:
+            print(f"Error generating review question for topic {topic.topic_name}: {e}")
+            return None
+        if result is None:
+            return None
+        item = {
+            'topic_id': topic.id,
+            'topic_name': topic.topic_name,
+            'question_text': result['question_text'],
+            'options': result['options'],
+            'correct_answer': result['correct_answer'],
+        }
+        item.update(extra_fields)
+        return item
 
     due_schedules = ReviewSchedule.query.filter(
         ReviewSchedule.user_id == user_id,
@@ -53,11 +75,6 @@ def get_due_reviews(subject_id):
         note = get_note_for_topic(topic)
         if not note:
             continue
-        try:
-            question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
-        except Exception as e:
-            print(f"Error generating review question for topic {topic.topic_name}: {e}")
-            continue
 
         perf = TopicPerformance.query.filter_by(
             user_id=user_id, subject_id=subject_id, topic_id=topic.id
@@ -67,16 +84,14 @@ def get_due_reviews(subject_id):
             schedule.last_reviewed_at
         )
 
-        due_items.append({
+        item = build_mcq_item(topic, note, {
             'review_id': schedule.id,
-            'topic_id': topic.id,
-            'topic_name': topic.topic_name,
-            'question_text': question_text,
-            'correct_answer': topic.topic_name,
             'current_strength': round(decayed_score, 3),
             'repetitions': schedule.repetitions,
             'interval_days': schedule.interval_days
         })
+        if item:
+            due_items.append(item)
 
     for perf in unscheduled_due:
         topic = Topic.query.get(perf.topic_id)
@@ -85,22 +100,15 @@ def get_due_reviews(subject_id):
         note = get_note_for_topic(topic)
         if not note:
             continue
-        try:
-            question_text = generate_question_for_topic(note.raw_text, topic.topic_name)
-        except Exception as e:
-            print(f"Error generating review question for topic {topic.topic_name}: {e}")
-            continue
 
-        due_items.append({
+        item = build_mcq_item(topic, note, {
             'review_id': None,
-            'topic_id': topic.id,
-            'topic_name': topic.topic_name,
-            'question_text': question_text,
-            'correct_answer': topic.topic_name,
             'current_strength': round(perf.strength_score, 3),
             'repetitions': 0,
             'interval_days': 0
         })
+        if item:
+            due_items.append(item)
 
     return jsonify({
         'subject_id': subject_id,
@@ -122,7 +130,8 @@ def submit_review():
     if not all([subject_id, topic_id, user_answer, correct_answer]):
         return jsonify({'error': 'Missing required fields.'}), 400
 
-    score, is_correct = score_answer(user_answer, correct_answer)
+    is_correct = user_answer.strip().lower() == correct_answer.strip().lower()
+    score = 1.0 if is_correct else 0.0
     quality = score_to_quality(score)
 
     schedule = ReviewSchedule.query.filter_by(

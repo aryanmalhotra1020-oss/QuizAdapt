@@ -1,10 +1,7 @@
-"""
-Comparative Evaluation: Summarization Approaches
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-Generates a summary for each uploaded note using all three tested
-approaches - extractive-only, untrained base Flan-T5, and the final
-fine-tuned model - for side-by-side rubric scoring.
-"""
 
 import sys
 import csv
