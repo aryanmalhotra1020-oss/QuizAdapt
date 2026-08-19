@@ -2,14 +2,13 @@ from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Quiz, Question, Attempt, Answer, Topic, Note, TopicPerformance, Subject
-from app.services import generate_mcq_question, generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question, score_answer, is_malformed_question, generate_question_for_topic, score_answer, generate_mcq_options
+from app.services import generate_mcq_question, generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question, score_answer
 import random
 from app.bkt import BKTModel
 import json
 from app.adaptive import select_adaptive_topics
 import re
 from app.document_builder import build_docx, build_pdf
-
 
 quiz_bp = Blueprint('quiz', __name__)
 
@@ -46,36 +45,6 @@ def score_question_answer(question, user_answer):
     return score_answer(user_answer, question.correct_answer)
 
 # ============== Routes ==============
-
-@quiz_bp.route('/test-types/<int:subject_id>', methods=['GET'])
-@jwt_required()
-def test_question_types(subject_id):
-    from app.services import generate_fill_blank_question, generate_long_answer_question, generate_multi_select_question
-
-    note = Note.query.filter_by(subject_id=subject_id).order_by(Note.id.desc()).first()
-    topics = Topic.query.filter_by(subject_id=subject_id).all()
-    if not topics:
-        return jsonify({'error': 'No topics found'}), 400
-
-    topic_names = [t.topic_name for t in topics]
-    sample_topics = topics[:3]  # test across a few topics, not just the first
-
-    fill_blanks = []
-    long_answers = []
-    for t in sample_topics:
-        other_names = [name for name in topic_names if name != t.topic_name]
-        fill_blanks.append(generate_fill_blank_question(note.raw_text, t.topic_name, other_names))
-        long_answers.append(generate_long_answer_question(note.raw_text, t.topic_name))
-
-    multi_select = generate_multi_select_question(topic_names)
-
-    return jsonify({
-        'topics': topic_names,
-        'fill_blanks': fill_blanks,
-        'long_answers': long_answers,
-        'multi_select': multi_select
-    }), 200
-
 
 @quiz_bp.route('/generate/<int:subject_id>', methods=['POST'])
 @jwt_required()
@@ -331,7 +300,6 @@ def submit_diagnostic(quiz_id):
         'message': 'Diagnostic complete! Your knowledge baseline has been set.'
     }), 201
 
-
 @quiz_bp.route('/<int:quiz_id>', methods=['GET'])
 @jwt_required()
 def get_quiz(quiz_id):
@@ -420,16 +388,6 @@ def submit_attempt(quiz_id):
         'attempt_id': attempt.id,
         'results': results
     }), 201
-
-@quiz_bp.route('/results/<int:subject_id>', methods=['GET'])
-@jwt_required()
-def get_subjects():
-    quizzes = Quiz.query.filter_by(subject_id=subject_id).all()
-    return jsonify([{
-        'id': q.id,
-        'type': q.type,
-        'created_at': q.created_at
-    } for q in quizzes]), 200
 
 @quiz_bp.route('/performance/<int:subject_id>', methods=['GET'])
 @jwt_required()

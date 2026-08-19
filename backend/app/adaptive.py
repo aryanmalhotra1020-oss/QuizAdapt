@@ -1,6 +1,5 @@
 import random
 
-
 def classify_topics(topics, performances, bkt):
     """Splits topics into weak/moderate/strong lists based on current BKT scores."""
     weak, moderate, strong = [], [], []

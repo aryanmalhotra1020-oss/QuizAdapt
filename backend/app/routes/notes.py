@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Note, Topic, Subject, User, Summary
 from keybert import KeyBERT
-import fitz  # PDF Extraction
+import fitz
 from app.services import embed_texts, extract_summary_sentences, generate_abstractive_summary
 import torch.nn.functional as F
 import spacy
@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 notes_bp = Blueprint('notes', __name__)
 kw_model = KeyBERT()
 
-# ============== Filtering ==============
+# ============== Filtering Unwanted Topics and Words ==============
 
 _VALID_TOPIC_PATTERN = re.compile(r"^[A-Za-z0-9\s\-']+$")
 
@@ -31,7 +31,7 @@ ADMIN_PAGE_KEYWORDS = {
     'associate professor', 'department of computer science', 'assistant professor',
     'what this module will cover', 'module organization', 'assessment distribution',
     'recommended textbook', 'free online course', 'programming environment',
-    'pre-requisite', 'prerequisite', 'module plan', 'module lead', 'module team',
+    'pre-requisite', 'prerequisite', 'module plan', 'module lead',
 }
 
 _URL_EMAIL_PATTERN = re.compile(r'(https?://\S+|www\.\S+|\S+@\S+\.\S+)')
@@ -86,6 +86,7 @@ _CITATION_PATTERN = re.compile(
     r'source:|adapted from)\b',
     re.IGNORECASE
 )
+
 def filter_citation_topics(keywords):
     return [(kw, score) for kw, score in keywords if not _CITATION_PATTERN.search(kw)]
 
@@ -133,7 +134,7 @@ def extract_text(file):
     else:
         return file.read().decode('utf-8', errors='ignore')
 
-# ============== Topic Extraction and Cleanup ==============
+# ============== Topic Extraction, Filteting and Cleanup ==============
 
 _nlp = None
 
