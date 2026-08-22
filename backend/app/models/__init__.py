@@ -41,7 +41,6 @@ class Topic(db.Model):
     performances = db.relationship('TopicPerformance', backref='topic', lazy=True, cascade='all, delete')
     review_schedules = db.relationship('ReviewSchedule', backref='topic', lazy=True, cascade='all, delete')
 
-
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)
@@ -58,7 +57,7 @@ class Question(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=True)
     question_text = db.Column(db.Text, nullable=False)
     correct_answer = db.Column(db.Text, nullable=False)
-    question_type = db.Column(db.String(30), default='short_answer', nullable=False)
+    question_type = db.Column(db.String(30), default='mcq', nullable=False)
     difficulty = db.Column(db.String(10), default='medium', nullable=False)
     options = db.Column(db.Text)  # JSON-encoded list of strings, used for MCQ (and match, later)
     answers = db.relationship('Answer', backref='question', lazy=True, cascade='all, delete')

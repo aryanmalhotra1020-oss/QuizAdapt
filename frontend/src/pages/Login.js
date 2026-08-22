@@ -3,25 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import logoLight from '../logo/logo-light.png';
-
-const tokens = {
-  ink: '#334155',
-  inkSoft: '#64748B',
-  accent: '#2563EB',
-  accentHover: '#1D4ED8',
-  accentSoft: '#DBEAFE',
-  accentText: '#1D4ED8',
-  onAccent: '#FFFFFF',
-  paper: '#F8FAFC',
-  card: '#FFFFFF',
-  border: '#E2E8F0',
-  darkSurface: '#0F172A',
-  onInkMuted: '#CBD5E1',
-  danger: '#DC2626',
-  displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
-  bodyFont: "'Karla', 'Segoe UI', sans-serif",
-  monoFont: "'IBM Plex Mono', 'Courier New', monospace",
-};
+import { tokens, fontImport } from '../theme';
 
 const EyeIcon = ({ off }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -87,7 +69,7 @@ const Login = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+        ${fontImport}
 
         .auth-input {
           transition: border-color 0.15s, box-shadow 0.15s;
@@ -191,13 +173,11 @@ const Login = () => {
       <div style={styles.brandSide} className="brand-side">
         <div style={styles.brandContent}>
           <h2 style={styles.brandHeadline}>
-            Learn what you don&rsquo;t know yet.<br />
-            {/*
+            Learn what you <br />
             <span style={styles.headlineDoodleWrap}>
               don&rsquo;t know yet.
               <CircleDoodle style={styles.circleDoodle} />
             </span>
-            */}
           </h2>
           <p style={styles.brandSubhead}>
             QuizAdapt turns your notes into quizzes that target your weak spots.
@@ -261,8 +241,8 @@ const styles = {
     fontSize: '0.95rem',
   },
   errorBanner: {
-    backgroundColor: '#FEF2F2',
-    border: '1px solid #FECACA',
+    backgroundColor: tokens.dangerSoft, 
+    border: `1px solid ${tokens.dangerBorder}`,
     color: tokens.danger,
     padding: '0.75rem 1rem',
     borderRadius: '8px',

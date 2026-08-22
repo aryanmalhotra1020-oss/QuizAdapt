@@ -107,7 +107,7 @@ const TYPE_META = {
   diagnostic: { label: 'Diagnostic', color: typeMeta.typeDiagnostic, bg: typeMeta.typeDiagnosticSoft, Icon: ClipboardIcon },
   adaptive: { label: 'Adaptive', color: typeMeta.typeAdaptive, bg: typeMeta.typeAdaptiveSoft, Icon: TargetIcon },
   initial: { label: 'Initial', color: typeMeta.typeInitial, bg: typeMeta.typeInitialSoft, Icon: PencilIcon },
-  sample_paper: {label: 'Sample Paper', color: '#7C3AED', bg: '#F38FF', Icon: ExamIcon},
+  sample_paper: {label: 'Sample Paper', color: '#7C3AED', bg: '#F3E8FF', Icon: ExamIcon},
 };
 
 const PerformanceOverview = ({ subjectId, onContinueLearning }) => {
@@ -350,7 +350,7 @@ const styles = {
   groupTitle: { fontSize: '0.85rem', fontWeight: '700', margin: 0 },
   empty: { textAlign: 'center', padding: '2rem', color: tokens.inkSoft, fontSize: '0.9rem' },
   historyList: { display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.5rem' },
-  historyItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: tokens.paper, borderRadius: '10px', borderWidth: '1px', borderStyle:'solid', borderColor: tokens.border, border: `1px solid ${tokens.border}`, flexWrap: 'wrap', gap: '0.5rem', cursor:'pointer', transition:'border-color 0.15s, box-shadow 0.15s' },
+  historyItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: tokens.paper, borderRadius: '10px', borderWidth: '1px', borderStyle:'solid', borderColor: tokens.border, flexWrap: 'wrap', gap: '0.5rem', cursor:'pointer', transition:'border-color 0.15s, box-shadow 0.15s' },
   historyLeft: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
   typeBadge: { padding: '0.25rem 0.7rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' },
   historyDate: { color: tokens.inkSoft, fontSize: '0.8rem' },

@@ -11,7 +11,6 @@ import CreateSubject from './pages/CreateSubject';
 import Profile from './pages/Profile';
 import Quiz from './pages/Quiz';
 import DiagnosticQuiz from './pages/DiagnosticQuiz';
-import Performance from './pages/Performance';
 import ReviewQueue from './pages/ReviewQueue';
 import Landing from './pages/Landing';
 import QuizHistoryDetail from './pages/QuizHistoryDetail';
@@ -59,11 +58,6 @@ function App() {
             <Route path="/diagnostic/:subjectId" element={
               <ProtectedRoute>
                 <DiagnosticQuiz />
-              </ProtectedRoute>
-            } />
-            <Route path="/performance/:subjectId" element={
-              <ProtectedRoute>
-                <Performance />
               </ProtectedRoute>
             } />
             <Route path="/review/:subjectId" element={

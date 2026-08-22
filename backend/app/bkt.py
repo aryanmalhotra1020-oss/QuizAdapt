@@ -1,13 +1,4 @@
 class BKTModel:
-    """
-    Bayesian Knowledge Tracing (BKT) Model
-    
-    Parameters:
-    - p_know: Initial probability student knows the concept (prior)
-    - p_learn: Probability of learning after each attempt
-    - p_guess: Probability of guessing correctly without knowing
-    - p_slip: Probability of answering incorrectly despite knowing
-    """
     
     def __init__(self, p_know=0.5, p_learn=0.2, p_guess=0.25, p_slip=0.1):
         self.p_know = p_know

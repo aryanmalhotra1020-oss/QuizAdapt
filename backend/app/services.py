@@ -25,7 +25,6 @@ _NOISE_PATTERNS = [
     re.compile(r'\b\d{1,3}\b'),  # standalone slide/page numbers
 ]
 _FUSED_WORD_PATTERN = re.compile(r'[a-z][A-Z]')
-_CITATION_SENTENCE_PATTERN = re.compile(r'\bet al\b|\b\d{4}\)\.|arxiv', re.IGNORECASE)
 _CITATION_SENTENCE_PATTERN_SUMMARY = re.compile(
     r'\bet al\b|\b\d{4}\)\.|arxiv|proceedings|transactions on|journal of|'
     r'conference on|ieee|springer|elsevier',
@@ -173,6 +172,8 @@ def is_low_quality_sentence(sentence, min_prose_ratio=0.85, min_words=4):
         return True
     first_word = sentence.strip().split()[0].lower() if sentence.strip() else ''
     if first_word in ('and', 'or', 'but', 'so', 'because'):
+        return True
+    if not has_finite_verb(sentence):
         return True
     return False
 
@@ -347,12 +348,6 @@ def generate_fill_in_blank(raw_text, topic, difficulty='medium', min_fallback_si
         'correct_answer': topic,
         'from_real_sentence': False
     }
-
-def generate_mcq_stem(raw_text, topic, difficulty='medium'):
-    fib = generate_fill_in_blank(raw_text, topic, difficulty=difficulty)
-    if fib['from_real_sentence']:
-        return fib['question_text']
-    return generate_question_for_topic(raw_text, topic, difficulty=difficulty)
 
 def mask_topic_in_question(question_text, topic):
     pattern = re.compile(re.escape(topic), re.IGNORECASE)
@@ -600,3 +595,17 @@ def generate_abstractive_summary(key_sentences):
         )
 
     return tok.decode(outputs[0], skip_special_tokens=True)
+
+_verb_check_nlp = None
+
+def _get_verb_check_nlp():
+    global _verb_check_nlp
+    if _verb_check_nlp is None:
+        import spacy
+        _verb_check_nlp = spacy.load("en_core_web_sm")
+    return _verb_check_nlp
+
+def has_finite_verb(sentence):
+    nlp = _get_verb_check_nlp()
+    doc = nlp(sentence)
+    return any(token.pos_ in ("VERB", "AUX") for token in doc)

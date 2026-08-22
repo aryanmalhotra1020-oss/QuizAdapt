@@ -1,7 +1,6 @@
 import io
 import json
 from docx import Document
-from docx.shared import Pt
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle

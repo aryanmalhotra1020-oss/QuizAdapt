@@ -35,12 +35,3 @@ export const tokens = {
 export const fontImport =
   "@import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap');";
 
-export const LogoMark = ({ size = 22 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <rect width="24" height="24" rx="6" fill={tokens.accent} />
-    <path d="M3 12a9 9 0 0 1 15-6.7L21 8" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" />
-    <path d="M21 3v5h-5" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M21 12a9 9 0 0 1-15 6.7L3 16" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" />
-    <path d="M3 21v-5h5" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);

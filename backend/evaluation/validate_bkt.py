@@ -10,6 +10,8 @@ from app.adaptive import select_adaptive_topics
 from collections import Counter
 import random
 
+random.seed(42)
+
 TEST_SUBJECT_NAME = "BKT_VALIDATION_TEST"
 NUM_SIMULATED_ROUNDS = 8
 NUM_SELECTION_TRIALS = 200

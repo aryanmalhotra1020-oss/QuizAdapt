@@ -115,13 +115,15 @@ const DiagnosticQuiz = () => {
           </div>
 
           <div style={styles.resultsList}>
-            {results.map((result, i) => (
-              <div key={i} style={{
-                ...styles.resultItem,
-                borderLeft: `4px solid ${result.is_correct ? tokens.good : tokens.critical}`
-              }}>
+            {results.map((result) => {
+              const question = questions.find(q => q.id === result.question_id);
+              return (
+                <div key={result.question_id} style={{
+                  ...styles.resultItem,
+                  borderLeft: `4px solid ${result.is_correct ? tokens.good : tokens.critical}`
+                }}>
                 <div style={styles.resultHeader}>
-                  <span style={styles.topicTag}>{questions[i]?.topic}</span>
+                  <span style={styles.topicTag}>{question?.topic}</span>
                   <span style={{
                     ...styles.resultStatus,
                     color: result.is_correct ? tokens.successText : tokens.dangerText,
@@ -131,7 +133,7 @@ const DiagnosticQuiz = () => {
                       : <><SmallXIcon color={tokens.dangerText} /> Needs Work</>}
                   </span>
                 </div>
-                <p style={styles.resultQuestion}>{questions[i]?.question_text}</p>
+                <p style={styles.resultQuestion}>{question?.question_text}</p>
                 <p style={styles.userAnswer}>
                   Your answer: <strong>{result.user_answer}</strong>
                 </p>
@@ -141,7 +143,7 @@ const DiagnosticQuiz = () => {
                   </p>
                 )}
               </div>
-            ))}
+              )})}
           </div>
 
           <button className="diag-btn" style={styles.button} onClick={() => navigate(`/subject/${subjectId}`)}>

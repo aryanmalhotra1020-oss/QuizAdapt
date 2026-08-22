@@ -1,23 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logoLight from '../logo/logo-light.png';
-
-const tokens = {
-  ink: '#334155',
-  inkSoft: '#64748B',
-  accent: '#2563EB',
-  accentText: '#1D4ED8',
-  accentSoft: '#DBEAFE',
-  onAccent: '#FFFFFF',
-  paper: '#F8FAFC',
-  card: '#FFFFFF',
-  border: '#E2E8F0',
-  darkSurface: '#0F172A',
-  onInkMuted: '#CBD5E1',
-  displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
-  bodyFont: "'Karla', 'Segoe UI', sans-serif",
-  monoFont: "'IBM Plex Mono', 'Courier New', monospace",
-};
+import { tokens, fontImport } from '../theme';
 
 /* Hand-drawn marker annotations — the page's signature device */
 const CircleDoodle = ({ style }) => (
@@ -113,7 +97,7 @@ const Landing = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+        ${fontImport}
 
         a, button { cursor: pointer; }
         a:focus-visible, button:focus-visible {
@@ -162,12 +146,11 @@ const Landing = () => {
         <div style={styles.heroText}>
           <span style={styles.eyebrow}>ADAPTIVE STUDY, FROM YOUR OWN NOTES</span>
           <h1 style={styles.headline} className="ld-headline">
-            Learn what you don&rsquo;t know yet.<br />
-            {/* <span style={styles.headlineDoodleWrap}>
+            Learn what you <br />
+            <span style={styles.headlineDoodleWrap}>
               don&rsquo;t know yet.
               <CircleDoodle style={styles.circleDoodle} />
             </span>
-            */}
           </h1>
           <p style={styles.subheadline}>
             QuizAdapt turns your own notes into quizzes that target your weak spots -

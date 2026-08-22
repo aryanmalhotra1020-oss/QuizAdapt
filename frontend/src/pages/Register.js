@@ -2,24 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logoLight from '../logo/logo-light.png';
-
-const tokens = {
-  ink: '#334155',
-  inkSoft: '#64748B',
-  accent: '#2563EB',
-  accentHover: '#1D4ED8',
-  accentSoft: '#DBEAFE',
-  onAccent: '#FFFFFF',
-  paper: '#F8FAFC',
-  card: '#FFFFFF',
-  border: '#E2E8F0',
-  darkSurface: '#0F172A',
-  onInkMuted: '#CBD5E1',
-  danger: '#DC2626',
-  displayFont: "'Bricolage Grotesque', 'Segoe UI', sans-serif",
-  bodyFont: "'Karla', 'Segoe UI', sans-serif",
-  monoFont: "'IBM Plex Mono', 'Courier New', monospace",
-};
+import { tokens, fontImport } from '../theme';
 
 const EyeIcon = ({ off }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -71,7 +54,7 @@ const Register = () => {
   return (
     <div style={styles.page}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+        ${fontImport}
 
         .auth-input {
           transition: border-color 0.15s, box-shadow 0.15s;
@@ -196,7 +179,7 @@ const Register = () => {
           <div style={styles.featureCard}>
             {[
               'Adaptive quizzes weighted to your weak topics',
-              'MCQ, fill-in-the-blank, match, or long-answer',
+              'MCQ, fill-in-the-blank, choose, or long-answer',
               'Spaced repetition before you forget',
             ].map((feature) => (
               <div key={feature} style={styles.featureRow}>
@@ -249,8 +232,8 @@ const styles = {
     fontSize: '0.95rem',
   },
   errorBanner: {
-    backgroundColor: '#FEF2F2',
-    border: '1px solid #FECACA',
+    backgroundColor: tokens.dangerSoft, 
+    border: `1px solid ${tokens.dangerBorder}`,
     color: tokens.danger,
     padding: '0.75rem 1rem',
     borderRadius: '8px',
